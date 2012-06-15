@@ -78,7 +78,7 @@ Description:     BlogLiterately is a tool for uploading web log posts to web log
                  The options for BlogLiterately are, I hope, self-explanatory (given the 
                  above background!).
                  .
-                 > BlogLierately v0.3, (C) Robert Greayer 2009
+                 > BlogLierately v0.4, (C) Robert Greayer 2008-2010
                  > This program comes with ABSOLUTELY NO WARRANTY
                  > 
                  > 
@@ -128,7 +128,7 @@ License-file:   LICENSE
 Category:	Web
 Copyright:	Copyright (c) Robert Greayer 2012.
 Author:         Robert Greayer <robgreayer@yahoo.com>
-Maintainer:	Robert Greayer <robgreayer@yahoo.com>
+Maintainer:	Brent Yorgey <byorgey@cis.upenn.edu>
 Stability:	experimental
 Build-Type:     Simple
 Tested-With:	GHC ==7.4.1

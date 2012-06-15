@@ -420,7 +420,7 @@ work:
 >     postid = "" &= help "Post to replace (if any)" 
 >   } 
 >   &= program "BlogLiterately"
->   &= summary ("BlogLierately v0.4, (C) Robert Greayer 2012\n" ++
+>   &= summary ("BlogLierately v0.4, (C) Robert Greayer 2008-2010\n" ++
 >               "This program comes with ABSOLUTELY NO WARRANTY\n")
 >  
 >  where
