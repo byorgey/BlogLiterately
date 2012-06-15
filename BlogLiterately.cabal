@@ -25,10 +25,9 @@ Description:     BlogLiterately is a tool for uploading web log posts to web log
                  >   -- This is a code segment but the tool doesn't know what kind!
                  >   foo :: String -> String
                  .
-                 Pandoc offers another way to specify a code segment (replace the
-                 square braces with curly braces, haddock/hackage mangles them):
+                 Pandoc offers another way to specify a code segment:
                  .
-                 > ~~~~ [ .haskell ] 
+                 > ~~~~ \{ .haskell \}
                  > -- This is a code segment, and the tool knows it's Haskell!
                  > foo :: String -> String 
                  > ~~~~
