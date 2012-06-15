@@ -1,5 +1,5 @@
 Name:           BlogLiterately
-Version:        0.3
+Version:        0.4
 Synopsis:	A tool for posting Haskelly articles to blogs
 
 Description:     BlogLiterately is a tool for uploading web log posts to web log servers
@@ -76,21 +76,8 @@ Description:     BlogLiterately is a tool for uploading web log posts to web log
                  attributes, so the stylesheet must be provided separately.  Sample 
                  stylesheets are provided in the package archive file.
                  .
-                 To use the highlighting-kate, you must (re)install Pandoc with highlighting
-                 enabled, like so:
-                 .
-                 > cabal install -fhighlighting pandoc
-                 .
-                 or
-                 .
-                 > cabal install --reinstall -fhighlighting pandoc
-                 .
-                 (If you have already installed BlogLiterately, you must reinstall that
-                 as well).
-                 .
                  The options for BlogLiterately are, I hope, self-explanatory (given the 
-                 above background!).  Note that if Pandoc isn't installed with highlighting
-                 enabled, there will be fewer options (no -kate options):
+                 above background!).
                  .
                  > BlogLierately v0.3, (C) Robert Greayer 2009
                  > This program comes with ABSOLUTELY NO WARRANTY
@@ -140,19 +127,20 @@ Homepage:       none
 License:        GPL
 License-file:   LICENSE
 Category:	Web
-Copyright:	Copyright (c) Robert Greayer 2008.
+Copyright:	Copyright (c) Robert Greayer 2012.
 Author:         Robert Greayer <robgreayer@yahoo.com>
 Maintainer:	Robert Greayer <robgreayer@yahoo.com>
 Stability:	experimental
 Build-Type:     Simple
-Tested-With:	GHC ==6.10.4
+Tested-With:	GHC ==7.4.1
 Extra-Source-Files: hscolour.css
                     kate.css
 Executable BlogLiterately
-  Build-Depends:  base >= 4.0 && < 4.3, haskell98, parsec >= 2.1.0.0 && < 3,
-                  HaXml >= 1.20 && < 1.21, utf8-string >= 0.3 && < 0.4,
-                  hscolour >= 1.15 && < 1.17, xhtml >= 3000.2 && < 3000.3, cmdargs >= 0.1 && < 0.2,
-                  haxr >= 3000.2.1 && < 3000.6, pandoc >= 1.2 && < 1.6
+  Build-Depends:  base >= 4.0 && < 4.6, parsec >= 3 && < 3.2,
+                  HaXml >= 1.22 && < 1.23, utf8-string >= 0.3 && < 0.4,
+                  hscolour >= 1.20 && < 1.21, blaze-html >= 0.5 && < 0.6, 
+                  cmdargs >= 0.9.5 && < 0.10,
+                  haxr >= 3000.8 && < 3000.9, pandoc >= 1.9 && < 1.10
   Main-Is:        BlogLiterately.lhs
   Hs-Source-Dirs: src
   Ghc-Options: -fwarn-unused-imports

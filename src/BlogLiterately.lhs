@@ -38,12 +38,10 @@ Wallace's [HaXml][] XML combinators:
 
 > import Text.XML.HaXml
 > import Text.XML.HaXml.Posn
-> import Text.XML.HaXml.Verbatim
 
 > import qualified System.IO.UTF8 as U
-
+> import Text.Blaze.Html.Renderer.String
 > import Control.Monad(liftM,unless)
-> import Text.XHtml.Transitional(showHtmlFragment)
 > import Text.ParserCombinators.Parsec
 
 The program will read in a literate Haskell file, use Pandoc to parse it as 
@@ -230,7 +228,7 @@ and then re-render it as a `String`.  Use HaXml to do all of this:
 >     -- a style attribute when it has a specific 'class' attribute.
 >     filt (cls,style) =
 >         replaceAttrs [("style",style)] `when`
->             (attrval $ ("class",AttValue [Left cls]))
+>             (attrval $ (N "class", AttValue [Left cls]))
 
 Highlighting-Kate uses &lt;br/> in code blocks to indicate newlines.  WordPress
 (if not other software) chooses to strip them away when found in &lt;pre> sections
@@ -261,9 +259,9 @@ highlighting of non-Haskell has been selected.
 >     if tag == "haskell" || haskell
 >         then case hsHilite of
 >             HsColourInline style -> 
->                 RawHtml $ bakeStyles style $ colourIt lit src
->             HsColourCSS -> RawHtml $ colourIt lit src
->             HsNoHighlight -> RawHtml $ simpleHTML hsrc
+>                 RawBlock "html" $ bakeStyles style $ colourIt lit src
+>             HsColourCSS -> RawBlock "html" $ colourIt lit src
+>             HsNoHighlight -> RawBlock "html" $ simpleHTML hsrc
 >             HsKate -> if null tag 
 >                 then myHiliteK attr hsrc
 >                 else myHiliteK ("",tag:classes,[]) hsrc
@@ -271,15 +269,15 @@ highlighting of non-Haskell has been selected.
 >             then case tag of
 >                 "" -> myHiliteK attr src
 >                 t -> myHiliteK ("",[t],[]) src
->             else RawHtml $ simpleHTML src     
+>             else RawBlock "html" $ simpleHTML src     
 >     where (tag,src) = if null classes then unTag s else ("",s)
 >           hsrc = if lit then prepend src else src
 >           lit = "sourceCode" `elem` classes
 >           haskell = "haskell" `elem` classes
 >           simpleHTML s = "<pre><code>" ++ s ++ "</code></pre>"
->           myHiliteK attr s = case highlightHtml attr s of
->               Left _ -> RawHtml $ simpleHTML s
->               Right html -> RawHtml $ replaceBreaks $ showHtmlFragment html
+>           myHiliteK attr s = case highlight formatHtmlBlock attr s of
+>               Nothing   -> RawBlock "html" $ simpleHTML s
+>               Just html -> RawBlock "html" $ replaceBreaks $ renderHtml html
 > colouriseCodeBlock _ _ b = b
 
 Colourising a `Pandoc` document is simply:
@@ -291,7 +289,7 @@ Transforming a complete input document string to an HTML output string:
 
 > xformDoc :: HsHighlight -> Bool -> String -> String
 > xformDoc hsHilite otherHilite s = 
->     showHtmlFragment 
+>     renderHtml
 >     $ writeHtml writeOpts -- from Pandoc
 >     $ colourisePandoc hsHilite otherHilite
 >     $ readMarkdown parseOpts -- from Pandoc
@@ -374,11 +372,6 @@ There are four modes of Haskell highlighting:
 
 And two modes for other code (off or on!).
 
-We can figure out if Pandoc is linked with highlighting-kate (we
-won't show the kate-related options if it isn't):
-
-> noKate = null defaultHighlightingCss
-
 To create a command line program,  I can capture the command line controls in a type:
 
 > data BlogLiterately = BlogLiterately {
@@ -402,32 +395,35 @@ To create a command line program,  I can capture the command line controls in a 
 And using CmdArgs, this bit of impure evil defines how the command line arguments
 work:
 
-> bl = mode $ BlogLiterately {
->     test = def &= text "do a test-run: html goes to stdout, is not posted",
->     style = "" &= text "Style Specification (for --hscolour-icss)" & typFile,
->     hshighlight = enum (HsColourInline defaultStylePrefs)
->         ([ (HsColourInline defaultStylePrefs) &= explicit & 
->                flag "hscolour-icss" & text inline,
->            HsColourCSS &= explicit & flag "hscolour-css" & text css,
->            HsNoHighlight &= explicit & flag "hs-nohilight" &
->                text "no haskell hilighting" ] ++
->           (if noKate then []  else
->                [HsKate &= explicit & flag "hs-kate" & text hskate])),
->     highlightOther = enum False 
->         (if noKate then [] else 
->              [True &= explicit & flag "other-code-kate" &
->               text "hilight other code with highlighting-kate"]),
->     publish = def &= text "Publish post (otherwise it's uploaded as a draft)",
->     categories = def &= explicit & flag "category" & 
->         text "post category (can specify more than one)",
->     blogid = "default" &= text "Blog specific identifier",
->     blog = def &= argPos 0 & typ "URL" 
->         & text "URL of blog's xmlrpc address (e.g. http://example.com/blog/xmlrpc.php)",
->     user = def &= argPos 1 & typ "USER" & text "blog author's user name" ,
->     password = def &= argPos 2 & typ "PASSWORD" & text "blog author's password",
->     title = def &= argPos 3 & typ "TITLE",
->     file = def &=  argPos 4 & typ "FILE" & text "literate haskell file",
->     postid = "" &= text "Post to replace (if any)" } where
+> bl = BlogLiterately {
+>     test = def &= help "do a test-run: html goes to stdout, is not posted",
+>     style = "" &= help "Style Specification (for --hscolour-icss)" &= typFile,
+>     hshighlight = enum [ (HsColourInline defaultStylePrefs) &= explicit &= 
+>                             name "hscolour-icss" &= help inline
+>                        , HsColourCSS &= explicit &= name "hscolour-css" &= help css
+>                        , HsNoHighlight &= explicit &= name "hs-nohilight" &=
+>                             help "no haskell hilighting"
+>                        , HsKate &= explicit &= name "hs-kate" &= help hskate
+>                        ],
+>     highlightOther = enum
+>              [True &= explicit &= name "other-code-kate" &=
+>               help "hilight other code with highlighting-kate"],
+>     publish = def &= help "Publish post (otherwise it's uploaded as a draft)",
+>     categories = def &= explicit &= name "category" &= 
+>         help "post category (can specify more than one)",
+>     blogid = "default" &= help "Blog specific identifier",
+>     blog = def &= argPos 0 &= typ "URL",
+>     user = def &= argPos 1 &= typ "USER",
+>     password = def &= argPos 2 &= typ "PASSWORD",
+>     title = def &= argPos 3 &= typ "TITLE",
+>     file = def &=  argPos 4 &= typ "FILE",
+>     postid = "" &= help "Post to replace (if any)" 
+>   } 
+>   &= program "BlogLiterately"
+>   &= summary ("BlogLierately v0.4, (C) Robert Greayer 2012\n" ++
+>               "This program comes with ABSOLUTELY NO WARRANTY\n")
+>  
+>  where
 >     inline =  "hilight haskell: hscolour, inline style (default)"
 >     css = "hilight haskell: hscolour, separate stylesheet"
 >     hskate = "hilight haskell with highlighting-kate"
@@ -455,9 +451,7 @@ post it to the blog:
 
 And the main program is simply:
 
-> main = cmdArgs info [bl] >>= blogLiterately
->    where info = "BlogLierately v0.3, (C) Robert Greayer 2010\n" ++
->                 "This program comes with ABSOLUTELY NO WARRANTY\n"
+> main = cmdArgs bl >>= blogLiterately
 
 I can run it to get some help:
 
