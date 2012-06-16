@@ -481,7 +481,7 @@ line arguments work:
 >      , file     = def &= argPos 4 &= typ "FILE"
 >   }
 >   &= program "BlogLiterately"
->   &= summary ("BlogLierately v0.4, (C) Robert Greayer 2008-2010\n" ++
+>   &= summary ("BlogLierately v0.4, (c) Robert Greayer 2008-2010, Brent Yorgey 2012\n" ++
 >               "This program comes with ABSOLUTELY NO WARRANTY\n")
 
 The main blogging function uses the information captured in the
