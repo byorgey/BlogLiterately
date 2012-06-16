@@ -2,7 +2,6 @@ TODO:
 
   - ability to insert ghci output
   - ability to upload/replace images
-  - incorporate WPTexify (just tex portion)
 
   - diagrams -- at first, just have it separate.  Maybe later make a
     plugin system for BlogLiterately that can ship out specially marked
@@ -314,14 +313,36 @@ Colourising a `Pandoc` document is simply:
 > colourisePandoc hsHilite otherHilite (Pandoc m blocks) =
 >     Pandoc m $ map (colouriseCodeBlock hsHilite otherHilite) blocks
 
+Turn LaTeX math (`\$foo\$`) into the format expected by WordPress
+(`\$latex foo\$`).
+
+> wpTeXify :: Pandoc -> Pandoc
+> wpTeXify = bottomUp formatDisplayTex . bottomUp formatInlineTex
+>   where formatInlineTex :: [Inline] -> [Inline]
+>         formatInlineTex (Math InlineMath tex : is)
+>           = (Str $ "\\$latex " ++ escape tex ++ "\\$") : is
+>         formatInlineTex is = is
+>
+>         formatDisplayTex :: [Block] -> [Block]
+>         formatDisplayTex (Para [Math DisplayMath tex] : bs)
+>           = RawBlock "html" "<p><div align=\"center\">"
+>           : Plain [Str $ "\\$latex " ++ escape ("\\displaystyle " ++ tex) ++ "\\$"]
+>           : RawBlock "html" "</div></p>"
+>           : bs
+>         formatDisplayTex bs = bs
+>
+>         escape  = concatMap (\c -> if c `elem` special then ['\\', c] else [c])
+>         special = "\\"
+
 Transforming a complete input document string to an HTML output
 string:
 
-> xformDoc :: HsHighlight -> Bool -> String -> String
-> xformDoc hsHilite otherHilite s =
+> xformDoc :: HsHighlight -> Bool -> Bool -> String -> String
+> xformDoc hsHilite otherHilite wpl s =
 >     renderHtml
 >     . writeHtml writeOpts -- from Pandoc
 >     . colourisePandoc hsHilite otherHilite
+>     . (if wpl then wpTeXify else id)
 >     . readMarkdown parseOpts -- from Pandoc
 >     $ fixLineEndings s
 >   where
@@ -419,6 +440,7 @@ in a type:
 >   , style          :: String      -- name of a style file
 >   , hshighlight    :: HsHighlight -- Haskell highlighting mode
 >   , highlightOther :: Bool        -- use highlighting-kate for non-Haskell?
+>   , wplatex        :: Bool        -- format LaTeX for WordPress?
 >   , publish        :: Bool        -- Should the post be published, or
 >                                    --   loaded as a draft?
 >   , categories     :: [String]    -- categories for the post
@@ -465,8 +487,9 @@ line arguments work:
 >          &= name "other-code-kate"
 >          &= help "hilight other code with highlighting-kate"
 >        ]
->      , publish = def &= help "Publish post (otherwise it's uploaded as a draft)"
->      , categories = def 
+>      , wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
+>      , publish = def &= help "publish post (otherwise it's uploaded as a draft)"
+>      , categories = def
 >        &= explicit
 >        &= name "category"
 >        &= help "post category (can specify more than one)"
@@ -492,13 +515,13 @@ The main blogging function uses the information captured in the
 `BlogLiterately` type to read the style preferences, read the input
 file and transform it, and post it to the blog:
 
-> blogLiterately (BlogLiterately test style hsmode other pub cats tgs blogid url
+> blogLiterately (BlogLiterately test style hsmode other wpl pub cats tgs blogid url
 >         user pw title file postid) = do
 >     prefs <- getStylePrefs style
 >     let hsmode' = case hsmode of
 >             HsColourInline _ -> HsColourInline prefs
 >             _                -> hsmode
->     html <- liftM (xformDoc hsmode' other) $ U.readFile file
+>     html <- liftM (xformDoc hsmode' other wpl) $ U.readFile file
 >     if test
 >        then putStr html
 >        else if null postid
