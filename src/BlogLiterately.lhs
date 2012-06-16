@@ -313,8 +313,9 @@ Colourising a `Pandoc` document is simply:
 > colourisePandoc hsHilite otherHilite (Pandoc m blocks) =
 >     Pandoc m $ map (colouriseCodeBlock hsHilite otherHilite) blocks
 
-Turn LaTeX math (`\$foo\$`) into the format expected by WordPress
-(`\$latex foo\$`).
+WordPress can render LaTeX, but expects it in a special (non-standard)
+format (`\$latex foo\$`).  The `wpTeXify` function formats inline math
+using this format so that it can be processed by WordPress.
 
 > wpTeXify :: Pandoc -> Pandoc
 > wpTeXify = bottomUp formatDisplayTex . bottomUp formatInlineTex
