@@ -97,7 +97,7 @@ The `Attr` component has metadata about what's in the code block:
     type Attr = ( String,             -- code block identifier
                 , [String]            -- list of code classes
                 , [(String, String)]  -- name/value pairs
-                ) 
+                )
 
 Thanks to some feedback from the Pandoc author, John MacFarlane, I
 learned that the CodeBlock *may* contain markers about the kind of
@@ -145,7 +145,7 @@ need my `unTag` function to parse the code block.
 
 > unTag :: String -> (String, String)
 > unTag s = either (const ("",s)) id $ parse tag "" s
->   where 
+>   where
 >     tag = do
 >       tg <- between (char '[') (char ']') $ many $ noneOf "[]"
 >       skipMany $ oneOf " \t"
@@ -229,7 +229,7 @@ HTML, we need to parse it, manipulate it and then re-render it as a
 `String`.  We use HaXml to do all of this:
 
 > bakeStyles :: StylePrefs -> String -> String
-> bakeStyles prefs s = verbatim $ filtDoc (xmlParse "bake-input" s) 
+> bakeStyles prefs s = verbatim $ filtDoc (xmlParse "bake-input" s)
 >   where
 >
 >     -- filter the document (an Hscoloured fragment of Haskell source)
@@ -251,7 +251,7 @@ found in &lt;pre> sections of uploaded HTML.  So we need to turn them
 back to newlines.
 
 > replaceBreaks :: String -> String
-> replaceBreaks s = verbatim $ filtDoc (xmlParse "input" s) 
+> replaceBreaks s = verbatim $ filtDoc (xmlParse "input" s)
 >   where
 >     -- filter the document (a highlighting-kate hilighted fragment of
 >     -- haskell source)
@@ -320,7 +320,7 @@ string:
 >     . colourisePandoc hsHilite otherHilite
 >     . readMarkdown parseOpts -- from Pandoc
 >     $ fixLineEndings s
->   where   
+>   where
 >     writeOpts = defaultWriterOptions {
 >         --writerLiterateHaskell = True,
 >         writerReferenceLinks = True }
@@ -398,10 +398,10 @@ To update (replace) a post:
 
 There are four modes of Haskell highlighting:
 
-> data HsHighlight = 
+> data HsHighlight =
 >       HsColourInline StylePrefs
->     | HsColourCSS 
->     | HsKate 
+>     | HsColourCSS
+>     | HsKate
 >     | HsNoHighlight
 >   deriving (Data,Typeable,Show,Eq)
 
@@ -410,7 +410,7 @@ And two modes for other code (off or on!).
 To create a command line program, we capture the command line controls
 in a type:
 
-> data BlogLiterately = BlogLiterately 
+> data BlogLiterately = BlogLiterately
 >   { test           :: Bool        -- do a dry-run: html goes to stdout
 >   , style          :: String      -- name of a style file
 >   , hshighlight    :: HsHighlight -- Haskell highlighting mode
@@ -427,36 +427,36 @@ in a type:
 >   , title          :: String      -- post title
 >   , file           :: String      -- file to post
 >   , postid         :: String       -- id of a post to updated
->   } 
+>   }
 >   deriving (Show,Data,Typeable)
 
 And using CmdArgs, this bit of impure evil defines how the command
 line arguments work:
 
-> bl = BlogLiterately 
+> bl = BlogLiterately
 >      { test  = def &= help "do a test-run: html goes to stdout, is not posted"
->      , style = ""  &= help "Style Specification (for --hscolour-icss)" 
+>      , style = ""  &= help "Style Specification (for --hscolour-icss)"
 >                    &= typFile
->      , hshighlight = enum 
->        [ (HsColourInline defaultStylePrefs) 
+>      , hshighlight = enum
+>        [ (HsColourInline defaultStylePrefs)
 >          &= explicit
->          &= name "hscolour-icss" 
+>          &= name "hscolour-icss"
 >          &= help "hilight haskell: hscolour, inline style (default)"
->        , HsColourCSS 
->          &= explicit 
->          &= name "hscolour-css" 
+>        , HsColourCSS
+>          &= explicit
+>          &= name "hscolour-css"
 >          &= help "hilight haskell: hscolour, separate stylesheet"
 >        , HsNoHighlight
 >          &= explicit
 >          &= name "hs-nohilight"
 >          &= help "no haskell hilighting"
->        , HsKate 
->          &= explicit 
->          &= name "hs-kate" 
+>        , HsKate
+>          &= explicit
+>          &= name "hs-kate"
 >          &= help "hilight haskell with highlighting-kate"
 >        ]
 >      , highlightOther = enum
->        [ True 
+>        [ True
 >          &= explicit
 >          &= name "other-code-kate"
 >          &= help "hilight other code with highlighting-kate"
@@ -467,7 +467,7 @@ line arguments work:
 >        &= name "category"
 >        &= help "post category (can specify more than one)"
 >      , tags = def
->        &= explicit 
+>        &= explicit
 >        &= name "tag"
 >        &= help "tag (can specify more than one)"
 >
