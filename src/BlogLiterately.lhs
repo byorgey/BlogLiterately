@@ -273,21 +273,25 @@ markers), or marked up non-Haskell, if highlighting of non-Haskell has
 been selected.
 
 > colouriseCodeBlock :: HsHighlight -> Bool -> Block -> Block
-> colouriseCodeBlock hsHilite otherHilite b@(CodeBlock attr@(_,classes,_) s) =
->     if tag == "haskell" || haskell
->         then case hsHilite of
->             HsColourInline style ->
->                 RawBlock "html" $ bakeStyles style $ colourIt lit src
->             HsColourCSS   -> RawBlock "html" $ colourIt lit src
->             HsNoHighlight -> RawBlock "html" $ simpleHTML hsrc
->             HsKate        -> if null tag
->                 then myHiliteK attr hsrc
->                 else myHiliteK ("",tag:classes,[]) hsrc
->         else if otherHilite
->             then case tag of
->                 "" -> myHiliteK attr src
->                 t  -> myHiliteK ("",[t],[]) src
->             else RawBlock "html" $ simpleHTML src
+> colouriseCodeBlock hsHilite otherHilite b@(CodeBlock attr@(_,classes,_) s)
+>
+>   | tag == "haskell" || haskell
+>   = case hsHilite of
+>         HsColourInline style ->
+>             RawBlock "html" $ bakeStyles style $ colourIt lit src
+>         HsColourCSS   -> RawBlock "html" $ colourIt lit src
+>         HsNoHighlight -> RawBlock "html" $ simpleHTML hsrc
+>         HsKate        -> if null tag
+>             then myHiliteK attr hsrc
+>             else myHiliteK ("",tag:classes,[]) hsrc
+>
+>   | otherHilite
+>   = case tag of
+>         "" -> myHiliteK attr src
+>         t  -> myHiliteK ("",[t],[]) src
+>
+>   | otherwise
+>   = RawBlock "html" $ simpleHTML src
 >
 >   where 
 >     (tag,src) 
