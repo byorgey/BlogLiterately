@@ -1,3 +1,15 @@
+TODO:
+
+  - clean up code
+  - clean up comments etc.
+  - ability to insert ghci output
+  - ability to upload/replace images
+  - incorporate WPTexify (just tex portion)
+
+  - diagrams -- at first, just have it separate.  Maybe later make a
+    plugin system for BlogLiterately that can ship out specially marked
+    blocks to external tools?
+
 This new version of BlogLiterately adds a few more options and tries to allow
 the user to take advantage of the Pandoc syntax highlighting, or suppress
 it.
