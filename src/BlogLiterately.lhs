@@ -323,13 +323,16 @@ the post along with some meta-data, like the title.  I want be able to provide
 the post body, a title, and a list of categories.  The for the
 body and title, we could just let HaXR convert the values automatically
 into the XML-RPC `Value` type, since they all have the same Haskell type
-(`String`) and thus can be put into a list.  But the categories are a list of
-strings, so we need to explicitly convert everything to a `Value`, then combine:
+(`String`) and thus can be put into a list.  But the categories and tags are lists
+of strings, so we need to explicitly convert everything to a `Value`, then combine:
 
-> mkPost title text categories = 
->     cats ++ [("title",toValue title),("description",toValue text)]
->     where cats = if null categories then [] 
->               else [("categories",toValue categories)]
+> mkPost title text categories tags = 
+>        mkArray "categories" categories
+>     ++ mkArray "mt_keywords" tags
+>     ++ [("title",toValue title),("description",toValue text)]
+>
+> mkArray _    []     = []
+> mkArray name values = [(name, toValue values)]
 
 The HaXR library exports a function for invoking XML-RPC procedures:
 
@@ -351,18 +354,18 @@ make the call in an IO context, it will typecheck.  So to call the
 `metaWeblog.newPost` procedure, I can do something like:
 
 > postIt :: String -> String -> String -> String -> String -> String 
->     -> [String] -> Bool -> IO String
-> postIt url blogId user password title text cats publish =
+>     -> [String] -> [String] -> Bool -> IO String
+> postIt url blogId user password title text cats tgs publish =
 >     remote url "metaWeblog.newPost" blogId user password 
->         (mkPost title text cats) publish
+>         (mkPost title text cats tgs) publish
 
 To update (replace) a post, the function would be:
 
 > updateIt :: String -> String -> String -> String -> String -> String 
->     -> [String] -> Bool -> IO Bool
-> updateIt url postId user password title text cats publish =
+>     -> [String] -> [String] -> Bool -> IO Bool
+> updateIt url postId user password title text cats tgs publish =
 >     remote url "metaWeblog.editPost" postId user password
->         (mkPost title text cats) publish
+>         (mkPost title text cats tgs) publish
 
 There are four modes of Haskell highlighting:
 
@@ -381,7 +384,8 @@ To create a command line program,  I can capture the command line controls in a 
 >        highlightOther :: Bool, -- use highlight-kate to highlight other code
 >        publish :: Bool,    -- an indication of whether the post should be
 >                                -- published, or loaded as a draft
->        categories :: [String], --
+>        categories :: [String], -- categories for the post
+>        tags       :: [String], -- tags for the post
 >        blogid :: String,   -- blog-specific identifier (e.g. for blogging
 >                                -- software handling multiple blogs)
 >        blog :: String,     -- blog xmlrpc URL
@@ -411,13 +415,15 @@ work:
 >     publish = def &= help "Publish post (otherwise it's uploaded as a draft)",
 >     categories = def &= explicit &= name "category" &= 
 >         help "post category (can specify more than one)",
->     blogid = "default" &= help "Blog specific identifier",
+>     tags    = def &= explicit &= name "tag" &=
+>         help "tag (can specify more than one)",
+>     blogid = "default" &= help "Blog specific identifier" &= typ "ID",
 >     blog = def &= argPos 0 &= typ "URL",
 >     user = def &= argPos 1 &= typ "USER",
 >     password = def &= argPos 2 &= typ "PASSWORD",
 >     title = def &= argPos 3 &= typ "TITLE",
 >     file = def &=  argPos 4 &= typ "FILE",
->     postid = "" &= help "Post to replace (if any)" 
+>     postid = "" &= help "Post to replace (if any)" &= typ "ID"
 >   } 
 >   &= program "BlogLiterately"
 >   &= summary ("BlogLierately v0.4, (C) Robert Greayer 2008-2010\n" ++
@@ -432,7 +438,7 @@ The main blogging function uses the information captured in the `BlogLiterately`
 type to read the style preferences, read the input file and transform it, and
 post it to the blog:
 
-> blogLiterately (BlogLiterately test style hsmode other pub cats blogid url
+> blogLiterately (BlogLiterately test style hsmode other pub cats tgs blogid url
 >         user pw title file postid) = do
 >     prefs <- getStylePrefs style
 >     let hsmode' = case hsmode of
@@ -443,10 +449,10 @@ post it to the blog:
 >        then putStr html
 >        else if null postid 
 >            then do
->                postid <- postIt url blogid user pw title html cats pub
+>                postid <- postIt url blogid user pw title html cats tgs pub
 >                putStrLn $ "post Id: " ++ postid
 >            else do
->                result <- updateIt url postid user pw title html cats pub
+>                result <- updateIt url postid user pw title html cats tgs pub
 >                unless result $ putStrLn "update failed!"
 
 And the main program is simply:
