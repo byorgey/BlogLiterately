@@ -18,17 +18,17 @@ And [hscolour][] for highlighting:
 To post to a blog, we need the [MetaWeblog][] API, which is an XML-RPC-based
 protocol for interacting with blogs.
 
-We'll use the Haskell XML-RPC library, [HaXR][], by Bjorn Bringert, (on 
-[hackage][hackage-haxr]). *Note: the latest version (as of this writing) of 
+We'll use the Haskell XML-RPC library, [HaXR][], by Bjorn Bringert, (on
+[hackage][hackage-haxr]). *Note: the latest version (as of this writing) of
 HaXR on Hackage does not specify an upper bound in its dependency on HaXml, but
-it is incompatible with the 1.19 versions of HaXml!  If you have HaXml-1.19.* 
+it is incompatible with the 1.19 versions of HaXml!  If you have HaXml-1.19.*
 installed, you'll have to work around this.*
 
 > import Network.XmlRpc.Client
 > import Network.XmlRpc.Internals
 
-And it works that out I'll need some miscellaneous other stuff.  Since I'm 
-writing a command line tool, I'll need to process the command line arguments, 
+And it works that out I'll need some miscellaneous other stuff.  Since I'm
+writing a command line tool, I'll need to process the command line arguments,
 and Neil Mitchell's [CmdArgs][] library ought to work for that:
 
 > import System.Console.CmdArgs
@@ -44,31 +44,31 @@ Wallace's [HaXml][] XML combinators:
 > import Control.Monad(liftM,unless)
 > import Text.ParserCombinators.Parsec
 
-The program will read in a literate Haskell file, use Pandoc to parse it as 
+The program will read in a literate Haskell file, use Pandoc to parse it as
 markdown, and, if it is using hscolour to for the Haskell pieces, will use
 hscolour to transform those.  Pandoc turns its input into a structure of type:
 
     [haskell]
     data Pandoc = Pandoc Meta [Block]
-    
+ 
 where a `Block` (the interesting bit, for my purposes) looks like:
 
     [haskell]
     -- | Block element.
-    data Block  
+    data Block
         = Plain [Inline]        -- ^ Plain text, not a paragraph
         | Para [Inline]         -- ^ Paragraph
-        | CodeBlock Attr String -- ^ Code block (literal) with attributes 
+        | CodeBlock Attr String -- ^ Code block (literal) with attributes
         | RawHtml String        -- ^ Raw HTML block (literal)
         | BlockQuote [Block]    -- ^ Block quote (list of blocks)
         | OrderedList ListAttributes [[Block]] -- ^ Ordered list (attributes
                                 -- and a list of items, each a list of blocks)
         | BulletList [[Block]]  -- ^ Bullet list (list of items, each
                                 -- a list of blocks)
-        | DefinitionList [([Inline],[Block])]  -- ^ Definition list 
+        | DefinitionList [([Inline],[Block])]  -- ^ Definition list
                                 -- (list of items, each a pair of an inline list,
                                 -- the term, and a block list)
-        | Header Int [Inline]   -- ^ Header - level (integer) and text (inlines) 
+        | Header Int [Inline]   -- ^ Header - level (integer) and text (inlines)
         | HorizontalRule        -- ^ Horizontal rule
         | Table [Inline] [Alignment] [Double] [[Block]] [[[Block]]]  -- ^ Table,
                                 -- with caption, column alignments,
@@ -80,7 +80,7 @@ where a `Block` (the interesting bit, for my purposes) looks like:
 
 The literate Haskell that Pandoc finds in a file ends up in various `CodeBlock`
 elements of the `Pandoc` document.  Other code can also wind up in `CodeBlock`
-elements -- normal markdown formatted code.  The `Attr` component has 
+elements -- normal markdown formatted code.  The `Attr` component has
 metadata about what's in the code block:
 
     [haskell]
@@ -92,9 +92,9 @@ Thanks to some feedback from the Pandoc author, John MacFarlane, I learned that
 the CodeBlock *may* contain markers about the kind of code contained within the
 block.  LHS (bird-style or LaTex style) will always have an `Attr` of the form
 `("",["sourceCode","haskell"],[])`, and other `CodeBlock`
-elements are the markdown code blocks *may* have an identifier, classes, or 
+elements are the markdown code blocks *may* have an identifier, classes, or
 key/value pairs.  Pandoc captures this info when the file contains code blocks
-in the delimited (rather than indented) format, which allows an optional 
+in the delimited (rather than indented) format, which allows an optional
 meta-data specification, e.g.
 
 ~~~~~~~~~~~
@@ -104,7 +104,7 @@ echo $x
 ~~~~~~~
 ~~~~~~~~~~~
 
-Although Pandoc supports the above format for marking code blocks (and 
+Although Pandoc supports the above format for marking code blocks (and
 annotating the kind of code within the block) I'll also keep my notation as
 another option for use with indented blocks, i.e. if you write:
 
@@ -131,7 +131,7 @@ between the literate blocks and the delimited blocks is lost (this is simply how
 the Pandoc highlighting module currently works).
 
 I'll adopt the rule that if you specify a class or
-classes using Pandoc's delimited code block syntax, I'll assume that there is 
+classes using Pandoc's delimited code block syntax, I'll assume that there is
 no additional tag within the block in Blog Literately syntax.  I still need my
 `unTag` function to parse the code block.
 
@@ -146,7 +146,7 @@ no additional tag within the block in Blog Literately syntax.  I still need my
 >              return (tg,txt)
 
 To highlight the syntax using hscolour (which produces HTML), I'm going to
-need to transform the `String` from a `CodeBlock` element to a `String` 
+need to transform the `String` from a `CodeBlock` element to a `String`
 suitable for the `RawHtml` element (because the hscolour library transforms
 Haskell text to HTML). Pandoc strips off the prepended &gt; characters from the
 literate Haskell, so I need to put them back, and also tell hscolour whether the
@@ -169,19 +169,19 @@ control the rendering, and a post-processing option to transform the `CSS`
 class-based rendering into a inline style based rendering (for people who can't
 update their stylesheet).  `colourIt` performs the initial transformation:
 
-> colourIt literate srcTxt = 
+> colourIt literate srcTxt =
 >     hscolour CSS defaultColourPrefs False True "" literate srcTxt'
 >     where srcTxt' | literate = prepend srcTxt
 >                   | otherwise = srcTxt
-    
+ 
 Prepending the literate Haskell markers on the source:
 
 > prepend s = unlines $ map ("> " ++) $ lines s
 
-Hscolour uses HTML `span` elements and CSS classes like 'hs-keyword' or 
-`hs-keyglyph` to markup Haskell code.  What I want to do is take each marked 
+Hscolour uses HTML `span` elements and CSS classes like 'hs-keyword' or
+`hs-keyglyph` to markup Haskell code.  What I want to do is take each marked
 `span` element and replace the `class` attribute with an inline `style` element
-that has the markup I want for that kind of source.  I've rethought the style 
+that has the markup I want for that kind of source.  I've rethought the style
 preferences type, and think it will be simpler, and more general, as just a list
 of name/value pairs:
 
@@ -242,8 +242,8 @@ of uploaded HTML.  So need to turn them back to newlines.
 >        [c] = filts (CElem e noPos)
 >    filts = foldXml (literal "\n" `when` tag "br")
 
-Note to self: the above is a function that could be made better in a 
-few ways and then factored out into a library.  A way to handle the 
+Note to self: the above is a function that could be made better in a
+few ways and then factored out into a library.  A way to handle the
 above would be to allow the preferences to be specified as an actual CSS
 style sheet, which then would be baked into the HTML.  Such a function
 could be separately useful, and could be used to 'bake' in the
@@ -258,18 +258,18 @@ highlighting of non-Haskell has been selected.
 > colouriseCodeBlock hsHilite otherHilite b@(CodeBlock attr@(_,classes,_) s) =
 >     if tag == "haskell" || haskell
 >         then case hsHilite of
->             HsColourInline style -> 
+>             HsColourInline style ->
 >                 RawBlock "html" $ bakeStyles style $ colourIt lit src
 >             HsColourCSS -> RawBlock "html" $ colourIt lit src
 >             HsNoHighlight -> RawBlock "html" $ simpleHTML hsrc
->             HsKate -> if null tag 
+>             HsKate -> if null tag
 >                 then myHiliteK attr hsrc
 >                 else myHiliteK ("",tag:classes,[]) hsrc
 >         else if otherHilite
 >             then case tag of
 >                 "" -> myHiliteK attr src
 >                 t -> myHiliteK ("",[t],[]) src
->             else RawBlock "html" $ simpleHTML src     
+>             else RawBlock "html" $ simpleHTML src
 >     where (tag,src) = if null classes then unTag s else ("",s)
 >           hsrc = if lit then prepend src else src
 >           lit = "sourceCode" `elem` classes
@@ -282,13 +282,13 @@ highlighting of non-Haskell has been selected.
 
 Colourising a `Pandoc` document is simply:
 
-> colourisePandoc hsHilite otherHilite (Pandoc m blocks) = 
+> colourisePandoc hsHilite otherHilite (Pandoc m blocks) =
 >     Pandoc m $ map (colouriseCodeBlock hsHilite otherHilite) blocks
 
 Transforming a complete input document string to an HTML output string:
 
 > xformDoc :: HsHighlight -> Bool -> String -> String
-> xformDoc hsHilite otherHilite s = 
+> xformDoc hsHilite otherHilite s =
 >     renderHtml
 >     $ writeHtml writeOpts -- from Pandoc
 >     $ colourisePandoc hsHilite otherHilite
@@ -297,7 +297,7 @@ Transforming a complete input document string to an HTML output string:
 >     where writeOpts = defaultWriterOptions {
 >               --writerLiterateHaskell = True,
 >               writerReferenceLinks = True }
->           parseOpts = defaultParserState { 
+>           parseOpts = defaultParserState {
 >               stateLiterateHaskell = True }
 >           -- readMarkdown is picky about line endings
 >           fixLineEndings [] = []
@@ -318,7 +318,7 @@ For my blog (a WordPress blog), the `blogid` is just `default`.  The user
 name and password are simply strings, and `publish` is a flag indicating whether
 to load the post as a draft, or to make it public immediately.  The `postid` is
 an identifier string which is assigned when you initially create a post. The
-interesting bit is the `struct` field, which is an XML-RPC structure defining 
+interesting bit is the `struct` field, which is an XML-RPC structure defining
 the post along with some meta-data, like the title.  I want be able to provide
 the post body, a title, and a list of categories.  The for the
 body and title, we could just let HaXR convert the values automatically
@@ -326,7 +326,7 @@ into the XML-RPC `Value` type, since they all have the same Haskell type
 (`String`) and thus can be put into a list.  But the categories and tags are lists
 of strings, so we need to explicitly convert everything to a `Value`, then combine:
 
-> mkPost title text categories tags = 
+> mkPost title text categories tags =
 >        mkArray "categories" categories
 >     ++ mkArray "mt_keywords" tags
 >     ++ [("title",toValue title),("description",toValue text)]
@@ -337,12 +337,12 @@ of strings, so we need to explicitly convert everything to a `Value`, then combi
 The HaXR library exports a function for invoking XML-RPC procedures:
 
     [haskell]
-    remote :: Remote a => 
+    remote :: Remote a =>
         String -- ^ Server URL. May contain username and password on
                --   the format username:password\@ before the hostname.
            -> String -- ^ Remote method name.
-           -> a      -- ^ Any function 
-         -- @(XmlRpcType t1, ..., XmlRpcType tn, XmlRpcType r) => 
+           -> a      -- ^ Any function
+         -- @(XmlRpcType t1, ..., XmlRpcType tn, XmlRpcType r) =>
                      -- t1 -> ... -> tn -> IO r@
 
 The function requires an URL and a method name, and returns a function of type
@@ -353,15 +353,15 @@ additional arguments as required by the remote procedure, and as long as you
 make the call in an IO context, it will typecheck.  So to call the
 `metaWeblog.newPost` procedure, I can do something like:
 
-> postIt :: String -> String -> String -> String -> String -> String 
+> postIt :: String -> String -> String -> String -> String -> String
 >     -> [String] -> [String] -> Bool -> IO String
 > postIt url blogId user password title text cats tgs publish =
->     remote url "metaWeblog.newPost" blogId user password 
+>     remote url "metaWeblog.newPost" blogId user password
 >         (mkPost title text cats tgs) publish
 
 To update (replace) a post, the function would be:
 
-> updateIt :: String -> String -> String -> String -> String -> String 
+> updateIt :: String -> String -> String -> String -> String -> String
 >     -> [String] -> [String] -> Bool -> IO Bool
 > updateIt url postId user password title text cats tgs publish =
 >     remote url "metaWeblog.editPost" postId user password
@@ -402,7 +402,7 @@ work:
 > bl = BlogLiterately {
 >     test = def &= help "do a test-run: html goes to stdout, is not posted",
 >     style = "" &= help "Style Specification (for --hscolour-icss)" &= typFile,
->     hshighlight = enum [ (HsColourInline defaultStylePrefs) &= explicit &= 
+>     hshighlight = enum [ (HsColourInline defaultStylePrefs) &= explicit &=
 >                             name "hscolour-icss" &= help inline
 >                        , HsColourCSS &= explicit &= name "hscolour-css" &= help css
 >                        , HsNoHighlight &= explicit &= name "hs-nohilight" &=
@@ -413,7 +413,7 @@ work:
 >              [True &= explicit &= name "other-code-kate" &=
 >               help "hilight other code with highlighting-kate"],
 >     publish = def &= help "Publish post (otherwise it's uploaded as a draft)",
->     categories = def &= explicit &= name "category" &= 
+>     categories = def &= explicit &= name "category" &=
 >         help "post category (can specify more than one)",
 >     tags    = def &= explicit &= name "tag" &=
 >         help "tag (can specify more than one)",
@@ -424,11 +424,11 @@ work:
 >     title = def &= argPos 3 &= typ "TITLE",
 >     file = def &=  argPos 4 &= typ "FILE",
 >     postid = "" &= help "Post to replace (if any)" &= typ "ID"
->   } 
+>   }
 >   &= program "BlogLiterately"
 >   &= summary ("BlogLierately v0.4, (C) Robert Greayer 2008-2010\n" ++
 >               "This program comes with ABSOLUTELY NO WARRANTY\n")
->  
+>
 >  where
 >     inline =  "hilight haskell: hscolour, inline style (default)"
 >     css = "hilight haskell: hscolour, separate stylesheet"
@@ -447,7 +447,7 @@ post it to the blog:
 >     html <- liftM (xformDoc hsmode' other) $ U.readFile file
 >     if test
 >        then putStr html
->        else if null postid 
+>        else if null postid
 >            then do
 >                postid <- postIt url blogid user pw title html cats tgs pub
 >                putStrLn $ "post Id: " ++ postid
