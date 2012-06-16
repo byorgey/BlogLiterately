@@ -184,7 +184,7 @@ style based rendering (for people who can't update their stylesheet).
 >     hscolour CSS defaultColourPrefs False True "" literate srcTxt'
 >     where srcTxt' | literate = prepend srcTxt
 >                   | otherwise = srcTxt
- 
+
 Prepending the literate Haskell markers on the source:
 
 > prepend = unlines . map ("> " ++) . lines
@@ -293,9 +293,9 @@ been selected.
 >   | otherwise
 >   = RawBlock "html" $ simpleHTML src
 >
->   where 
->     (tag,src) 
->         | null classes = unTag s 
+>   where
+>     (tag,src)
+>         | null classes = unTag s
 >         | otherwise    = ("",s)
 >     hsrc
 >         | lit          = prepend src
