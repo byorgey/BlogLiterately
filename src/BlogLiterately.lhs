@@ -321,19 +321,17 @@ using this format so that it can be processed by WordPress.
 > wpTeXify = bottomUp formatDisplayTex . bottomUp formatInlineTex
 >   where formatInlineTex :: [Inline] -> [Inline]
 >         formatInlineTex (Math InlineMath tex : is)
->           = (Str $ "\\$latex " ++ escape tex ++ "\\$") : is
+>           = (Str $ "$latex " ++ tex ++ "$") : is
 >         formatInlineTex is = is
 >
 >         formatDisplayTex :: [Block] -> [Block]
 >         formatDisplayTex (Para [Math DisplayMath tex] : bs)
 >           = RawBlock "html" "<p><div align=\"center\">"
->           : Plain [Str $ "\\$latex " ++ escape ("\\displaystyle " ++ tex) ++ "\\$"]
+>           : Plain [Str $ "$latex " ++ ("\\displaystyle " ++ tex) ++ "$"]
 >           : RawBlock "html" "</div></p>"
 >           : bs
 >         formatDisplayTex bs = bs
 >
->         escape  = concatMap (\c -> if c `elem` special then ['\\', c] else [c])
->         special = "\\"
 
 Transforming a complete input document string to an HTML output
 string:
