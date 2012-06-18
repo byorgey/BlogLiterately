@@ -532,19 +532,17 @@ remote procedure, and as long as you make the call in an IO context,
 it will typecheck.  So to call the `metaWeblog.newPost` procedure, I
 can do something like:
 
-> postIt :: String -> String -> String -> String -> String -> String
->     -> [String] -> [String] -> Bool -> IO String
-> postIt url blogId user password title text cats tgs publish =
->     remote url "metaWeblog.newPost" blogId user password
->         (mkPost title text cats tgs) publish
+> postIt :: BlogLiterately -> String -> IO String
+> postIt (BlogLiterately{..}) text =
+>     remote blog "metaWeblog.newPost" blogid user password
+>         (mkPost title text categories tags) publish
 
 To update (replace) a post:
 
-> updateIt :: String -> String -> String -> String -> String -> String
->     -> [String] -> [String] -> Bool -> IO Bool
-> updateIt url postId user password title text cats tgs publish =
->     remote url "metaWeblog.editPost" postId user password
->         (mkPost title text cats tgs) publish
+> updateIt :: BlogLiterately -> String -> IO Bool
+> updateIt (BlogLiterately{..}) text =
+>     remote blog "metaWeblog.editPost" postid user password
+>         (mkPost title text categories tags) publish
 
 There are four modes of Haskell highlighting:
 
@@ -642,21 +640,21 @@ The main blogging function uses the information captured in the
 `BlogLiterately` type to read the style preferences, read the input
 file and transform it, and post it to the blog:
 
-> blogLiterately (BlogLiterately test style hsmode other wpl pub cats tgs blogid url
->         user pw title file postid) = do
+> blogLiterately b@(BlogLiterately {..}) = do
 >     prefs <- getStylePrefs style
->     let hsmode' = case hsmode of
+>     let hshighlight' = case hshighlight of
 >             HsColourInline _ -> HsColourInline prefs
->             _                -> hsmode
->     html <- liftM (xformDoc hsmode' other wpl) $ U.readFile file
+>             _                -> hshighlight
+>     html <- xformDoc file hshighlight' highlightOther wplatex ghci
+>             =<< U.readFile file
 >     if test
 >        then putStr html
 >        else if null postid
 >            then do
->                postid <- postIt url blogid user pw title html cats tgs pub
+>                postid <- postIt b html
 >                putStrLn $ "post Id: " ++ postid
 >            else do
->                result <- updateIt url postid user pw title html cats tgs pub
+>                result <- updateIt b html
 >                unless result $ putStrLn "update failed!"
 
 And the main program is simply:
