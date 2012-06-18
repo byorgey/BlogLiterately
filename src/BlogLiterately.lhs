@@ -13,6 +13,7 @@ others).  It also handles syntax highlighting of Haskell and other
 languages.
 
 > {-# LANGUAGE DeriveDataTypeable #-}
+> {-# LANGUAGE RecordWildCards #-}
 > module Main where
 
 We need [Pandoc][] for parsing [Markdown][]:
@@ -46,7 +47,15 @@ HTML:
 > import Text.XML.HaXml
 > import Text.XML.HaXml.Posn
 > import Text.Blaze.Html.Renderer.String
->
+
+> import Data.Functor
+> import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
+> import Control.Monad.IO.Class (liftIO)
+> import System.IO
+> import System.Process
+> import Control.Arrow (first, (>>>), arr, Kleisli(..), runKleisli)
+> import qualified Control.Category as A (id)
+> import Data.List (isPrefixOf, intercalate)
 > import qualified System.IO.UTF8 as U
 > import Control.Monad                   (liftM,unless)
 > import Text.ParserCombinators.Parsec
@@ -331,25 +340,125 @@ using this format so that it can be processed by WordPress.
 >           : RawBlock "html" "</div></p>"
 >           : bs
 >         formatDisplayTex bs = bs
+
+The next bit of code enables using code blocks marked with `[ghci]` as
+input to ghci and then inserting the results.  This code was mostly
+stolen from lhs2TeX.
+
+> type ProcessInfo = (Handle, Handle, Handle, ProcessHandle)
+
+First, a way to evaluate an expression using an external ghci process.
+
+> eval :: String -> ReaderT ProcessInfo IO String
+> eval expr =  do
+>   (pin, pout, _, _) <- ask
+>   let script = "putStrLn " ++ show magic ++ "\n"
+>                  ++ expr ++ "\n"
+>                  ++ "putStrLn " ++ show magic ++ "\n"
+>   liftIO $ do
+>     hPutStr pin script
+>     hFlush pin
+>     extract' pout
 >
+> withGhciProcess :: FilePath -> ReaderT ProcessInfo IO a -> IO a
+> withGhciProcess f m = do
+>   pi  <- runInteractiveCommand $ "ghci -v0 -ignore-dot-ghci " ++ f
+>   res <- runReaderT m pi
+>   stopProcess pi
+>   return res
+>
+> stopProcess :: ProcessInfo -> IO ()
+> stopProcess (pin,_,_,pid) = do
+>   hPutStrLn pin ":q"
+>   hFlush pin
+>   _ <- waitForProcess pid   -- ignore exit code
+>   return ()
 
-Transforming a complete input document string to an HTML output
-string:
+To extract the answer from @ghci@'s output we use a simple technique
+which should work in most cases: we print the string |magic| before
+and after the expression we are interested in. We assume that
+everything that appears before the first occurrence of |magic| on the
+same line is the prompt, and everything between the first |magic| and
+the second |magic| plus prompt is the result we look for.
 
-> xformDoc :: HsHighlight -> Bool -> Bool -> String -> String
-> xformDoc hsHilite otherHilite wpl s =
->     renderHtml
->     . writeHtml writeOpts -- from Pandoc
->     . colourisePandoc hsHilite otherHilite
->     . (if wpl then wpTeXify else id)
->     . readMarkdown parseOpts -- from Pandoc
->     $ fixLineEndings s
+> magic :: String
+> magic =  "!@#$^&*"
+>
+> extract' :: Handle -> IO String
+> extract' h = fmap (extract . unlines) (readMagic 2)
 >   where
->     writeOpts = defaultWriterOptions {
->         --writerLiterateHaskell = True,
->         writerReferenceLinks = True }
->     parseOpts = defaultParserState {
->         stateLiterateHaskell = True }
+>     readMagic :: Int -> IO [String]
+>     readMagic 0 = return []
+>     readMagic n = do
+>       l <- hGetLine h
+>       let n' | (null . snd . breaks (isPrefixOf magic)) l = n
+>              | otherwise                                  = n - 1
+>       fmap (l:) (readMagic n')
+>
+> extract                       :: String -> String
+> extract s                     =  v
+>     where (t, u)              =  breaks (isPrefixOf magic) s
+>           -- t contains everything up to magic, u starts with magic
+>           -- |u'                      =  tail (dropWhile (/='\n') u)|
+>           pre                 =  reverse . takeWhile (/='\n') . reverse $ t
+>           prelength           =  if null pre then 0 else length pre + 1
+>           -- pre contains the prefix of magic on the same line
+>           u'                  =  drop (length magic + prelength) u
+>           -- we drop the magic string, plus the newline, plus the prefix
+>           (v, _)              =  breaks (isPrefixOf (pre ++ magic)) u'
+>           -- we look for the next occurrence of prefix plus magic
+>
+> breaks                        :: ([a] -> Bool) -> [a] -> ([a], [a])
+> breaks p []                   =  ([], [])
+> breaks p as@(a : as')
+>     | p as                    =  ([], as)
+>     | otherwise               =  first (a:) $ breaks p as'
+
+Finally, a function which takes the path to the `.lhs` source and its
+representation as a `Pandoc` document, finds any `[ghci]` blocks in
+it, runs them through `ghci`, and formats the results as an
+interactive `ghci` session.
+
+> formatInlineGhci :: FilePath -> Pandoc -> IO Pandoc
+> formatInlineGhci f = withGhciProcess f . bottomUpM formatInlineGhci'
+>   where
+>     formatInlineGhci' :: Block -> ReaderT ProcessInfo IO Block
+>     formatInlineGhci' b@(CodeBlock attr s)
+>       | tag == "ghci" =  do
+>           results <- zip inputs <$> mapM eval inputs
+>           return $ CodeBlock attr (intercalate "\n" $ map formatGhciResult results)
+>
+>       | otherwise = return b
+>
+>       where (tag,src) = unTag s
+>             inputs    = lines src
+>
+>     formatInlineGhci' b = return b
+>
+>     formatGhciResult (input, output)
+>       = "<span style=\"color: gray;\">ghci&gt;</span> " ++ input ++ (unlines . map ("  "++) . lines) output  -- XXX this should be configurable!
+
+Finally, putting everything together to transform a complete input
+document string to an HTML output string:
+
+> xformDoc :: FilePath -> HsHighlight -> Bool -> Bool -> Bool -> (String -> IO String)
+> xformDoc f hsHilite otherHilite wpl ghci = runKleisli $
+>         arr     fixLineEndings
+>     >>> arr     (readMarkdown parseOpts) -- from Pandoc
+>     >>> arr     wpTeXify             `whenA` wpl
+>     >>> Kleisli (formatInlineGhci f) `whenA` ghci
+>     >>> arr     (colourisePandoc hsHilite otherHilite)
+>     >>> arr     (writeHtml writeOpts) -- from Pandoc
+>     >>> arr     renderHtml
+>   where
+>     writeOpts = defaultWriterOptions
+>                 { writerReferenceLinks = True }
+>     parseOpts = defaultParserState
+>                 { stateLiterateHaskell = True }
+>
+>     whenA a p | p         = a
+>               | otherwise = A.id
+>
 >     -- readMarkdown is picky about line endings
 >     fixLineEndings [] = []
 >     fixLineEndings ('\r':'\n':cs) = '\n':fixLineEndings cs
@@ -440,6 +549,7 @@ in a type:
 >   , hshighlight    :: HsHighlight -- Haskell highlighting mode
 >   , highlightOther :: Bool        -- use highlighting-kate for non-Haskell?
 >   , wplatex        :: Bool        -- format LaTeX for WordPress?
+>   , ghci           :: Bool        -- automatically generate ghci sessions?
 >   , publish        :: Bool        -- Should the post be published, or
 >                                    --   loaded as a draft?
 >   , categories     :: [String]    -- categories for the post
@@ -487,6 +597,7 @@ line arguments work:
 >          &= help "hilight other code with highlighting-kate"
 >        ]
 >      , wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
+>      , ghci    = def &= help "run [ghci] blocks through ghci and include output"
 >      , publish = def &= help "publish post (otherwise it's uploaded as a draft)"
 >      , categories = def
 >        &= explicit

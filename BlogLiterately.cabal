@@ -118,7 +118,8 @@ Extra-Source-Files: hscolour.css
                     kate.css
                     hs-style
 Executable BlogLiterately
-  Build-Depends:  base >= 4.0 && < 4.6, parsec >= 3 && < 3.2,
+  Build-Depends:  base >= 4.0 && < 4.6, process >= 1.1 && < 1.2,
+                  transformers >= 0.3 && < 0.4, parsec >= 3 && < 3.2,
                   HaXml >= 1.22 && < 1.23, utf8-string >= 0.3 && < 0.4,
                   hscolour >= 1.20 && < 1.21, blaze-html >= 0.5 && < 0.6,
                   cmdargs >= 0.9.5 && < 0.10,
