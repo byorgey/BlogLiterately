@@ -1,8 +1,25 @@
 TODO:
 
-  - ability to insert ghci output
+  - Documentation!  Be sure to dogfood it somehow, of course.  Start
+    with what's in the .cabal file and go from there.  (Replace what's in
+    the .cabal file with some simple info and a link.)
+
+  - move todos to another file
+
+  - get rid of positional arguments and add configuration file (with
+    versioning?)
+ 
+  - Make it multi-mode??
+
   - ability to upload/replace images
 
+ 
+
+longer term:
+
+  - Syntax highlighting for ghci sessions.  Will probably require some
+    refactoring.
+ 
   - diagrams -- at first, just have it separate.  Maybe later make a
     plugin system for BlogLiterately that can ship out specially marked
     blocks to external tools?
