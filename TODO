@@ -1,9 +1,5 @@
 Short term:
 
-  - Documentation!  Be sure to dogfood it somehow, of course.  Start
-    with what's in the .cabal file and go from there.  (Replace what's in
-    the .cabal file with some simple info and a link.)
-
   - get rid of positional arguments and add configuration file (with
     versioning?)
 
