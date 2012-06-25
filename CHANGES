@@ -1,0 +1,12 @@
+0.4: XXX
+
+  * Add special support for wordpress.com's LaTeX format
+
+  * Support for [ghci] blocks with contents automatically passed
+    through ghci and results typeset
+
+  * Support for tags
+
+  * New standalone documentation
+
+  * Code cleanup

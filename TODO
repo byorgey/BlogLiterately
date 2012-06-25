@@ -11,8 +11,6 @@ Short term:
 
   - ability to upload/replace images
 
-  - create CHANGES file
-
 Longer term:
 
   - Syntax highlighting for ghci sessions.  Will probably require some
