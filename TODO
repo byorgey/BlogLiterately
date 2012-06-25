@@ -13,11 +13,6 @@ Short term:
 
   - create CHANGES file
 
-  - allow specifying whether display-style LaTeX should be centered
-    when using --wplatex.
-
-  - allow output using MathJax.
-
 Longer term:
 
   - Syntax highlighting for ghci sessions.  Will probably require some
@@ -28,3 +23,8 @@ Longer term:
     blocks to external tools?
 
   - Improve ghci interaction so it returns error messages, etc.
+
+  - allow specifying whether display-style LaTeX should be centered
+    when using --wplatex.
+
+  - allow output using MathJax.
