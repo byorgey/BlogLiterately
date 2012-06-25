@@ -18,9 +18,6 @@ Short term:
 
   - allow output using MathJax.
 
-  - when doing --wplatex, don't add extra 'latex' tag to inline latex
-    that already appears to have it.
-
 Longer term:
 
   - Syntax highlighting for ghci sessions.  Will probably require some
