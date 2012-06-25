@@ -13,8 +13,6 @@ Short term:
 
   - create CHANGES file
 
-  - if no definitions in file, don't pass file as an argument to ghci.
-
   - clean up imports
 
   - allow specifying whether display-style LaTeX should be centered
