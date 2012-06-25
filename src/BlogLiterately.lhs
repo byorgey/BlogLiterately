@@ -39,17 +39,20 @@ HTML:
 > import Text.XML.HaXml.Posn
 > import Text.Blaze.Html.Renderer.String
 
-> import Data.Functor
-> import Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
-> import Control.Monad.IO.Class (liftIO)
-> import System.IO
-> import System.Process
-> import Control.Arrow (first, (>>>), arr, Kleisli(..), runKleisli)
-> import qualified Control.Category as A (id)
-> import Data.List (isPrefixOf, intercalate)
+Finally, some miscellaneous/standard imports:
+
+> import           Control.Arrow              ( first, (>>>), arr
+>                                             , Kleisli(..), runKleisli )
+> import qualified Control.Category as A      (id)
+> import           Control.Monad              (liftM,unless)
+> import           Control.Monad.IO.Class     (liftIO)
+> import           Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
+> import           Data.Functor
+> import           Data.List                  (isPrefixOf, intercalate)
+> import           System.IO
 > import qualified System.IO.UTF8 as U
-> import Control.Monad                   (liftM,unless)
-> import Text.ParserCombinators.Parsec
+> import           System.Process
+> import           Text.ParserCombinators.Parsec
 
 The program will read in a literate Haskell file, use Pandoc to parse
 it as markdown, and, if it is using hscolour to for the Haskell

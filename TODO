@@ -13,8 +13,6 @@ Short term:
 
   - create CHANGES file
 
-  - clean up imports
-
   - allow specifying whether display-style LaTeX should be centered
     when using --wplatex.
 
