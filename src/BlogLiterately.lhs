@@ -314,23 +314,27 @@ Colourising a `Pandoc` document is simply:
 >     Pandoc m $ map (colouriseCodeBlock hsHighlight otherHighlight) blocks
 
 WordPress can render LaTeX, but expects it in a special (non-standard)
-format (`\$latex foo\$`).  The `wpTeXify` function formats inline math
+format (`\$latex foo\$`).  The `wpTeXify` function formats LaTeX code
 using this format so that it can be processed by WordPress.
 
 > wpTeXify :: Pandoc -> Pandoc
 > wpTeXify = bottomUp formatDisplayTex . bottomUp formatInlineTex
 >   where formatInlineTex :: [Inline] -> [Inline]
 >         formatInlineTex (Math InlineMath tex : is)
->           = (Str $ "$latex " ++ tex ++ "$") : is
+>           = (Str $ "$latex " ++ unPrefix "latex" tex ++ "$") : is
 >         formatInlineTex is = is
 >
 >         formatDisplayTex :: [Block] -> [Block]
 >         formatDisplayTex (Para [Math DisplayMath tex] : bs)
->           = RawBlock "html" "<p><div align=\"center\">"
->           : Plain [Str $ "$latex " ++ ("\\displaystyle " ++ tex) ++ "$"]
+>           = RawBlock "html" "<p><div style=\"text-align: center\">"
+>           : Plain [Str $ "$latex " ++ "\\displaystyle " ++ unPrefix "latex" tex ++ "$"]
 >           : RawBlock "html" "</div></p>"
 >           : bs
 >         formatDisplayTex bs = bs
+>
+>         unPrefix pre s
+>           | pre `isPrefixOf` s = drop (length pre) s
+>           | otherwise          = s
 
 The next bit of code enables using code blocks marked with `[ghci]` as
 input to ghci and then inserting the results.  This code was mostly
