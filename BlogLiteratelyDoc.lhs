@@ -18,9 +18,10 @@ Markdown and pandoc
 
 `BlogLiterately` takes as input files written using the [markdown][]
 format.  See the [markdown website][markdown] for detailed
-documentation.  `BlogLiterately` uses [pandoc][] for
-reading markdown, which also [supports a few extensions](XXX) to the
-basic format.
+documentation.  `BlogLiterately` uses [pandoc][] for reading markdown,
+which also [supports a few
+extensions](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
+to the basic format.
 
 Code blocks and syntax highlighting
 -----------------------------------
@@ -36,6 +37,10 @@ Two different syntax highlighting libraries are supported:
       that can be used for highlighting a wide range of languages
       (including Haskell).
 
+You may independently specify whether to use `hscolour` or
+`highlighting-kate` to highlight Haskell code; other languages will be
+highlighted with `highlighting-kate`.
+
 In basic markdown, a generic code block is set off from normal text
 by indenting at least four spaces:
 
@@ -44,8 +49,9 @@ by indenting at least four spaces:
 
 However, markdown has no way of specifying the language used in a code
 block, making support for syntax highlighting problematic.  Pandoc
-offers [an alternative syntax](XXX) for code segments which does allow
-specifying the language:
+offers [an alternative
+syntax](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
+for code segments which does allow specifying the language:
 
     ~~~~ { .haskell }
     -- This is a Haskell code segment!
@@ -62,25 +68,19 @@ enclosed in square brackets:
 
 Of course, languages other than Haskell may be specified as well.
 
-XXX edit this
+By default, `hscolour` will be used for highlighting Haskell code,
+using "inline" CSS style attributes.  The default styling is similar
+to that used for source code in documentation on [Hackage][].  You can
+also specify a configuration file containing a Haskell value of type
+[(String,String)] which specifies a CSS style for each syntax
+class. An example (corresponding to the default configuration) is
+provided in the package archive (`hs-style`).
 
-Once you have written your markdown file, you can run the tool,
-specifying how you want it highlighted.  You can specify different
-highlighting modes for the haskell segments and the other code
-segments.  If using hscolour, you can specify that the highlighting be
-done 'inline' via CSS 'style' attributes.  You can use the default
-styling (which is similar to source code in documentation on hackage)
-or you can specify a configuration file which is (readable as) a
-Haskell value of type [(String,String)], and specifies a CSS style for
-each syntax class. An example (corresponding to the default
-configuration) is provided in the package archive (`hs-style`).
-
-With highlighting-kate (always) and with hscolour (optionally), the
-style for syntax segments is specified using 'class' attributes, so
-the stylesheet must be provided separately.  Sample stylesheets are
-provided in the package archive file (`kate.css`, `hscolour.css`).
-
-XXX edit the above.
+With `highlighting-kate`, the style for syntax segments is specified
+using "class" attributes, so the stylesheet must be provided
+separately.  You may optionally use a similar scheme with `hscolour`.
+Sample stylesheets are provided in the package archive file
+(`kate.css`, `hscolour.css`).
 
 LaTeX
 -----
@@ -94,14 +94,18 @@ certain subset of LaTeX expressions (such as those above) will be
 transformed into [MathML][], and anything Pandoc cannot parse will be
 passed through as literal LaTeX enclosed in dollar signs.
 
-Blogs hosted on wordpress.com, however, have built-in support for
-LaTeX, compiling LaTeX expressions to embedded images on-the-fly.
-Passing the `--wplatex` option to `BlogLiterately` causes any embedded
-LaTeX to be output in the format expected by WordPress (*e.g.* `$latex
-\pi^2 / 6$`).  XXX mention `$latex...` won't be added if it already
-exists.
+Blogs hosted on [wordpress.com](http://www.wordpress.com), however,
+have built-in support for LaTeX, compiling LaTeX expressions to
+embedded images on-the-fly.  Passing the `--wplatex` option to
+`BlogLiterately` causes any embedded LaTeX to be output in the format
+expected by WordPress (*e.g.* `$latex \pi^2 / 6$`).  Note that an
+extra `$latex...` won't be added to the beginning of LaTeX expressions
+which already appear to be in WordPress format.
 
-XXX mention MathJax as future work.
+When working with other blogging platforms that do not directly
+support LaTeX, it might be nice for `BlogLiterately` to have some sort
+of [MathJax][] support.  This is future work; drop a note (or a
+patch!)  if you would like to see this added.
 
 `ghci` sessions
 ---------------
@@ -171,31 +175,31 @@ This feature is not yet implemented but is coming soon!
 Command-line options
 --------------------
 
-XXX update to reflect the latest options.
-
 The options for `BlogLiterately` are hopefully self-explanatory, given the
 above background:
 
-    BlogLierately v0.4, (C) Robert Greayer 2008-2010, Brent Yorgey 2012
+    BlogLierately v0.4, (c) Robert Greayer 2008-2010, Brent Yorgey 2012
     This program comes with ABSOLUTELY NO WARRANTY
 
-    BlogLiterately [FLAG] URL USER PASSWORD TITLE FILE
+    BlogLiterately [OPTIONS] URL USER PASSWORD TITLE FILE
 
-      -? --help[=FORMAT]    Show usage information (optional format)
-      -V --version          Show version information
-      -v --verbose          Higher verbosity
-      -q --quiet            Lower verbosity
+    Common flags:
       -t --test             do a test-run: html goes to stdout, is not posted
       -s --style=FILE       Style Specification (for --hscolour-icss)
          --hscolour-icss    highlight haskell: hscolour, inline style (default)
          --hscolour-css     highlight haskell: hscolour, separate stylesheet
          --hs-nohighlight   no haskell highlighting
          --hs-kate          highlight haskell with highlighting-kate
-         --other-code-kate  highlight other code with highlighting-kate
-         --publish          Publish post (otherwise it's uploaded as a draft)
-         --category=VALUE   post category (can specify more than one)
-      -b --blogid=VALUE     Blog specific identifier (default=default)
-         --postid=VALUE     Post to replace (if any)
+         --other-kate       highlight other code with highlighting-kate
+      -w --wplatex          reformat inline LaTeX the way WordPress expects
+      -g --ghci             run [ghci] blocks through ghci and include output
+         --publish          publish post (otherwise it's uploaded as a draft)
+         --category=ITEM    post category (can specify more than one)
+         --tag=ITEM         tag (can specify more than one)
+      -b --blogid=ID        Blog specific identifier
+         --postid=ID        Post to replace (if any)
+      -? --help             Display help message
+      -V --version          Print version information
 
 Example usage
 -------------
@@ -225,4 +229,5 @@ before uploading or as a simple standalone tool, XXX
 [metaweblog]: http://www.xmlrpc.com/metaWeblogApi
 [WordPress]: http://wordpress.org/
 [Hackage]: http://hackage.haskell.org/
-[MathML]: XXX
+[MathML]: http://www.w3.org/Math/
+[MathJax]: http://www.mathjax.org/
