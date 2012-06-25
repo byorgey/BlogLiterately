@@ -340,8 +340,8 @@ stolen from lhs2TeX.
 
 First, a way to evaluate an expression using an external ghci process.
 
-> eval :: String -> ReaderT ProcessInfo IO String
-> eval expr =  do
+> ghciEval :: String -> ReaderT ProcessInfo IO String
+> ghciEval expr =  do
 >   (pin, pout, _, _) <- ask
 >   let script = "putStrLn " ++ show magic ++ "\n"
 >                  ++ expr ++ "\n"
@@ -353,10 +353,15 @@ First, a way to evaluate an expression using an external ghci process.
 >
 > withGhciProcess :: FilePath -> ReaderT ProcessInfo IO a -> IO a
 > withGhciProcess f m = do
->   pi  <- runInteractiveCommand $ "ghci -v0 -ignore-dot-ghci " ++ f
->   res <- runReaderT m pi
+>   isLit <- isLiterate f
+>   pi    <- runInteractiveCommand $ "ghci -v0 -ignore-dot-ghci "
+>                                    ++ (if isLit then f else "")
+>   res   <- runReaderT m pi
 >   stopProcess pi
 >   return res
+>
+> isLiterate :: FilePath -> IO Bool
+> isLiterate f = (any ("> " `isPrefixOf`) . lines) <$> readFile f
 >
 > stopProcess :: ProcessInfo -> IO ()
 > stopProcess (pin,_,_,pid) = do
@@ -416,7 +421,7 @@ interactive `ghci` session.
 >     formatInlineGhci' :: Block -> ReaderT ProcessInfo IO Block
 >     formatInlineGhci' b@(CodeBlock attr s)
 >       | tag == "ghci" =  do
->           results <- zip inputs <$> mapM eval inputs
+>           results <- zip inputs <$> mapM ghciEval inputs
 >           return $ CodeBlock attr (intercalate "\n" $ map formatGhciResult results)
 >
 >       | otherwise = return b
