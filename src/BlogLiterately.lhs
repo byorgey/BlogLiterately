@@ -252,7 +252,7 @@ back to newlines.
 > replaceBreaks :: String -> String
 > replaceBreaks s = verbatim $ filtDoc (xmlParse "input" s)
 >   where
->     -- filter the document (a highlighting-kate hilighted fragment of
+>     -- filter the document (a highlighting-kate highlighted fragment of
 >     -- haskell source)
 >     filtDoc (Document p s e m) = c where
 >         [c] = filts (CElem e noPos)
@@ -272,22 +272,22 @@ markers), or marked up non-Haskell, if highlighting of non-Haskell has
 been selected.
 
 > colouriseCodeBlock :: HsHighlight -> Bool -> Block -> Block
-> colouriseCodeBlock hsHilite otherHilite b@(CodeBlock attr@(_,classes,_) s)
+> colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
 >
 >   | tag == "haskell" || haskell
->   = case hsHilite of
+>   = case hsHighlight of
 >         HsColourInline style ->
 >             RawBlock "html" $ bakeStyles style $ colourIt lit src
 >         HsColourCSS   -> RawBlock "html" $ colourIt lit src
 >         HsNoHighlight -> RawBlock "html" $ simpleHTML hsrc
 >         HsKate        -> if null tag
->             then myHiliteK attr hsrc
->             else myHiliteK ("",tag:classes,[]) hsrc
+>             then myHighlightK attr hsrc
+>             else myHighlightK ("",tag:classes,[]) hsrc
 >
->   | otherHilite
+>   | otherHighlight
 >   = case tag of
->         "" -> myHiliteK attr src
->         t  -> myHiliteK ("",[t],[]) src
+>         "" -> myHighlightK attr src
+>         t  -> myHighlightK ("",[t],[]) src
 >
 >   | otherwise
 >   = RawBlock "html" $ simpleHTML src
@@ -302,7 +302,7 @@ been selected.
 >     lit          = "sourceCode" `elem` classes
 >     haskell      = "haskell" `elem` classes
 >     simpleHTML s = "<pre><code>" ++ s ++ "</code></pre>"
->     myHiliteK attr s = case highlight formatHtmlBlock attr s of
+>     myHighlightK attr s = case highlight formatHtmlBlock attr s of
 >         Nothing   -> RawBlock "html" $ simpleHTML s
 >         Just html -> RawBlock "html" $ replaceBreaks $ renderHtml html
 >
@@ -310,8 +310,8 @@ been selected.
 
 Colourising a `Pandoc` document is simply:
 
-> colourisePandoc hsHilite otherHilite (Pandoc m blocks) =
->     Pandoc m $ map (colouriseCodeBlock hsHilite otherHilite) blocks
+> colourisePandoc hsHighlight otherHighlight (Pandoc m blocks) =
+>     Pandoc m $ map (colouriseCodeBlock hsHighlight otherHighlight) blocks
 
 WordPress can render LaTeX, but expects it in a special (non-standard)
 format (`\$latex foo\$`).  The `wpTeXify` function formats inline math
@@ -438,12 +438,12 @@ Finally, putting everything together to transform a complete input
 document string to an HTML output string:
 
 > xformDoc :: FilePath -> HsHighlight -> Bool -> Bool -> Bool -> (String -> IO String)
-> xformDoc f hsHilite otherHilite wpl ghci = runKleisli $
+> xformDoc f hsHighlight otherHighlight wpl ghci = runKleisli $
 >         arr     fixLineEndings
 >     >>> arr     (readMarkdown parseOpts) -- from Pandoc
 >     >>> arr     wpTeXify             `whenA` wpl
 >     >>> Kleisli (formatInlineGhci f) `whenA` ghci
->     >>> arr     (colourisePandoc hsHilite otherHilite)
+>     >>> arr     (colourisePandoc hsHighlight otherHighlight)
 >     >>> arr     (writeHtml writeOpts) -- from Pandoc
 >     >>> arr     renderHtml
 >   where
@@ -570,25 +570,25 @@ line arguments work:
 >        [ (HsColourInline defaultStylePrefs)
 >          &= explicit
 >          &= name "hscolour-icss"
->          &= help "hilight haskell: hscolour, inline style (default)"
+>          &= help "highlight haskell: hscolour, inline style (default)"
 >        , HsColourCSS
 >          &= explicit
 >          &= name "hscolour-css"
->          &= help "hilight haskell: hscolour, separate stylesheet"
+>          &= help "highlight haskell: hscolour, separate stylesheet"
 >        , HsNoHighlight
 >          &= explicit
->          &= name "hs-nohilight"
->          &= help "no haskell hilighting"
+>          &= name "hs-nohighlight"
+>          &= help "no haskell highlighting"
 >        , HsKate
 >          &= explicit
 >          &= name "hs-kate"
->          &= help "hilight haskell with highlighting-kate"
+>          &= help "highlight haskell with highlighting-kate"
 >        ]
 >      , highlightOther = enum
 >        [ True
 >          &= explicit
->          &= name "other-code-kate"
->          &= help "hilight other code with highlighting-kate"
+>          &= name "other-kate"
+>          &= help "highlight other code with highlighting-kate"
 >        ]
 >      , wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
 >      , ghci    = def &= help "run [ghci] blocks through ghci and include output"
