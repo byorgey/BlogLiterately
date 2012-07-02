@@ -1,8 +1,9 @@
 Name:           BlogLiterately
 Version:        0.4
-Synopsis:	A tool for posting Haskelly articles to blogs
-
-Description:    XXX
+Synopsis:       A tool for posting Haskelly articles to blogs
+Description:    Write blog posts in Markdown format, then use BlogLiterately
+                to do syntax highlighting, format ghci sessions, and upload
+                to any blog supporting the metaWeblog API (such as Wordpress).
 Cabal-Version:  >= 1.6
 Homepage:       none
 License:        GPL
