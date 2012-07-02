@@ -3,6 +3,7 @@ support the MetaWeblog API (such as WordPress-based blogs and many
 others).  It also handles syntax highlighting of Haskell and other
 languages.
 
+> {-# LANGUAGE TypeOperators #-}
 > {-# LANGUAGE DeriveDataTypeable #-}
 > {-# LANGUAGE RecordWildCards #-}
 > module Main where
@@ -10,12 +11,12 @@ languages.
 We need [Pandoc][] for parsing [Markdown][]:
 
 > import Text.Pandoc
-> import Text.Pandoc.Highlighting
+> import Text.Pandoc.Highlighting             ( highlight, formatHtmlBlock )
 
 And [hscolour][] for highlighting:
 
-> import Language.Haskell.HsColour           (hscolour, Output(..))
-> import Language.Haskell.HsColour.Colourise (defaultColourPrefs)
+> import Language.Haskell.HsColour            ( hscolour, Output(..) )
+> import Language.Haskell.HsColour.Colourise  ( defaultColourPrefs )
 
 To post to a blog, we need the [MetaWeblog][] API, which is an
 XML-RPC-based protocol for interacting with blogs.
@@ -23,8 +24,8 @@ XML-RPC-based protocol for interacting with blogs.
 We'll use the Haskell XML-RPC library, [HaXR][], by Bjorn Bringert,
 (on [hackage][hackage-haxr]).
 
-> import Network.XmlRpc.Client
-> import Network.XmlRpc.Internals
+> import Network.XmlRpc.Client                ( remote )
+> import Network.XmlRpc.Internals             ( XmlRpcType(toValue) )
 
 We use Neil Mitchell's [CmdArgs][] library for processing command-line
 arguments:
@@ -36,22 +37,23 @@ Wallace's [HaXml][] XML combinators, and blaze-html for rendering
 HTML:
 
 > import Text.XML.HaXml
-> import Text.XML.HaXml.Posn
-> import Text.Blaze.Html.Renderer.String
+> import Text.XML.HaXml.Posn                  ( noPos )
+> import Text.Blaze.Html.Renderer.String      ( renderHtml )
 
 Finally, some miscellaneous/standard imports:
 
 > import           Control.Arrow              ( first, (>>>), arr
 >                                             , Kleisli(..), runKleisli )
-> import qualified Control.Category as A      (id)
-> import           Control.Monad              (liftM,unless)
-> import           Control.Monad.IO.Class     (liftIO)
-> import           Control.Monad.Trans.Reader (ReaderT, runReaderT, ask)
-> import           Data.Functor
-> import           Data.List                  (isPrefixOf, intercalate)
+> import qualified Control.Category as C      ( Category, id )
+> import           Control.Monad              ( liftM, unless )
+> import           Control.Monad.IO.Class     ( liftIO )
+> import           Control.Monad.Trans.Reader ( ReaderT, runReaderT, ask )
+> import           Data.Functor               ( (<$>) )
+> import           Data.List                  ( isPrefixOf, intercalate )
 > import           System.IO
-> import qualified System.IO.UTF8 as U
-> import           System.Process
+> import qualified System.IO.UTF8 as U        ( readFile )
+> import           System.Process             ( ProcessHandle, waitForProcess
+>                                             , runInteractiveCommand )
 > import           Text.ParserCombinators.Parsec
 
 The program will read in a literate Haskell file, use Pandoc to parse
@@ -441,15 +443,24 @@ interactive `ghci` session.
 >     formatGhciResult (input, output)
 >       = "<span style=\"color: gray;\">ghci&gt;</span> " ++ input ++ (unlines . map ("  "++) . lines) output  -- XXX this should be configurable!
 
-Finally, putting everything together to transform a complete input
-document string to an HTML output string:
+A useful arrow utility, for running some part of a pipeline
+conditionally:
 
-> xformDoc :: FilePath -> HsHighlight -> Bool -> Bool -> Bool -> (String -> IO String)
-> xformDoc f hsHighlight otherHighlight wpl ghci = runKleisli $
+> whenA :: C.Category (~>) => (a ~> a) -> Bool -> (a ~> a)
+> whenA a p | p         = a
+>           | otherwise = C.id
+
+Finally, putting everything together to transform a complete input
+document string to an HTML output string.  Note this may involve
+running `ghci`.
+
+> xformDoc :: BlogLiterately -> (String -> IO String)
+> xformDoc bl@(BlogLiterately {..}) = runKleisli $
 >         arr     fixLineEndings
 >     >>> arr     (readMarkdown parseOpts) -- from Pandoc
->     >>> arr     wpTeXify             `whenA` wpl
->     >>> Kleisli (formatInlineGhci f) `whenA` ghci
+>     >>> arr     wpTeXify                `whenA` wplatex
+>     >>> Kleisli (formatInlineGhci file) `whenA` ghci
+>     -- >>> Kleisli (uploadAllImages bl)
 >     >>> arr     (colourisePandoc hsHighlight otherHighlight)
 >     >>> arr     (writeHtml writeOpts) -- from Pandoc
 >     >>> arr     renderHtml
@@ -458,9 +469,6 @@ document string to an HTML output string:
 >                 { writerReferenceLinks = True }
 >     parseOpts = defaultParserState
 >                 { stateLiterateHaskell = True }
->
->     whenA a p | p         = a
->               | otherwise = A.id
 >
 >     -- readMarkdown is picky about line endings
 >     fixLineEndings [] = []
