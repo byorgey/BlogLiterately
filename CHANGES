@@ -1,4 +1,4 @@
-0.4: XXX
+0.4: 2 July 2012
 
   * Add special support for wordpress.com's LaTeX format
 
@@ -7,6 +7,10 @@
 
   * Support for tags
 
+  * Support for creating "pages" as well as posts (WordPress only)
+
   * New standalone documentation
 
   * Code cleanup
+
+  * Update to build with GHC 7.4.1
