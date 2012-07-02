@@ -9,9 +9,9 @@ useful for writing posts including code written in other languages, or
 even no code at all.
 
 `BlogLiterately` includes support for syntax highlighting, $\LaTeX$
-(including special support for WordPress blogs), automatic generation
-and formatting of `ghci` sessions, and uploading embedded images.
-Each of these features is explained in more detail below.
+(including special support for WordPress blogs), and automatic
+generation and formatting of `ghci` sessions.  Each of these features
+is explained in more detail below.
 
 Markdown and pandoc
 -------------------
@@ -170,7 +170,13 @@ There are currently a few known limitations of this feature:
 Uploading embedded images
 -------------------------
 
-This feature is not yet implemented but is coming soon!
+A planned feature for a future release of `BlogLiterately` is the
+ability to automatically upload images embedded in a blog post to the
+server, replacing local image file names with the appropriate URL.
+However, this feature is currently [blocked on a baffling
+bug](http://stackoverflow.com/questions/11277788/errorclosed-exception-from-network-http-simplehttp-trying-to-upload-images-vi).
+If you know anything about HTTP, TCP/IP, XML-RPC, WordPress, and/or
+the `HTTP` and `haxr` libraries, please help!
 
 Command-line options
 --------------------
@@ -181,51 +187,65 @@ above background:
     BlogLierately v0.4, (c) Robert Greayer 2008-2010, Brent Yorgey 2012
     This program comes with ABSOLUTELY NO WARRANTY
 
-    BlogLiterately [OPTIONS] URL USER PASSWORD TITLE FILE
+    BlogLiterately [OPTIONS] FILE
 
     Common flags:
-      -t --test             do a test-run: html goes to stdout, is not posted
-      -s --style=FILE       Style Specification (for --hscolour-icss)
-         --hscolour-icss    highlight haskell: hscolour, inline style (default)
-         --hscolour-css     highlight haskell: hscolour, separate stylesheet
-         --hs-nohighlight   no haskell highlighting
-         --hs-kate          highlight haskell with highlighting-kate
-         --other-kate       highlight other code with highlighting-kate
-      -w --wplatex          reformat inline LaTeX the way WordPress expects
-      -g --ghci             run [ghci] blocks through ghci and include output
-         --publish          publish post (otherwise it's uploaded as a draft)
-         --category=ITEM    post category (can specify more than one)
-         --tag=ITEM         tag (can specify more than one)
-      -b --blogid=ID        Blog specific identifier
-         --postid=ID        Post to replace (if any)
-      -? --help             Display help message
-      -V --version          Print version information
+      -s --style=FILE         style specification (for --hscolour-icss)
+         --hscolour-icss      highlight haskell: hscolour, inline style (default)
+         --hscolour-css       highlight haskell: hscolour, separate stylesheet
+         --hs-nohighlight     no haskell highlighting
+         --hs-kate            highlight haskell with highlighting-kate
+         --other-kate         highlight other code with highlighting-kate
+      -w --wplatex            reformat inline LaTeX the way WordPress expects
+      -g --ghci               run [ghci] blocks through ghci and include output
+         --category=ITEM      post category (can specify more than one)
+         --tag=ITEM           tag (can specify more than one)
+         --blogid=ID          Blog specific identifier
+         --blog=URL           blog XML-RPC url (if omitted, html goes to stdout)
+      -u --user=USER          user name
+         --password=PASSWORD  password
+      -t --title=TITLE        post title
+         --postid=ID          Post to replace (if any)
+         --publish            publish post (otherwise it's uploaded as a draft)
+      -? --help               Display help message
+      -V --version            Print version information
 
 Example usage
 -------------
 
-To post to a WordPress blog, use something like:
+If you do not specify a blog URL, by default `BlogLiterately` simply
+prints the generated HTML to stdout.  So, to preview the generated
+HTML before uploading requires merely something like
 
-    BlogLiterately http://blogurl.example.com/xmlrpc.php \
-        myname mypasswd "Sample" Sample.lhs
+    BlogLiterately Sample.lhs
+
+To actually post to, say, a WordPress blog, a basic command line would
+be something like
+
+    BlogLiterately --blog http://blogurl.example.com/xmlrpc.php \
+        --user myname --password mypasswd --title "Sample" Sample.lhs
 
 (which creates a new post).  If, for example, the post id of that post
 (which `BlogLiterately` prints when it uploads a new post) is '37', then
 to update the post, the command would be:
 
-    BlogLiterately --postid=37 http://blogurl.example.com/xmlrpc.php \
-        myname mypasswd "Sample" Sample.lhs
+    BlogLiterately --postid 37 --blog http://blogurl.example.com/xmlrpc.php \
+        --user myname --password mypasswd --title "Sample" Sample.lhs
 
 and the post will be updated with the new text.
 
+Getting Help
+------------
 
-XXX can also be used as a simple filter with `-t`, either to preview
-before uploading or as a simple standalone tool, XXX
+For questions, support, feature suggestions, etc., feel free to
+contact me (Brent Yorgey): `byorgey` on IRC (freenode), or `byorgey`
+at gmail.
+
 
 [markdown]: http://daringfireball.net/projects/markdown/
 [pandoc]: http://johnmacfarlane.net/pandoc/
 [hscolour]: http://www.cs.york.ac.uk/fp/darcs/hscolour/
-[highlighting-kate]: XXX
+[highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/
 [metaweblog]: http://www.xmlrpc.com/metaWeblogApi
 [WordPress]: http://wordpress.org/
 [Hackage]: http://hackage.haskell.org/
