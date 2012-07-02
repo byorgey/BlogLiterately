@@ -6,6 +6,7 @@ languages.
 > {-# LANGUAGE TypeOperators #-}
 > {-# LANGUAGE DeriveDataTypeable #-}
 > {-# LANGUAGE RecordWildCards #-}
+> {-# LANGUAGE ViewPatterns #-}
 > module Main where
 
 We need [Pandoc][] for parsing [Markdown][]:
@@ -25,7 +26,7 @@ We'll use the Haskell XML-RPC library, [HaXR][], by Bjorn Bringert,
 (on [hackage][hackage-haxr]).
 
 > import Network.XmlRpc.Client                ( remote )
-> import Network.XmlRpc.Internals             ( XmlRpcType(toValue) )
+> import Network.XmlRpc.Internals             ( Value(..), toValue )
 
 We use Neil Mitchell's [CmdArgs][] library for processing command-line
 arguments:
@@ -48,13 +49,17 @@ Finally, some miscellaneous/standard imports:
 > import           Control.Monad              ( liftM, unless )
 > import           Control.Monad.IO.Class     ( liftIO )
 > import           Control.Monad.Trans.Reader ( ReaderT, runReaderT, ask )
+> import qualified Data.ByteString.Char8 as B
+> import           Data.Char                  ( toLower )
 > import           Data.Functor               ( (<$>) )
 > import           Data.List                  ( isPrefixOf, intercalate )
+> import           System.FilePath            ( takeFileName, takeExtension )
 > import           System.IO
 > import qualified System.IO.UTF8 as U        ( readFile )
 > import           System.Process             ( ProcessHandle, waitForProcess
 >                                             , runInteractiveCommand )
 > import           Text.ParserCombinators.Parsec
+
 
 The program will read in a literate Haskell file, use Pandoc to parse
 it as markdown, and, if it is using hscolour to for the Haskell
@@ -443,6 +448,76 @@ interactive `ghci` session.
 >     formatGhciResult (input, output)
 >       = "<span style=\"color: gray;\">ghci&gt;</span> " ++ input ++ (unlines . map ("  "++) . lines) output  -- XXX this should be configurable!
 
+XXX write me
+
+> uploadAllImages :: BlogLiterately -> (Pandoc -> IO Pandoc)
+> uploadAllImages bl@(BlogLiterately{..}) =
+>   case (blog, uploadImages) of
+>     (Just xmlrpc, True) -> bottomUpM (uploadOneImage xmlrpc)
+>     _                   -> return
+>   where
+>     uploadOneImage :: String -> Inline -> IO Inline
+>     uploadOneImage xmlrpc i@(Image altText (imgUrl, imgTitle))
+>       | isLocal imgUrl = do
+>           res <- uploadIt xmlrpc imgUrl bl
+>           case res of 
+>             ValueStruct (lookup "url" -> Just (ValueString newUrl)) ->
+>               return $ Image altText (newUrl, imgTitle)
+>             _ -> do
+>               putStrLn $ "Warning: upload of " ++ imgUrl ++ " failed."
+>               return i
+>       | otherwise      = return i
+>     uploadOneImage _ i = return i
+>
+>     isLocal imgUrl = none (`isPrefixOf` imgUrl) ["http", "/"]
+>     none p = all (not . p)
+>
+> uploadIt :: String -> FilePath -> BlogLiterately -> IO Value
+> uploadIt url filePath (BlogLiterately{..}) = do
+>   media <- mkMediaObject filePath
+>   remote url "metaWeblog.newMediaObject" blogid user password media
+>
+> mkMediaObject :: FilePath -> IO Value
+> mkMediaObject filePath = do
+>   bits <- B.unpack <$> B.readFile filePath
+>   return $ ValueStruct
+>     [ ("name", toValue fileName)
+>     , ("type", toValue fileType)
+>     , ("bits", ValueBase64 bits)
+>     ]
+>   where
+>     fileName = takeFileName filePath
+>     fileType = case (map toLower . drop 1 . takeExtension) fileName of
+>                  "png"  -> "image/png"
+>                  "jpg"  -> "image/jpeg"
+>                  "jpeg" -> "image/jpeg"
+>                  "gif"  -> "image/gif"
+> 
+
+Half-written text for manual:
+
+When passed the `--upload-images` option, `BlogLiterately` can take
+any images referenced locally and automatically upload them to the
+server, replacing the local references with appropriate URLs.
+
+To include images in blog posts, use the Markdown syntax
+
+    ![alt](URL)   XXX is there more to it than this?  What about title?
+
+The URL determines whether the image will be uploaded. A *remote* URL
+is any beginning with `http` or a forward slash.  In all other cases
+it is assumed that the URL in fact represents a relative path on the
+local file system.  Such images, if they exist, will be uploaded to
+the server (using the `metaWeblog.newMedia` (XXX) RPC call), and the
+local file name replaced with the URL returned by the server.
+
+XXX how should this be done?  What key does "replace" use?
+Note that the "replace" option is passed to `metaWeblog.newMedia`
+(XXX), so 
+
+XXX finish me
+
+
 A useful arrow utility, for running some part of a pipeline
 conditionally:
 
@@ -460,7 +535,7 @@ running `ghci`.
 >     >>> arr     (readMarkdown parseOpts) -- from Pandoc
 >     >>> arr     wpTeXify                `whenA` wplatex
 >     >>> Kleisli (formatInlineGhci file) `whenA` ghci
->     -- >>> Kleisli (uploadAllImages bl)
+>     >>> Kleisli (uploadAllImages bl)
 >     >>> arr     (colourisePandoc hsHighlight otherHighlight)
 >     >>> arr     (writeHtml writeOpts) -- from Pandoc
 >     >>> arr     renderHtml
@@ -565,7 +640,7 @@ in a type:
 >   , otherHighlight :: Bool          -- use highlighting-kate for non-Haskell?
 >   , wplatex        :: Bool          -- format LaTeX for WordPress?
 >   , ghci           :: Bool          -- automatically generate ghci sessions?
-> --  , uploadImages   :: Bool          -- automatically upload images?
+>   , uploadImages   :: Bool          -- automatically upload images?
 >   , categories     :: [String]      -- categories for the post
 >   , tags           :: [String]      -- tags for the post
 >   , blogid         :: String        -- blog-specific identifier (e.g. for blogging
@@ -614,7 +689,7 @@ line arguments work:
 >        ]
 >      , wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
 >      , ghci    = def &= help "run [ghci] blocks through ghci and include output"
-> --     , uploadImages = def &= name "upload-images" &= explicit &= help "upload local images"
+>      , uploadImages = def &= name "upload-images" &= explicit &= help "upload local images"
 >      , page    = def &= help "create a \"page\" instead of a post (WordPress only)"
 >      , publish = def &= help "publish post (otherwise it's uploaded as a draft)"
 >      , categories = def
