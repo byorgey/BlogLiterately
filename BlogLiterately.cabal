@@ -5,7 +5,7 @@ Description:    Write blog posts in Markdown format, then use BlogLiterately
                 to do syntax highlighting, format ghci sessions, and upload
                 to any blog supporting the metaWeblog API (such as Wordpress).
 Cabal-Version:  >= 1.6
-Homepage:       none
+Homepage:       http://byorgey.wordpress.com/blogliterately/
 License:        GPL
 License-file:   LICENSE
 Category:	Web
