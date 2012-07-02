@@ -1,4 +1,4 @@
-`BlogLiterately` is a tool for uploading blog posts to servers that
+[`BlogLiterately`][] is a tool for uploading blog posts to servers that
 support the [MetaWeblog API][metaweblog] (such as [WordPress][]-based
 blogs and many others).  Blog posts to be published via
 `BlogLiterately` are written in [markdown][] format, with extensions
@@ -88,8 +88,12 @@ LaTeX
 LaTeX can be included in documents using single dollar signs to
 enclose inline LaTeX, and double dollar signs to enclose
 "display-style" LaTeX.  For example, `$\pi^2 / 6$` produces $\pi^2 /
-6$, and `$$\sum_{k=0}^\infty 1/k^2$$` produces $$\sum_{k=0}^\infty
-1/k^2.$$ By default, LaTeX is processed with Pandoc, meaning that a
+6$, and `$$\sum_{k=0}^\infty 1/k^2$$` (when put by itself in its own
+paragraph) produces
+
+$$\sum_{k=0}^\infty 1/k^2.$$
+
+By default, LaTeX is processed with Pandoc, meaning that a
 certain subset of LaTeX expressions (such as those above) will be
 transformed into [MathML][], and anything Pandoc cannot parse will be
 passed through as literal LaTeX enclosed in dollar signs.
@@ -98,9 +102,9 @@ Blogs hosted on [wordpress.com](http://www.wordpress.com), however,
 have built-in support for LaTeX, compiling LaTeX expressions to
 embedded images on-the-fly.  Passing the `--wplatex` option to
 `BlogLiterately` causes any embedded LaTeX to be output in the format
-expected by WordPress (*e.g.* `$latex \pi^2 / 6$`).  Note that an
-extra `$latex...` won't be added to the beginning of LaTeX expressions
-which already appear to be in WordPress format.
+expected by WordPress.  Note that an extra `$latex...` won't be added
+to the beginning of LaTeX expressions which already appear to be in
+WordPress format.
 
 When working with other blogging platforms that do not directly
 support LaTeX, it might be nice for `BlogLiterately` to have some sort
@@ -206,6 +210,7 @@ above background:
          --password=PASSWORD  password
       -t --title=TITLE        post title
          --postid=ID          Post to replace (if any)
+         --page               create a "page" instead of a post (WordPress only)
          --publish            publish post (otherwise it's uploaded as a draft)
       -? --help               Display help message
       -V --version            Print version information
@@ -241,7 +246,7 @@ For questions, support, feature suggestions, etc., feel free to
 contact me (Brent Yorgey): `byorgey` on IRC (freenode), or `byorgey`
 at gmail.
 
-
+[`BlogLiterately`]: http://hackage.haskell.org/package/BlogLiterately
 [markdown]: http://daringfireball.net/projects/markdown/
 [pandoc]: http://johnmacfarlane.net/pandoc/
 [hscolour]: http://www.cs.york.ac.uk/fp/darcs/hscolour/
