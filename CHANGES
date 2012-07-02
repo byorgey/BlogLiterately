@@ -1,3 +1,7 @@
+trunk:
+
+  * bump HaXml upper bound
+
 0.4: 2 July 2012
 
   * Add special support for wordpress.com's LaTeX format
