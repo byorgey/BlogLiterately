@@ -10,6 +10,9 @@ uploadMediaObject file = do
   media <- mkMediaObject file
   remote "http://mathlesstraveled.com/xmlrpc.php" "metaWeblog.newMediaObject" "default" "byorgey" "a0303017" media
 
+  -- note: same successes + failures with wp.uploadFile in place of
+  -- metaWeblog.newMediaObject
+
 -- Create the required struct representing the image.
 mkMediaObject :: FilePath -> IO Value
 mkMediaObject filePath = do
