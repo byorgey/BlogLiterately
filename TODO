@@ -1,13 +1,10 @@
 Short term:
 
-  - get rid of positional arguments and add configuration file (with
-    versioning?)
-
-  - Make it multi-mode??
-
   - ability to upload/replace images
 
 Longer term:
+
+  - add configuration file (with versioning?)
 
   - Syntax highlighting for ghci sessions.  Will probably require some
     refactoring.
