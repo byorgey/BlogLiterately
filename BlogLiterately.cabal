@@ -4,6 +4,9 @@ Synopsis:       A tool for posting Haskelly articles to blogs
 Description:    Write blog posts in Markdown format, then use BlogLiterately
                 to do syntax highlighting, format ghci sessions, and upload
                 to any blog supporting the metaWeblog API (such as Wordpress).
+                .
+                See <http://byorgey.wordpress.com/blogliterately/> for complete
+                documentation.
 Cabal-Version:  >= 1.6
 Homepage:       http://byorgey.wordpress.com/blogliterately/
 License:        GPL
@@ -18,6 +21,10 @@ Tested-With:	GHC ==7.4.1
 Extra-Source-Files: hscolour.css
                     kate.css
                     hs-style
+Source-repository head
+  type:     darcs
+  location: http://patch-tag.com/r/byorgey/BlogLiterately
+
 Executable BlogLiterately
   Build-Depends:  base >= 4.0 && < 4.6, process >= 1.1 && < 1.2,
                   transformers >= 0.3 && < 0.4, parsec >= 3 && < 3.2,
