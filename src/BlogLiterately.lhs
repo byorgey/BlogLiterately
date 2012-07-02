@@ -490,10 +490,13 @@ thus can be put into a list.  But the categories and tags are lists of
 strings, so we need to explicitly convert everything to a `Value`,
 then combine:
 
-> mkPost title text categories tags =
+> mkPost title text categories tags page =
 >        mkArray "categories" categories
 >     ++ mkArray "mt_keywords" tags
->     ++ [("title",toValue title),("description",toValue text)]
+>     ++ [ ("title", toValue title)
+>        , ("description", toValue text)
+>        ]
+>     ++ [ ("post_type", toValue "page") | page ]
 >
 > mkArray _    []     = []
 > mkArray name values = [(name, toValue values)]
@@ -515,20 +518,24 @@ any function with zero or more parameters in the class `XmlRpcType`
 and a return type of `XmlRpcType r => IO r` will work, which means you
 can simply 'feed' `remote` additional arguments as required by the
 remote procedure, and as long as you make the call in an IO context,
-it will typecheck.  So to call the `metaWeblog.newPost` procedure, I
-can do something like:
+it will typecheck.  `postIt` calls `metaWeblog.newPost` or
+`metaWeblog.editPost` (or simply prints the HTML to stdout) as
+appropriate:
 
-> postIt :: BlogLiterately -> String -> IO String
-> postIt (BlogLiterately{..}) text =
->     remote blog "metaWeblog.newPost" blogid user password
->         (mkPost title text categories tags) publish
-
-To update (replace) a post:
-
-> updateIt :: BlogLiterately -> String -> IO Bool
-> updateIt (BlogLiterately{..}) text =
->     remote blog "metaWeblog.editPost" postid user password
->         (mkPost title text categories tags) publish
+> postIt :: BlogLiterately -> String -> IO ()
+> postIt (BlogLiterately{..}) html =
+>   case blog of
+>     Nothing  -> putStr html
+>     Just url ->
+>       case postid of
+>         Nothing  -> do
+>           pid <- remote url "metaWeblog.newPost" blogid user password
+>                    (mkPost title html categories tags page) publish
+>           putStrLn $ "Post ID: " ++ pid
+>         Just pid -> do
+>           success <- remote url "metaWeblog.editPost" pid user password
+>                        (mkPost title html categories tags page) publish
+>           unless success $ putStrLn "update failed!"
 
 There are four modes of Haskell highlighting:
 
@@ -545,24 +552,25 @@ To create a command line program, we capture the command line controls
 in a type:
 
 > data BlogLiterately = BlogLiterately
->   { test           :: Bool        -- do a dry-run: html goes to stdout
->   , style          :: String      -- name of a style file
->   , hshighlight    :: HsHighlight -- Haskell highlighting mode
->   , highlightOther :: Bool        -- use highlighting-kate for non-Haskell?
->   , wplatex        :: Bool        -- format LaTeX for WordPress?
->   , ghci           :: Bool        -- automatically generate ghci sessions?
->   , publish        :: Bool        -- Should the post be published, or
->                                    --   loaded as a draft?
->   , categories     :: [String]    -- categories for the post
->   , tags           :: [String]    -- tags for the post
->   , blogid         :: String      -- blog-specific identifier (e.g. for blogging
->                                    --   software handling multiple blogs)
->   , blog           :: String      -- blog xmlrpc URL
->   , user           :: String      -- blog user name
->   , password       :: String      -- blog password
->   , title          :: String      -- post title
->   , file           :: String      -- file to post
->   , postid         :: String       -- id of a post to updated
+>   { style          :: String        -- name of a style file
+>   , hsHighlight    :: HsHighlight   -- Haskell highlighting mode
+>   , otherHighlight :: Bool          -- use highlighting-kate for non-Haskell?
+>   , wplatex        :: Bool          -- format LaTeX for WordPress?
+>   , ghci           :: Bool          -- automatically generate ghci sessions?
+> --  , uploadImages   :: Bool          -- automatically upload images?
+>   , categories     :: [String]      -- categories for the post
+>   , tags           :: [String]      -- tags for the post
+>   , blogid         :: String        -- blog-specific identifier (e.g. for blogging
+>                                     --   software handling multiple blogs)
+>   , blog           :: Maybe String  -- blog xmlrpc URL
+>   , user           :: String        -- blog user name
+>   , password       :: String        -- blog password
+>   , title          :: String        -- post title
+>   , file           :: String        -- file to post
+>   , postid         :: Maybe String  -- id of a post to update
+>   , page           :: Bool          -- create a "page" instead of a post
+>   , publish        :: Bool          -- Should the post be published, or
+>                                     --   loaded as a draft?
 >   }
 >   deriving (Show,Data,Typeable)
 
@@ -570,10 +578,9 @@ And using CmdArgs, this bit of impure evil defines how the command
 line arguments work:
 
 > bl = BlogLiterately
->      { test  = def &= help "do a test-run: html goes to stdout, is not posted"
->      , style = ""  &= help "Style Specification (for --hscolour-icss)"
+>      { style = ""  &= help "style specification (for --hscolour-icss)"
 >                    &= typFile
->      , hshighlight = enum
+>      , hsHighlight = enum
 >        [ (HsColourInline defaultStylePrefs)
 >          &= explicit
 >          &= name "hscolour-icss"
@@ -591,7 +598,7 @@ line arguments work:
 >          &= name "hs-kate"
 >          &= help "highlight haskell with highlighting-kate"
 >        ]
->      , highlightOther = enum
+>      , otherHighlight = enum
 >        [ True
 >          &= explicit
 >          &= name "other-kate"
@@ -599,6 +606,8 @@ line arguments work:
 >        ]
 >      , wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
 >      , ghci    = def &= help "run [ghci] blocks through ghci and include output"
+> --     , uploadImages = def &= name "upload-images" &= explicit &= help "upload local images"
+>      , page    = def &= help "create a \"page\" instead of a post (WordPress only)"
 >      , publish = def &= help "publish post (otherwise it's uploaded as a draft)"
 >      , categories = def
 >        &= explicit
@@ -610,13 +619,13 @@ line arguments work:
 >        &= help "tag (can specify more than one)"
 >
 >      , blogid   = "default" &= help "Blog specific identifier" &= typ "ID"
->      , postid   = ""  &= help "Post to replace (if any)" &= typ "ID"
+>      , postid   = def &= help "Post to replace (if any)" &= typ "ID"
 >
->      , blog     = def &= argPos 0 &= typ "URL"
->      , user     = def &= argPos 1 &= typ "USER"
->      , password = def &= argPos 2 &= typ "PASSWORD"
->      , title    = def &= argPos 3 &= typ "TITLE"
->      , file     = def &= argPos 4 &= typ "FILE"
+>      , blog     = def &= typ "URL"      &= help "blog XML-RPC url (if omitted, html goes to stdout)"
+>      , user     = def &= typ "USER"     &= help "user name"
+>      , password = def &= typ "PASSWORD" &= help "password"
+>      , title    = def &= typ "TITLE"    &= help "post title"
+>      , file     = def &= argPos 0 &= typ "FILE"
 >   }
 >   &= program "BlogLiterately"
 >   &= summary ("BlogLierately v0.4, (c) Robert Greayer 2008-2010, Brent Yorgey 2012\n" ++
@@ -626,22 +635,14 @@ The main blogging function uses the information captured in the
 `BlogLiterately` type to read the style preferences, read the input
 file and transform it, and post it to the blog:
 
-> blogLiterately b@(BlogLiterately {..}) = do
+> blogLiterately bl@(BlogLiterately {..}) = do
 >     prefs <- getStylePrefs style
->     let hshighlight' = case hshighlight of
+>     let hsHighlight' = case hsHighlight of
 >             HsColourInline _ -> HsColourInline prefs
->             _                -> hshighlight
->     html <- xformDoc file hshighlight' highlightOther wplatex ghci
->             =<< U.readFile file
->     if test
->        then putStr html
->        else if null postid
->            then do
->                postid <- postIt b html
->                putStrLn $ "post Id: " ++ postid
->            else do
->                result <- updateIt b html
->                unless result $ putStrLn "update failed!"
+>             _                -> hsHighlight
+>         bl' = bl { hsHighlight = hsHighlight' }
+>     html <- xformDoc bl' =<< U.readFile file
+>     postIt bl html
 
 And the main program is simply:
 
