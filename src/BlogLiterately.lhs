@@ -475,6 +475,7 @@ server.
 >
 > uploadIt :: String -> FilePath -> BlogLiterately -> IO Value
 > uploadIt url filePath (BlogLiterately{..}) = do
+>   putStrLn $ "Uploading " ++ filePath ++ "..."
 >   media <- mkMediaObject filePath
 >   remote url "metaWeblog.newMediaObject" blogid user password media
 >
