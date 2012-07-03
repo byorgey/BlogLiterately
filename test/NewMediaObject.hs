@@ -4,6 +4,20 @@ import           Data.Char                  (toLower)
 import           System.FilePath            (takeFileName, takeExtension)
 import qualified Data.ByteString.Char8 as B
 import           Data.Functor               ((<$>))
+import           Control.DeepSeq
+
+{-  The bottleneck seems to be in the actual haxr library (base64 encoding?)
+
+instance NFData Value where
+  rnf (ValueInt i)       = rnf i
+  rnf (ValueBool b)      = rnf b
+  rnf (ValueString s)    = rnf s
+  rnf (ValueDouble d)    = rnf d
+  rnf (ValueDateTime lt) = rnf lt
+  rnf (ValueBase64 s)    = rnf s
+  rnf (ValueStruct s)    = rnf s
+  rnf (ValueArray vs)    = rnf vs
+-}
 
 uploadMediaObject :: FilePath -> IO Value
 uploadMediaObject file = do
@@ -31,5 +45,5 @@ mkMediaObject filePath = do
                  "gif"  -> "image/gif"
 
 main = do
-  v <- uploadMediaObject "images/checkmark_20.png"
+  v <- uploadMediaObject "images/puppy.jpg"
   print v
