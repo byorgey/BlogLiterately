@@ -27,6 +27,6 @@ Neato!  And also $latex \pi$.
 
 Here's an image:
 
-![Title](foo.png)
+![A dog.](images/puppy.jpg "A puppy for you")
 
 I wonder why deleting a line only goes to the second column.
