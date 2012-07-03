@@ -174,13 +174,43 @@ There are currently a few known limitations of this feature:
 Uploading embedded images
 -------------------------
 
-A planned feature for a future release of `BlogLiterately` is the
-ability to automatically upload images embedded in a blog post to the
-server, replacing local image file names with the appropriate URL.
-However, this feature is currently [blocked on a baffling
-bug](http://stackoverflow.com/questions/11277788/errorclosed-exception-from-network-http-simplehttp-trying-to-upload-images-vi).
-If you know anything about HTTP, TCP/IP, XML-RPC, WordPress, and/or
-the `HTTP` and `haxr` libraries, please help!
+Half-written text for manual:
+
+When passed the `--upload-images` option, `BlogLiterately` can take
+any images referenced locally and automatically upload them to the
+server, replacing the local references with appropriate URLs.
+
+To include images in blog posts, use the Markdown syntax
+
+    ![alt](URL "title")
+
+The URL determines whether the image will be uploaded. A *remote* URL
+is any beginning with `http` or a forward slash.  In all other cases
+it is assumed that the URL in fact represents a relative path on the
+local file system.  Such images, if they exist, will be uploaded to
+the server (using the `metaWeblog.newMediaObject` RPC call), and the
+local file name replaced with the URL returned by the server.
+
+A few caveats:
+
+There is no mechanism for uploading only some of the images.  So if
+you upload a post with a bunch of images but then want to change just
+one of the images, you are sort of out of luck --- either re-upload
+them all, or upload the single image manually.
+
+Also, the `newMediaObject` call has an optional `replace` parameter, but
+`BlogLiterately` does not use it, since it's too dangerous: if
+`replace` is set and you happen to use the same file name as some
+other image file that already exists on your blog, the old image would
+be deleted.  However, this means that if you upload an image multiple
+times you will get multiple copies on your blog.
+
+As a consequence of the above, best practice is probably to write your
+post while doing a combination of previewing locally to see the post
+with images and uploading without the `--upload-images` flag to see
+what the post looks like on your blog (except with a bunch of broken
+images).  Once you're confident everything looks good, do a final
+upload with `--upload-images` set.
 
 Command-line options
 --------------------
