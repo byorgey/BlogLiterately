@@ -424,7 +424,7 @@ the second |magic| plus prompt is the result we look for.
 >     | p as                    =  ([], as)
 >     | otherwise               =  first (a:) $ breaks p as'
 
-Finally, a function which takes the path to the `.lhs` source and its
+Next, a function which takes the path to the `.lhs` source and its
 representation as a `Pandoc` document, finds any `[ghci]` blocks in
 it, runs them through `ghci`, and formats the results as an
 interactive `ghci` session.
@@ -448,7 +448,8 @@ interactive `ghci` session.
 >     formatGhciResult (input, output)
 >       = "<span style=\"color: gray;\">ghci&gt;</span> " ++ input ++ (unlines . map ("  "++) . lines) output  -- XXX this should be configurable!
 
-XXX write me
+Finally, a function to upload embedded images from the post to the
+server.
 
 > uploadAllImages :: BlogLiterately -> (Pandoc -> IO Pandoc)
 > uploadAllImages bl@(BlogLiterately{..}) =
@@ -492,31 +493,6 @@ XXX write me
 >                  "jpg"  -> "image/jpeg"
 >                  "jpeg" -> "image/jpeg"
 >                  "gif"  -> "image/gif"
-> 
-
-Half-written text for manual:
-
-When passed the `--upload-images` option, `BlogLiterately` can take
-any images referenced locally and automatically upload them to the
-server, replacing the local references with appropriate URLs.
-
-To include images in blog posts, use the Markdown syntax
-
-    ![alt](URL)   XXX is there more to it than this?  What about title?
-
-The URL determines whether the image will be uploaded. A *remote* URL
-is any beginning with `http` or a forward slash.  In all other cases
-it is assumed that the URL in fact represents a relative path on the
-local file system.  Such images, if they exist, will be uploaded to
-the server (using the `metaWeblog.newMedia` (XXX) RPC call), and the
-local file name replaced with the URL returned by the server.
-
-XXX how should this be done?  What key does "replace" use?
-Note that the "replace" option is passed to `metaWeblog.newMedia`
-(XXX), so 
-
-XXX finish me
-
 
 A useful arrow utility, for running some part of a pipeline
 conditionally:
