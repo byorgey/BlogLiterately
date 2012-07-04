@@ -9,6 +9,9 @@ languages.
 > {-# LANGUAGE ViewPatterns #-}
 > module Main where
 
+> import Text.BlogLiterately.Ghci
+> import Text.BlogLiterately.Block
+
 We need [Pandoc][] for parsing [Markdown][]:
 
 > import Text.Pandoc
@@ -152,16 +155,6 @@ Pandoc's delimited code block syntax, I'll assume that there is no
 additional tag within the block in Blog Literately syntax.  I still
 need my `unTag` function to parse the code block.
 
-> unTag :: String -> (String, String)
-> unTag s = either (const ("",s)) id $ parse tag "" s
->   where
->     tag = do
->       tg <- between (char '[') (char ']') $ many $ noneOf "[]"
->       skipMany $ oneOf " \t"
->       (string "\r\n" <|> string "\n")
->       txt <- many $ anyToken
->       eof
->       return (tg,txt)
 
 To highlight the syntax using hscolour (which produces HTML), I'm
 going to need to transform the `String` from a `CodeBlock` element to
@@ -345,108 +338,6 @@ using this format so that it can be processed by WordPress.
 >         unPrefix pre s
 >           | pre `isPrefixOf` s = drop (length pre) s
 >           | otherwise          = s
-
-The next bit of code enables using code blocks marked with `[ghci]` as
-input to ghci and then inserting the results.  This code was mostly
-stolen from lhs2TeX.
-
-> type ProcessInfo = (Handle, Handle, Handle, ProcessHandle)
-
-First, a way to evaluate an expression using an external ghci process.
-
-> ghciEval :: String -> ReaderT ProcessInfo IO String
-> ghciEval expr =  do
->   (pin, pout, _, _) <- ask
->   let script = "putStrLn " ++ show magic ++ "\n"
->                  ++ expr ++ "\n"
->                  ++ "putStrLn " ++ show magic ++ "\n"
->   liftIO $ do
->     hPutStr pin script
->     hFlush pin
->     extract' pout
->
-> withGhciProcess :: FilePath -> ReaderT ProcessInfo IO a -> IO a
-> withGhciProcess f m = do
->   isLit <- isLiterate f
->   pi    <- runInteractiveCommand $ "ghci -v0 -ignore-dot-ghci "
->                                    ++ (if isLit then f else "")
->   res   <- runReaderT m pi
->   stopProcess pi
->   return res
->
-> isLiterate :: FilePath -> IO Bool
-> isLiterate f = (any ("> " `isPrefixOf`) . lines) <$> readFile f
->
-> stopProcess :: ProcessInfo -> IO ()
-> stopProcess (pin,_,_,pid) = do
->   hPutStrLn pin ":q"
->   hFlush pin
->   _ <- waitForProcess pid   -- ignore exit code
->   return ()
-
-To extract the answer from @ghci@'s output we use a simple technique
-which should work in most cases: we print the string |magic| before
-and after the expression we are interested in. We assume that
-everything that appears before the first occurrence of |magic| on the
-same line is the prompt, and everything between the first |magic| and
-the second |magic| plus prompt is the result we look for.
-
-> magic :: String
-> magic =  "!@#$^&*"
->
-> extract' :: Handle -> IO String
-> extract' h = fmap (extract . unlines) (readMagic 2)
->   where
->     readMagic :: Int -> IO [String]
->     readMagic 0 = return []
->     readMagic n = do
->       l <- hGetLine h
->       let n' | (null . snd . breaks (isPrefixOf magic)) l = n
->              | otherwise                                  = n - 1
->       fmap (l:) (readMagic n')
->
-> extract                       :: String -> String
-> extract s                     =  v
->     where (t, u)              =  breaks (isPrefixOf magic) s
->           -- t contains everything up to magic, u starts with magic
->           -- |u'                      =  tail (dropWhile (/='\n') u)|
->           pre                 =  reverse . takeWhile (/='\n') . reverse $ t
->           prelength           =  if null pre then 0 else length pre + 1
->           -- pre contains the prefix of magic on the same line
->           u'                  =  drop (length magic + prelength) u
->           -- we drop the magic string, plus the newline, plus the prefix
->           (v, _)              =  breaks (isPrefixOf (pre ++ magic)) u'
->           -- we look for the next occurrence of prefix plus magic
->
-> breaks                        :: ([a] -> Bool) -> [a] -> ([a], [a])
-> breaks p []                   =  ([], [])
-> breaks p as@(a : as')
->     | p as                    =  ([], as)
->     | otherwise               =  first (a:) $ breaks p as'
-
-Next, a function which takes the path to the `.lhs` source and its
-representation as a `Pandoc` document, finds any `[ghci]` blocks in
-it, runs them through `ghci`, and formats the results as an
-interactive `ghci` session.
-
-> formatInlineGhci :: FilePath -> Pandoc -> IO Pandoc
-> formatInlineGhci f = withGhciProcess f . bottomUpM formatInlineGhci'
->   where
->     formatInlineGhci' :: Block -> ReaderT ProcessInfo IO Block
->     formatInlineGhci' b@(CodeBlock attr s)
->       | tag == "ghci" =  do
->           results <- zip inputs <$> mapM ghciEval inputs
->           return $ CodeBlock attr (intercalate "\n" $ map formatGhciResult results)
->
->       | otherwise = return b
->
->       where (tag,src) = unTag s
->             inputs    = lines src
->
->     formatInlineGhci' b = return b
->
->     formatGhciResult (input, output)
->       = "<span style=\"color: gray;\">ghci&gt;</span> " ++ input ++ (unlines . map ("  "++) . lines) output  -- XXX this should be configurable!
 
 Finally, a function to upload embedded images from the post to the
 server.
