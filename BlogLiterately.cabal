@@ -15,6 +15,17 @@ Description:    Write blog posts in Markdown format, then use BlogLiterately
                 particular, it is easy to create your own executable
                 which adds extra custom transformations; see
                 "Text.BlogLiterately.Run".
+                .
+                Note that BlogLiterately depends on blaze-html-0.5.
+                Pandoc 1.9.3 and later can depend on either
+                blaze-html-0.4 or blaze-html-0.5, but the latter only
+                in case the blaze_html_0_5 flag is set.  If pandoc is
+                installed as a dependency of BlogLiterately,
+                everything should work out fine, since cabal's
+                constraint solver will figure out to set that flag.
+                But if pandoc is already installed against
+                blaze-html-0.4 you may need to reinstall it with the
+                blaze_html_0_5 flag explicitly set.
 Cabal-Version:  >= 1.8
 Homepage:       http://byorgey.wordpress.com/blogliterately/
 License:        GPL
@@ -47,7 +58,7 @@ Library
                    blaze-html >= 0.5 && < 0.6,
                    cmdargs >= 0.9.5 && < 0.10,
                    haxr >= 3000.8.6 && < 3000.9,
-                   pandoc >= 1.9 && < 1.10
+                   pandoc >= 1.9.3 && < 1.10
   Exposed-modules: Text.BlogLiterately
                    Text.BlogLiterately.Block
                    Text.BlogLiterately.Ghci
