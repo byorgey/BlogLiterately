@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternGuards #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -15,7 +16,8 @@
 module Text.BlogLiterately.Ghci
     (
     -- * Running ghci
-      ghciEval
+      ProcessInfo
+    , ghciEval
     , withGhciProcess
     , isLiterate
     , stopGhci
@@ -46,6 +48,8 @@ import Text.Pandoc                ( Pandoc, Block(CodeBlock), bottomUpM )
 
 import Text.BlogLiterately.Block  ( unTag )
 
+-- | Information about a running process: stdin, stdout, stderr, and a
+--   handle.
 type ProcessInfo = (Handle, Handle, Handle, ProcessHandle)
 
 -- | Evaluate an expression using an external @ghci@ process.
@@ -134,7 +138,7 @@ formatInlineGhci f = withGhciProcess f . bottomUpM formatInlineGhci'
   where
     formatInlineGhci' :: Block -> ReaderT ProcessInfo IO Block
     formatInlineGhci' b@(CodeBlock attr s)
-      | tag == "ghci" =  do
+      | Just "ghci" <- tag =  do
           results <- zip inputs <$> mapM ghciEval inputs
           return $ CodeBlock attr (intercalate "\n" $ map formatGhciResult results)
 

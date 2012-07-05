@@ -7,7 +7,7 @@
 -- License     :  GPL (see LICENSE)
 -- Maintainer  :  Brent Yorgey <byorgey@gmail.com>
 --
--- XXX write me
+-- Syntax highlighting.
 --
 -----------------------------------------------------------------------------
 
@@ -25,6 +25,7 @@ module Text.BlogLiterately.Highlight
     ) where
 
 import           Control.Monad                       ( liftM )
+import           Data.Maybe                          ( isNothing )
 import qualified System.IO.UTF8 as U                 ( readFile )
 
 import           Text.Pandoc                         ( Pandoc(..)
@@ -41,9 +42,9 @@ import           Text.BlogLiterately.Block           ( unTag )
 
 -- | Four modes for highlighting Haskell.
 data HsHighlight =
-      HsColourInline StylePrefs   -- ^ Use hscolour, and inline the styles.
-    | HsColourCSS                 -- ^ Use hscolour, in conjunction with
-                                  --   a CSS style sheet.
+      HsColourInline StylePrefs   -- ^ Use hscolour and inline the styles.
+    | HsColourCSS                 -- ^ Use hscolour in conjunction with
+                                  --   an external CSS style sheet.
     | HsKate                      -- ^ Use highlighting-kate.
     | HsNoHighlight               -- ^ Do not highlight Haskell.
   deriving (Data,Typeable,Show,Eq)
@@ -134,6 +135,9 @@ style based rendering (for people who can't update their stylesheet).
 
 -}
 
+-- | Use hscolour to syntax highlight some Haskell code.  The first
+-- argument indicates whether the code is literate Haskell.
+colourIt :: Bool -> String -> String
 colourIt literate srcTxt =
     hscolour CSS defaultColourPrefs False True "" literate srcTxt'
     where srcTxt' | literate  = litify srcTxt
@@ -152,6 +156,8 @@ source.  Style preferences are specified as a list of name/value
 pairs:
 -}
 
+-- | Style preferences are specified as a list of mappings from class
+--   attributes to CSS style attributes.
 type StylePrefs = [(String,String)]
 
 -- | A default style that produces something that looks like the
@@ -182,7 +188,7 @@ getStylePrefs :: FilePath -> IO StylePrefs
 getStylePrefs ""    = return defaultStylePrefs
 getStylePrefs fname = liftM read (U.readFile fname)
 
--- | Take a @String@ of HTML produced by hscolour, and "bake" styles
+-- | Take a @String@ of HTML produced by hscolour, and \"bake\" styles
 --   into it by replacing class attributes with appropriate style
 --   attributes.
 bakeStyles :: StylePrefs -> String -> String
@@ -202,13 +208,13 @@ bakeStyles prefs s = verbatim $ filtDoc (xmlParse "bake-input" s)
         replaceAttrs [("style",style)] `when`
             (attrval $ (N "class", AttValue [Left cls]))
 
-{- Highlighting-Kate uses @&lt;br/>@ in code blocks to indicate
+{- Highlighting-Kate uses @\<br/>@ in code blocks to indicate
    newlines.  WordPress (and possibly others) chooses to strip them
-   away when found in @&lt;pre>@ sections of uploaded HTML.  So we
+   away when found in @\<pre>@ sections of uploaded HTML.  So we
    need to turn them back to newlines.
 -}
 
--- | Replace @&lt;br/>@ tags with newlines.
+-- | Replace @\<br/>@ tags with newlines.
 replaceBreaks :: String -> String
 replaceBreaks s = verbatim $ filtDoc (xmlParse "input" s)
   where
@@ -234,20 +240,20 @@ the highlighting-kate styles.
 colouriseCodeBlock :: HsHighlight -> Bool -> Block -> Block
 colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
 
-  | tag == "haskell" || haskell
+  | tag == Just "haskell" || haskell
   = case hsHighlight of
         HsColourInline style ->
             RawBlock "html" $ bakeStyles style $ colourIt lit src
         HsColourCSS   -> RawBlock "html" $ colourIt lit src
         HsNoHighlight -> RawBlock "html" $ simpleHTML hsrc
-        HsKate        -> if null tag
-            then myHighlightK attr hsrc
-            else myHighlightK ("",tag:classes,[]) hsrc
+        HsKate        -> case tag of
+            Nothing -> myHighlightK attr hsrc
+            Just t  -> myHighlightK ("", t:classes,[]) hsrc
 
   | otherHighlight
   = case tag of
-        "" -> myHighlightK attr src
-        t  -> myHighlightK ("",[t],[]) src
+        Nothing -> myHighlightK attr src
+        Just t  -> myHighlightK ("",[t],[]) src
 
   | otherwise
   = RawBlock "html" $ simpleHTML src
@@ -255,7 +261,7 @@ colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
   where
     (tag,src)
         | null classes = unTag s
-        | otherwise    = ("",s)
+        | otherwise    = (Nothing, s)
     hsrc
         | lit          = litify src
         | otherwise    = src

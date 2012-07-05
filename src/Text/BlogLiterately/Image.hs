@@ -8,7 +8,7 @@
 -- License     :  GPL (see LICENSE)
 -- Maintainer  :  Brent Yorgey <byorgey@gmail.com>
 --
--- XXX write me
+-- Uploading images embedded in posts to the server.
 --
 -----------------------------------------------------------------------------
 
@@ -45,9 +45,9 @@ import           Text.BlogLiterately.Options
 --   server.
 uploadAllImages :: BlogLiterately -> (Pandoc -> IO Pandoc)
 uploadAllImages bl@(BlogLiterately{..}) =
-  case (blog, uploadImages) of
-    (Just xmlrpc, True) -> bottomUpM (uploadOneImage xmlrpc)
-    _                   -> return
+  case blog of
+    Just xmlrpc -> bottomUpM (uploadOneImage xmlrpc)
+    _           -> return
   where
     uploadOneImage :: String -> Inline -> IO Inline
     uploadOneImage xmlrpc i@(Image altText (imgUrl, imgTitle))
@@ -65,7 +65,7 @@ uploadAllImages bl@(BlogLiterately{..}) =
     isLocal imgUrl = none (`isPrefixOf` imgUrl) ["http", "/"]
     none p = all (not . p)
 
--- | Upload a file using the metaWeblog.newMediaObject XML-RPC method
+-- | Upload a file using the @metaWeblog.newMediaObject@ XML-RPC method
 --   call.
 uploadIt :: String -> FilePath -> BlogLiterately -> IO Value
 uploadIt url filePath (BlogLiterately{..}) = do

@@ -6,7 +6,7 @@
 -- License     :  GPL (see LICENSE)
 -- Maintainer  :  Brent Yorgey <byorgey@gmail.com>
 --
--- XXX write me
+-- Utilities for working with embedded LaTeX.
 --
 -----------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ module Text.BlogLiterately.LaTeX
 import Data.List   ( isPrefixOf )
 import Text.Pandoc
 
--- | WordPress can render LaTeX, but expects it in a special (non-standard)
+-- | WordPress can render LaTeX, but expects it in a special non-standard
 --   format (@\$latex foo\$@).  The @wpTeXify@ function formats LaTeX code
 --   using this format so that it can be processed by WordPress.
 wpTeXify :: Pandoc -> Pandoc

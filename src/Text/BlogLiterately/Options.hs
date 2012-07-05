@@ -7,13 +7,13 @@
 -- License     :  GPL (see LICENSE)
 -- Maintainer  :  Brent Yorgey <byorgey@gmail.com>
 --
--- XXX write me
+-- Configuation and command-line options.
 --
 -----------------------------------------------------------------------------
 
 module Text.BlogLiterately.Options
     ( BlogLiterately(..)
-    , bl
+    , blOpts
     )
     where
 
@@ -23,33 +23,35 @@ import Text.BlogLiterately.Highlight
 
 -- | Configuration record (and command-line options) for @BlogLiterately@.
 data BlogLiterately = BlogLiterately
-  { style          :: String        -- ^ name of a style file
+  { style          :: String        -- ^ Name of a style file
   , hsHighlight    :: HsHighlight   -- ^ Haskell highlighting mode
-  , otherHighlight :: Bool          -- ^ use highlighting-kate for
+  , otherHighlight :: Bool          -- ^ Use highlighting-kate for
                                     --   non-Haskell?
-  , wplatex        :: Bool          -- ^ format LaTeX for WordPress?
-  , ghci           :: Bool          -- ^ automatically generate ghci sessions?
-  , uploadImages   :: Bool          -- ^ automatically upload images?
-  , categories     :: [String]      -- ^ categories for the post
-  , tags           :: [String]      -- ^ tags for the post
-  , blogid         :: String        -- ^ blog-specific identifier
+  , wplatex        :: Bool          -- ^ Format LaTeX for WordPress?
+  , ghci           :: Bool          -- ^ Automatically process ghci sessions?
+  , uploadImages   :: Bool          -- ^ Automatically upload images?
+  , categories     :: [String]      -- ^ Categories for the post
+  , tags           :: [String]      -- ^ Tags for the post
+  , blogid         :: String        -- ^ Blog-specific identifier
                                     --   (e.g. for blogging software
                                     --   handling multiple blogs)
-  , blog           :: Maybe String  -- ^ blog xmlrpc URL
-  , user           :: String        -- ^ blog user name
-  , password       :: String        -- ^ blog password
-  , title          :: String        -- ^ post title
-  , file           :: String        -- ^ file to post
-  , postid         :: Maybe String  -- ^ id of a post to update
-  , page           :: Bool          -- ^ create a "page" instead of a post
-  , publish        :: Bool          -- ^ Should the post be published,
-                                    --   or loaded as a draft?
+  , blog           :: Maybe String  -- ^ Blog xmlrpc URL
+  , user           :: String        -- ^ Blog user name
+  , password       :: String        -- ^ Blog password
+  , title          :: String        -- ^ Post title
+  , file           :: String        -- ^ File to post
+  , postid         :: Maybe String  -- ^ ID of a post to update
+  , page           :: Bool          -- ^ Create a \"page\" instead of a post
+  , publish        :: Bool          -- ^ Should the post be published?
+                                    --   (Otherwise it is uploaded as a draft.)
+  , xtra           :: [String]      -- ^ Extension arguments, for use e.g. by
+                                    --   custom transforms
   }
   deriving (Show,Data,Typeable)
 
--- | Command-line configuration for use with cmdargs.
-bl :: BlogLiterately
-bl = BlogLiterately
+-- | Command-line configuration for use with @cmdargs@.
+blOpts :: BlogLiterately
+blOpts = BlogLiterately
      { style = ""  &= help "style specification (for --hscolour-icss)"
                    &= typFile
      , hsHighlight = enum
@@ -90,6 +92,8 @@ bl = BlogLiterately
        &= name "tag"
        &= help "tag (can specify more than one)"
 
+     , xtra = def
+       &= help "extension arguments, for use with custom extensions"
      , blogid   = "default" &= help "Blog specific identifier" &= typ "ID"
      , postid   = def &= help "Post to replace (if any)" &= typ "ID"
 
