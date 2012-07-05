@@ -171,6 +171,11 @@ There are currently a few known limitations of this feature:
 * The formatting of `ghci` sessions currently cannot be
   customized.  Suggestions for customizations to allow are welcome.
 
+* Due to the very hacky way that `ghci` interaction is implemented,
+  the usual `it` variable bound to the result of the previous expression
+  is not available (rather, it *is* available, but is always equal to
+  `()`).
+
 Uploading embedded images
 -------------------------
 
