@@ -32,11 +32,6 @@ We'll use the Haskell XML-RPC library, [HaXR][], by Bjorn Bringert,
 > import Network.XmlRpc.Client                ( remote )
 > import Network.XmlRpc.Internals             ( Value(..), toValue )
 
-We use Neil Mitchell's [CmdArgs][] library for processing command-line
-arguments:
-
-> import System.Console.CmdArgs
-
 We also need to parse and manipulate XHTML, so we'll use Malcolm
 Wallace's [HaXml][] XML combinators, and blaze-html for rendering
 HTML:
@@ -63,77 +58,6 @@ Finally, some miscellaneous/standard imports:
 > import           System.Process             ( ProcessHandle, waitForProcess
 >                                             , runInteractiveCommand )
 > import           Text.ParserCombinators.Parsec
-
-
-WordPress can render LaTeX, but expects it in a special (non-standard)
-format (`\$latex foo\$`).  The `wpTeXify` function formats LaTeX code
-using this format so that it can be processed by WordPress.
-
-> wpTeXify :: Pandoc -> Pandoc
-> wpTeXify = bottomUp formatDisplayTex . bottomUp formatInlineTex
->   where formatInlineTex :: [Inline] -> [Inline]
->         formatInlineTex (Math InlineMath tex : is)
->           = (Str $ "$latex " ++ unPrefix "latex" tex ++ "$") : is
->         formatInlineTex is = is
->
->         formatDisplayTex :: [Block] -> [Block]
->         formatDisplayTex (Para [Math DisplayMath tex] : bs)
->           = RawBlock "html" "<p><div style=\"text-align: center\">"
->           : Plain [Str $ "$latex " ++ "\\displaystyle " ++ unPrefix "latex" tex ++ "$"]
->           : RawBlock "html" "</div></p>"
->           : bs
->         formatDisplayTex bs = bs
->
->         unPrefix pre s
->           | pre `isPrefixOf` s = drop (length pre) s
->           | otherwise          = s
-
-Finally, a function to upload embedded images from the post to the
-server.
-
-> uploadAllImages :: BlogLiterately -> (Pandoc -> IO Pandoc)
-> uploadAllImages bl@(BlogLiterately{..}) =
->   case (blog, uploadImages) of
->     (Just xmlrpc, True) -> bottomUpM (uploadOneImage xmlrpc)
->     _                   -> return
->   where
->     uploadOneImage :: String -> Inline -> IO Inline
->     uploadOneImage xmlrpc i@(Image altText (imgUrl, imgTitle))
->       | isLocal imgUrl = do
->           res <- uploadIt xmlrpc imgUrl bl
->           case res of 
->             ValueStruct (lookup "url" -> Just (ValueString newUrl)) ->
->               return $ Image altText (newUrl, imgTitle)
->             _ -> do
->               putStrLn $ "Warning: upload of " ++ imgUrl ++ " failed."
->               return i
->       | otherwise      = return i
->     uploadOneImage _ i = return i
->
->     isLocal imgUrl = none (`isPrefixOf` imgUrl) ["http", "/"]
->     none p = all (not . p)
->
-> uploadIt :: String -> FilePath -> BlogLiterately -> IO Value
-> uploadIt url filePath (BlogLiterately{..}) = do
->   putStrLn $ "Uploading " ++ filePath ++ "..."
->   media <- mkMediaObject filePath
->   remote url "metaWeblog.newMediaObject" blogid user password media
->
-> mkMediaObject :: FilePath -> IO Value
-> mkMediaObject filePath = do
->   bits <- B.unpack <$> B.readFile filePath
->   return $ ValueStruct
->     [ ("name", toValue fileName)
->     , ("type", toValue fileType)
->     , ("bits", ValueBase64 bits)
->     ]
->   where
->     fileName = takeFileName filePath
->     fileType = case (map toLower . drop 1 . takeExtension) fileName of
->                  "png"  -> "image/png"
->                  "jpg"  -> "image/jpeg"
->                  "jpeg" -> "image/jpeg"
->                  "gif"  -> "image/gif"
 
 A useful arrow utility, for running some part of a pipeline
 conditionally:
@@ -237,99 +161,6 @@ appropriate:
 >                        (mkPost title html categories tags page) publish
 >           unless success $ putStrLn "update failed!"
 
-There are four modes of Haskell highlighting:
-
-> data HsHighlight =
->       HsColourInline StylePrefs
->     | HsColourCSS
->     | HsKate
->     | HsNoHighlight
->   deriving (Data,Typeable,Show,Eq)
-
-And two modes for other code (off or on!).
-
-To create a command line program, we capture the command line controls
-in a type:
-
-> data BlogLiterately = BlogLiterately
->   { style          :: String        -- name of a style file
->   , hsHighlight    :: HsHighlight   -- Haskell highlighting mode
->   , otherHighlight :: Bool          -- use highlighting-kate for non-Haskell?
->   , wplatex        :: Bool          -- format LaTeX for WordPress?
->   , ghci           :: Bool          -- automatically generate ghci sessions?
->   , uploadImages   :: Bool          -- automatically upload images?
->   , categories     :: [String]      -- categories for the post
->   , tags           :: [String]      -- tags for the post
->   , blogid         :: String        -- blog-specific identifier (e.g. for blogging
->                                     --   software handling multiple blogs)
->   , blog           :: Maybe String  -- blog xmlrpc URL
->   , user           :: String        -- blog user name
->   , password       :: String        -- blog password
->   , title          :: String        -- post title
->   , file           :: String        -- file to post
->   , postid         :: Maybe String  -- id of a post to update
->   , page           :: Bool          -- create a "page" instead of a post
->   , publish        :: Bool          -- Should the post be published, or
->                                     --   loaded as a draft?
->   }
->   deriving (Show,Data,Typeable)
-
-And using CmdArgs, this bit of impure evil defines how the command
-line arguments work:
-
-> bl = BlogLiterately
->      { style = ""  &= help "style specification (for --hscolour-icss)"
->                    &= typFile
->      , hsHighlight = enum
->        [ (HsColourInline defaultStylePrefs)
->          &= explicit
->          &= name "hscolour-icss"
->          &= help "highlight haskell: hscolour, inline style (default)"
->        , HsColourCSS
->          &= explicit
->          &= name "hscolour-css"
->          &= help "highlight haskell: hscolour, separate stylesheet"
->        , HsNoHighlight
->          &= explicit
->          &= name "hs-nohighlight"
->          &= help "no haskell highlighting"
->        , HsKate
->          &= explicit
->          &= name "hs-kate"
->          &= help "highlight haskell with highlighting-kate"
->        ]
->      , otherHighlight = enum
->        [ True
->          &= explicit
->          &= name "other-kate"
->          &= help "highlight other code with highlighting-kate"
->        ]
->      , wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
->      , ghci    = def &= help "run [ghci] blocks through ghci and include output"
->      , uploadImages = def &= name "upload-images" &= explicit &= help "upload local images"
->      , page    = def &= help "create a \"page\" instead of a post (WordPress only)"
->      , publish = def &= help "publish post (otherwise it's uploaded as a draft)"
->      , categories = def
->        &= explicit
->        &= name "category"
->        &= help "post category (can specify more than one)"
->      , tags = def
->        &= explicit
->        &= name "tag"
->        &= help "tag (can specify more than one)"
->
->      , blogid   = "default" &= help "Blog specific identifier" &= typ "ID"
->      , postid   = def &= help "Post to replace (if any)" &= typ "ID"
->
->      , blog     = def &= typ "URL"      &= help "blog XML-RPC url (if omitted, html goes to stdout)"
->      , user     = def &= typ "USER"     &= help "user name"
->      , password = def &= typ "PASSWORD" &= help "password"
->      , title    = def &= typ "TITLE"    &= help "post title"
->      , file     = def &= argPos 0 &= typ "FILE"
->   }
->   &= program "BlogLiterately"
->   &= summary ("BlogLierately v0.4, (c) Robert Greayer 2008-2010, Brent Yorgey 2012\n" ++
->               "This program comes with ABSOLUTELY NO WARRANTY\n")
 
 The main blogging function uses the information captured in the
 `BlogLiterately` type to read the style preferences, read the input

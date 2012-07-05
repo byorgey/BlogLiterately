@@ -7,7 +7,7 @@ Description:    Write blog posts in Markdown format, then use BlogLiterately
                 .
                 See <http://byorgey.wordpress.com/blogliterately/> for complete
                 documentation.
-Cabal-Version:  >= 1.6
+Cabal-Version:  >= 1.8
 Homepage:       http://byorgey.wordpress.com/blogliterately/
 License:        GPL
 License-file:   LICENSE
@@ -26,13 +26,23 @@ Source-repository head
   type:     darcs
   location: http://patch-tag.com/r/byorgey/BlogLiterately
 
+Library
+  Build-Depends:   base >= 4.0 && < 4.6, process, filepath, bytestring,
+                   transformers >= 0.3 && < 0.4, parsec >= 3 && < 3.2,
+                   HaXml >= 1.22 && < 1.24, utf8-string >= 0.3 && < 0.4,
+                   hscolour >= 1.20 && < 1.21, blaze-html >= 0.5 && < 0.6,
+                   cmdargs >= 0.9.5 && < 0.10,
+                   haxr >= 3000.8.6 && < 3000.9, pandoc >= 1.9 && < 1.10
+  Exposed-modules: Text.BlogLiterately.Block
+                   Text.BlogLiterately.Ghci
+                   Text.BlogLiterately.Highlight
+                   Text.BlogLiterately.Image
+                   Text.BlogLiterately.LaTeX
+                   Text.BlogLiterately.Options
+  hs-source-dirs:  src
+
 Executable BlogLiterately
-  Build-Depends:  base >= 4.0 && < 4.6, process, filepath, bytestring,
-                  transformers >= 0.3 && < 0.4, parsec >= 3 && < 3.2,
-                  HaXml >= 1.22 && < 1.24, utf8-string >= 0.3 && < 0.4,
-                  hscolour >= 1.20 && < 1.21, blaze-html >= 0.5 && < 0.6,
-                  cmdargs >= 0.9.5 && < 0.10,
-                  haxr >= 3000.8.6 && < 3000.9, pandoc >= 1.9 && < 1.10
+  Build-Depends:  base, BlogLiterately
   Main-Is:        BlogLiterately.lhs
-  Hs-Source-Dirs: src
+  hs-source-dirs: src
   Ghc-Options:    -fwarn-unused-imports
