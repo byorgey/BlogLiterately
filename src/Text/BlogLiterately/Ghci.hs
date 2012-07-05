@@ -52,17 +52,28 @@ import Text.BlogLiterately.Block  ( unTag )
 --   handle.
 type ProcessInfo = (Handle, Handle, Handle, ProcessHandle)
 
+data GhciInput  = GhciInput { expr :: String, expected :: Maybe String }
+data GhciOutput = OK String | Unexpected String -- ^ Actual output
+                                         String -- ^ Expected output
+
+data GhciLine = GhciLine GhciInput GhciOutput
+
 -- | Evaluate an expression using an external @ghci@ process.
-ghciEval :: String -> ReaderT ProcessInfo IO String
-ghciEval expr =  do
+ghciEval :: GhciInput -> ReaderT ProcessInfo IO GhciOutput
+ghciEval (GhciInput expr expected) =  do
   (pin, pout, _, _) <- ask
   let script = "putStrLn " ++ show magic ++ "\n"
                  ++ expr ++ "\n"
                  ++ "putStrLn " ++ show magic ++ "\n"
-  liftIO $ do
+  out <- liftIO $ do
     hPutStr pin script
     hFlush pin
     extract' pout
+  case expected of
+    Nothing -> return $ OK out
+    Just exp
+      | out == exp = return $ OK out
+      | otherwise  = return $ Unexpected out exp
 
 -- | Start an external ghci process, run a computation with access to
 --   it, and finally stop the process.
@@ -139,15 +150,17 @@ formatInlineGhci f = withGhciProcess f . bottomUpM formatInlineGhci'
     formatInlineGhci' :: Block -> ReaderT ProcessInfo IO Block
     formatInlineGhci' b@(CodeBlock attr s)
       | Just "ghci" <- tag =  do
-          results <- zip inputs <$> mapM ghciEval inputs
+          results <- zipWith GhciLine inputs <$> mapM ghciEval inputs
           return $ CodeBlock attr (intercalate "\n" $ map formatGhciResult results)
 
       | otherwise = return b
 
       where (tag,src) = unTag s
-            inputs    = lines src
+            inputs    = parseGhciInputs src
 
     formatInlineGhci' b = return b
+
+    parseGhciInputs = undefined  -- XXX
 
     formatGhciResult (input, output)
       = "<span style=\"color: gray;\">ghci&gt;</span> " ++ input ++ (unlines . map ("  "++) . lines) output  -- XXX this should be configurable!
