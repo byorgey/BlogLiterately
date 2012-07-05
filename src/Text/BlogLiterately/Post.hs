@@ -18,6 +18,7 @@ module Text.BlogLiterately.Post
     ) where
 
 import Control.Monad                        ( unless )
+import Data.Maybe                           ( fromMaybe )
 
 import Network.XmlRpc.Client                ( remote )
 import Network.XmlRpc.Internals             ( Value(..), toValue, XmlRpcType )
@@ -99,14 +100,15 @@ postIt :: BlogLiterately -> String -> IO ()
 postIt (BlogLiterately{..}) html =
   case blog of
     Nothing  -> putStr html
-    Just url ->
+    Just url -> do
+      let pwd = fromMaybe "" password
       case postid of
         Nothing  -> do
-          pid <- remote url "metaWeblog.newPost" blogid user password
+          pid <- remote url "metaWeblog.newPost" blogid user pwd
                    (mkPost title html categories tags page) publish
           putStrLn $ "Post ID: " ++ pid
         Just pid -> do
-          success <- remote url "metaWeblog.editPost" pid user password
+          success <- remote url "metaWeblog.editPost" pid user pwd
                        (mkPost title html categories tags page) publish
           unless success $ putStrLn "update failed!"
 

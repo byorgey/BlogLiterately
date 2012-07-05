@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -27,10 +28,12 @@ module Text.BlogLiterately.Run
       blogLiterately
     , blogLiteratelyWith
     , blogLiteratelyCustom
+
     ) where
 
-import qualified System.IO.UTF8 as U ( readFile )
 import           System.Console.CmdArgs ( cmdArgs)
+import           System.IO              ( hFlush, stdout )
+import qualified System.IO.UTF8 as U    ( readFile )
 
 import Text.BlogLiterately.Highlight
 import Text.BlogLiterately.Options
@@ -53,10 +56,24 @@ blogLiteratelyWith ts = blogLiteratelyCustom (standardTransforms ++ ts)
 blogLiteratelyCustom :: [Transform] -> IO ()
 blogLiteratelyCustom ts = do
     bl <- cmdArgs blOpts
-    prefs <- getStylePrefs (style bl)
-    let hsHighlight' = case hsHighlight bl of
+    let (BlogLiterately{..}) = bl
+
+    prefs <- getStylePrefs style
+    let hsHighlight' = case hsHighlight of
             HsColourInline _ -> HsColourInline prefs
-            _                -> hsHighlight bl
+            _                -> hsHighlight
         bl' = bl { hsHighlight = hsHighlight' }
-    html <- xformDoc bl' ts =<< U.readFile (file bl)
-    postIt bl html
+
+    pwd <- case (blog, password) of
+      (Just _, Nothing) -> passwordPrompt
+      _                 -> return password
+    let bl'' = bl' { password = pwd }
+
+    html <- xformDoc bl'' ts =<< U.readFile file
+    postIt bl'' html
+
+passwordPrompt :: IO (Maybe String)
+passwordPrompt = do
+  putStr "Password: " >> hFlush stdout
+  pwd <- getLine
+  return $ Just pwd

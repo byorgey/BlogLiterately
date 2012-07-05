@@ -37,7 +37,7 @@ data BlogLiterately = BlogLiterately
                                     --   handling multiple blogs)
   , blog           :: Maybe String  -- ^ Blog xmlrpc URL
   , user           :: String        -- ^ Blog user name
-  , password       :: String        -- ^ Blog password
+  , password       :: Maybe String  -- ^ Blog password (omit to be interactively prompted)
   , title          :: String        -- ^ Post title
   , file           :: String        -- ^ File to post
   , postid         :: Maybe String  -- ^ ID of a post to update

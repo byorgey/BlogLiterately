@@ -29,6 +29,7 @@ import qualified Data.ByteString.Char8 as B
 import           Data.Char                  ( toLower )
 import           Data.Functor               ( (<$>) )
 import           Data.List                  ( isPrefixOf, intercalate )
+import           Data.Maybe                 ( fromMaybe )
 import           System.FilePath            ( takeFileName, takeExtension )
 import           System.IO
 import qualified System.IO.UTF8 as U        ( readFile )
@@ -71,7 +72,7 @@ uploadIt :: String -> FilePath -> BlogLiterately -> IO Value
 uploadIt url filePath (BlogLiterately{..}) = do
   putStrLn $ "Uploading " ++ filePath ++ "..."
   media <- mkMediaObject filePath
-  remote url "metaWeblog.newMediaObject" blogid user password media
+  remote url "metaWeblog.newMediaObject" blogid user (fromMaybe "" password) media
 
 -- | Prepare a file for upload.
 mkMediaObject :: FilePath -> IO Value
