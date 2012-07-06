@@ -179,8 +179,6 @@ There are currently a few known limitations of this feature:
 Uploading embedded images
 -------------------------
 
-Half-written text for manual:
-
 When passed the `--upload-images` option, `BlogLiterately` can take
 any images referenced locally and automatically upload them to the
 server, replacing the local references with appropriate URLs.
@@ -190,32 +188,33 @@ To include images in blog posts, use the Markdown syntax
     ![alt](URL "title")
 
 The URL determines whether the image will be uploaded. A *remote* URL
-is any beginning with `http` or a forward slash.  In all other cases
-it is assumed that the URL in fact represents a relative path on the
-local file system.  Such images, if they exist, will be uploaded to
-the server (using the `metaWeblog.newMediaObject` RPC call), and the
-local file name replaced with the URL returned by the server.
+is any beginning with `http` or a forward slash (interpreted as a URL
+relative to the server root).  In all other cases it is assumed that
+the URL in fact represents a relative path on the local file system.
+Such images, if they exist, will be uploaded to the server (using the
+`metaWeblog.newMediaObject` RPC call), and the local file name
+replaced with the URL returned by the server.
 
 A few caveats:
 
-There is no mechanism for uploading only some of the images.  So if
-you upload a post with a bunch of images but then want to change just
-one of the images, you are sort of out of luck --- either re-upload
-them all, or upload the single image manually.
+* There is no mechanism for uploading only some of the images.  So if
+  you upload a post with a bunch of images but then want to change just
+  one of the images, you are sort of out of luck --- either re-upload
+  them all, or upload the single image manually.
 
-Also, the `newMediaObject` call has an optional `replace` parameter, but
-`BlogLiterately` does not use it, since it's too dangerous: if
-`replace` is set and you happen to use the same file name as some
-other image file that already exists on your blog, the old image would
-be deleted.  However, this means that if you upload an image multiple
-times you will get multiple copies on your blog.
+* Also, the `newMediaObject` call has an optional `replace` parameter, but
+  `BlogLiterately` does not use it, since it's too dangerous: if
+  `replace` is set and you happen to use the same file name as some
+  other image file that already exists on your blog, the old image would
+  be deleted.  However, this means that if you upload an image multiple
+  times you will get multiple copies on your blog.
 
-As a consequence of the above, best practice is probably to write your
-post while doing a combination of previewing locally to see the post
-with images and uploading without the `--upload-images` flag to see
-what the post looks like on your blog (except with a bunch of broken
-images).  Once you're confident everything looks good, do a final
-upload with `--upload-images` set.
+* As a consequence of the above, best practice is probably to write your
+  post while doing a combination of previewing locally to see the post
+  with images and uploading without the `--upload-images` flag to see
+  what the post looks like on your blog (except with a bunch of broken
+  images).  Once you're confident everything looks good, do a final
+  upload with `--upload-images` set.
 
 Command-line options
 --------------------
@@ -237,6 +236,7 @@ above background:
          --other-kate         highlight other code with highlighting-kate
       -w --wplatex            reformat inline LaTeX the way WordPress expects
       -g --ghci               run [ghci] blocks through ghci and include output
+         --upload-images      upload local images
          --category=ITEM      post category (can specify more than one)
          --tag=ITEM           tag (can specify more than one)
          --blogid=ID          Blog specific identifier
@@ -247,6 +247,7 @@ above background:
          --postid=ID          Post to replace (if any)
          --page               create a "page" instead of a post (WordPress only)
          --publish            publish post (otherwise it's uploaded as a draft)
+      -x --xtra=ITEM          extension arguments, for use with custom extensions
       -? --help               Display help message
       -V --version            Print version information
 
@@ -265,14 +266,20 @@ be something like
     BlogLiterately --blog http://blogurl.example.com/xmlrpc.php \
         --user myname --password mypasswd --title "Sample" Sample.lhs
 
-(which creates a new post).  If, for example, the post id of that post
-(which `BlogLiterately` prints when it uploads a new post) is '37', then
-to update the post, the command would be:
+(which creates a new post).  You can also omit the `--password` field,
+in which case `BlogLiterately` will prompt you for your password.
+
+If the post id of that post (which `BlogLiterately` prints when it
+uploads a new post) is '37', then to update the post, the command
+would be something like
 
     BlogLiterately --postid 37 --blog http://blogurl.example.com/xmlrpc.php \
         --user myname --password mypasswd --title "Sample" Sample.lhs
 
-and the post will be updated with the new text.
+and the post will be updated with the new text.  In both cases the
+post is uploaded as a draft.  To publish the post, you can pass the
+`--publish` option (or, of course, you can flip the publish bit
+manually on the server).
 
 Getting Help
 ------------
