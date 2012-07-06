@@ -38,12 +38,14 @@ module Text.BlogLiterately.Ghci
 import Control.Arrow              ( first)
 import Control.Monad.IO.Class     ( liftIO )
 import Control.Monad.Trans.Reader ( ReaderT, runReaderT, ask )
+import Data.Char                  ( isSpace )
 import Data.Functor               ( (<$>) )
 import Data.List                  ( isPrefixOf, intercalate )
 import System.IO
 import System.Process             ( ProcessHandle, waitForProcess
                                   , runInteractiveCommand )
 
+import Data.List.Split
 import Text.Pandoc                ( Pandoc, Block(CodeBlock), bottomUpM )
 
 import Text.BlogLiterately.Block  ( unTag )
@@ -52,11 +54,20 @@ import Text.BlogLiterately.Block  ( unTag )
 --   handle.
 type ProcessInfo = (Handle, Handle, Handle, ProcessHandle)
 
+-- | An input to ghci consists of an expression/command, possibly
+--   paired with an expected output.
 data GhciInput  = GhciInput { expr :: String, expected :: Maybe String }
-data GhciOutput = OK String | Unexpected String -- ^ Actual output
-                                         String -- ^ Expected output
+  deriving Show
 
+-- | An output from ghci is either a correct output, or an incorrect
+--   (unexpected) output paired with the expected output.
+data GhciOutput = OK String
+                | Unexpected String String
+  deriving Show
+
+-- | A @GhciLine@ is a @GhciInput@ paired with its corresponding @GhciOutput@.
 data GhciLine = GhciLine GhciInput GhciOutput
+  deriving Show
 
 -- | Evaluate an expression using an external @ghci@ process.
 ghciEval :: GhciInput -> ReaderT ProcessInfo IO GhciOutput
@@ -69,11 +80,12 @@ ghciEval (GhciInput expr expected) =  do
     hPutStr pin script
     hFlush pin
     extract' pout
+  let out' = strip out
   case expected of
-    Nothing -> return $ OK out
+    Nothing -> return $ OK out'
     Just exp
-      | out == exp = return $ OK out
-      | otherwise  = return $ Unexpected out exp
+      | out' == exp -> return $ OK out'
+      | otherwise   -> return $ Unexpected out' exp
 
 -- | Start an external ghci process, run a computation with access to
 --   it, and finally stop the process.
@@ -144,6 +156,18 @@ breaks p as@(a : as')
 --   @Pandoc@ document, @formatInlineGhci@ finds any @[ghci]@ blocks
 --   in it, runs them through @ghci@, and formats the results as an
 --   interactive @ghci@ session.
+--
+--   Lines beginning in the first column of the block are interpreted
+--   as inputs.  Lines indented by one or more space are interpreted
+--   as /expected outputs/.  Consecutive indented lines are
+--   interpreted as one multi-line expected output, with a number of
+--   spaces removed from the beginning of each line equal to the
+--   number of spaces at the start of the first indented line.
+--
+--   If the output for a given input is the same as the expected
+--   output (or if no expected output is given), the result is typeset
+--   normally.  If the actual and expected outputs differ, the actual
+--   output is typeset first in red, then the expected output in blue.
 formatInlineGhci :: FilePath -> Pandoc -> IO Pandoc
 formatInlineGhci f = withGhciProcess f . bottomUpM formatInlineGhci'
   where
@@ -160,7 +184,44 @@ formatInlineGhci f = withGhciProcess f . bottomUpM formatInlineGhci'
 
     formatInlineGhci' b = return b
 
-    parseGhciInputs = undefined  -- XXX
+parseGhciInputs :: String -> [GhciInput]
+parseGhciInputs = map mkGhciInput
+                . split
+                  ( dropInitBlank
+                  . dropFinalBlank
+                  . keepDelimsL
+                  $ whenElt (not . (" " `isPrefixOf`))
+                  )
+                . lines
 
-    formatGhciResult (input, output)
-      = "<span style=\"color: gray;\">ghci&gt;</span> " ++ input ++ (unlines . map ("  "++) . lines) output  -- XXX this should be configurable!
+mkGhciInput :: [String] -> GhciInput
+mkGhciInput [i]     = GhciInput i Nothing
+mkGhciInput (i:exp) = GhciInput i (Just . unlines' . unindent $ exp)
+
+unlines' :: [String] -> String
+unlines' = intercalate "\n"
+
+strip :: String -> String
+strip = f . f
+  where f = dropWhile isSpace . reverse
+
+unindent :: [String] -> [String]
+unindent (x:xs) = map (drop indentAmt) (x:xs)
+  where indentAmt = length . takeWhile (==' ') $ x
+
+indent :: Int -> String -> String
+indent n = unlines' . map (replicate n ' '++) . lines
+
+colored color txt = "<span style=\"color: " ++ color ++ ";\">" ++ txt ++ "</span>"
+coloredBlock color = unlines' . map (colored color) . lines
+
+ghciPrompt = colored "gray" "ghci&gt; "
+
+formatGhciResult (GhciLine (GhciInput input _) (OK output))
+  = ghciPrompt ++ input ++ "\n" ++ indent 2 output ++ "\n"
+formatGhciResult (GhciLine (GhciInput input _) (Unexpected output exp))
+  = ghciPrompt ++ input ++ "\n" ++ indent 2 (coloredBlock "red" output)
+                        ++ "\n" ++ indent 2 (coloredBlock "blue" exp)
+                        ++ "\n"
+
+    -- XXX the styles above should be configurable...
