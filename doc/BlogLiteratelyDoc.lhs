@@ -157,6 +157,34 @@ Now, given the input
     txt <- readFile "BlogLiteratelyDoc.lhs"
     length txt
 
+Additionally, lines indented by one or more space are interpreted as
+*expected outputs* instead of inputs.  Consecutive indented lines are
+interpreted as one multi-line expected output, with a number of spaces
+removed from the beginning of each line equal to the number of spaces
+at the start of the first indented line.
+
+If the output for a given input is the same as the expected output (or
+if no expected output is given), the result is typeset normally.  If
+the actual and expected outputs differ, the actual output is typeset
+first in red, then the expected output in blue.  For example,
+
+    [other]
+        [ghci]
+        reverse "kayak"
+        7+18
+          25
+        hailstone 15
+          107834
+
+produces
+
+    [ghci]
+    reverse "kayak"
+    7+18
+      25
+    hailstone 15
+      107834
+
 There are currently a few known limitations of this feature:
 
 * The code for interfacing with `ghci` is not very robust.  In
@@ -173,7 +201,7 @@ There are currently a few known limitations of this feature:
 
 * Due to the very hacky way that `ghci` interaction is implemented,
   the usual `it` variable bound to the result of the previous expression
-  is not available (rather, it *is* available, but is always equal to
+  is not available (rather, it *is* available... but is always equal to
   `()`).
 
 Uploading embedded images
@@ -185,7 +213,7 @@ server, replacing the local references with appropriate URLs.
 
 To include images in blog posts, use the Markdown syntax
 
-    ![alt](URL "title")
+    ![alt text](URL "title")
 
 The URL determines whether the image will be uploaded. A *remote* URL
 is any beginning with `http` or a forward slash (interpreted as a URL
@@ -199,8 +227,8 @@ A few caveats:
 
 * There is no mechanism for uploading only some of the images.  So if
   you upload a post with a bunch of images but then want to change just
-  one of the images, you are sort of out of luck --- either re-upload
-  them all, or upload the single image manually.
+  one of the images, you must either re-upload them all, or upload the
+  single image manually.
 
 * Also, the `newMediaObject` call has an optional `replace` parameter, but
   `BlogLiterately` does not use it, since it's too dangerous: if
@@ -214,7 +242,7 @@ A few caveats:
   with images and uploading without the `--upload-images` flag to see
   what the post looks like on your blog (except with a bunch of broken
   images).  Once you're confident everything looks good, do a final
-  upload with `--upload-images` set.
+  upload with `--upload-images` (and perhaps `--publish`) set.
 
 Command-line options
 --------------------
