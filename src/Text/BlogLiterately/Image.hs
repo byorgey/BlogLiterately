@@ -30,6 +30,7 @@ import           Data.Char                  ( toLower )
 import           Data.Functor               ( (<$>) )
 import           Data.List                  ( isPrefixOf, intercalate )
 import           Data.Maybe                 ( fromMaybe )
+import           System.Directory           ( doesFileExist )
 import           System.FilePath            ( takeFileName, takeExtension )
 import           System.IO
 import qualified System.IO.UTF8 as U        ( readFile )
@@ -55,7 +56,7 @@ uploadAllImages bl@(BlogLiterately{..}) =
       | isLocal imgUrl = do
           res <- uploadIt xmlrpc imgUrl bl
           case res of
-            ValueStruct (lookup "url" -> Just (ValueString newUrl)) ->
+            Just (ValueStruct (lookup "url" -> Just (ValueString newUrl))) ->
               return $ Image altText (newUrl, imgTitle)
             _ -> do
               putStrLn $ "Warning: upload of " ++ imgUrl ++ " failed."
@@ -68,21 +69,30 @@ uploadAllImages bl@(BlogLiterately{..}) =
 
 -- | Upload a file using the @metaWeblog.newMediaObject@ XML-RPC method
 --   call.
-uploadIt :: String -> FilePath -> BlogLiterately -> IO Value
+uploadIt :: String -> FilePath -> BlogLiterately -> IO (Maybe Value)
 uploadIt url filePath (BlogLiterately{..}) = do
   putStrLn $ "Uploading " ++ filePath ++ "..."
-  media <- mkMediaObject filePath
-  remote url "metaWeblog.newMediaObject" blogid user (fromMaybe "" password) media
+  mmedia <- mkMediaObject filePath
+  case mmedia of
+    Nothing -> do
+      putStrLn $ "File not found: " ++ filePath
+      return Nothing
+    Just media ->
+      Just <$> remote url "metaWeblog.newMediaObject" blogid user (fromMaybe "" password) media
 
 -- | Prepare a file for upload.
-mkMediaObject :: FilePath -> IO Value
+mkMediaObject :: FilePath -> IO (Maybe Value)
 mkMediaObject filePath = do
-  bits <- B.unpack <$> B.readFile filePath
-  return $ ValueStruct
-    [ ("name", toValue fileName)
-    , ("type", toValue fileType)
-    , ("bits", ValueBase64 bits)
-    ]
+  exists <- doesFileExist filePath
+  if not exists
+    then return Nothing
+    else do
+      bits <- B.unpack <$> B.readFile filePath
+      return . Just $ ValueStruct
+        [ ("name", toValue fileName)
+        , ("type", toValue fileType)
+        , ("bits", ValueBase64 bits)
+        ]
   where
     fileName = takeFileName filePath
     fileType = case (map toLower . drop 1 . takeExtension) fileName of

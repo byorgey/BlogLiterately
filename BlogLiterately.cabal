@@ -49,6 +49,7 @@ Library
   Build-Depends:   base >= 4.0 && < 4.6,
                    process,
                    filepath,
+                   directory,
                    bytestring,
                    split >= 0.1.4 && < 0.2,
                    utf8-string >= 0.3 && < 0.4,
