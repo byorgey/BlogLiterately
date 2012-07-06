@@ -87,7 +87,7 @@ mkMediaObject filePath = do
   if not exists
     then return Nothing
     else do
-      bits <- B.unpack <$> B.readFile filePath
+      bits <- B.readFile filePath
       return . Just $ ValueStruct
         [ ("name", toValue fileName)
         , ("type", toValue fileType)
