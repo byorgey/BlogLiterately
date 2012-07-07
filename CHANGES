@@ -1,6 +1,15 @@
-trunk:
+0.5: 7 July 2012
 
-  * bump HaXml upper bound
+  * expose internals as a library, and create framework for adding
+    custom transformations to the pipeline
+
+  * image uploads
+
+  * ability to specify expected outputs in ghci blocks
+
+  * prompt for password if not provided
+
+  * bump HaXml upper bound to allow 1.23.*
 
 0.4: 2 July 2012
 
