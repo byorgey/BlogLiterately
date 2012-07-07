@@ -71,14 +71,16 @@ uploadAllImages bl@(BlogLiterately{..}) =
 --   call.
 uploadIt :: String -> FilePath -> BlogLiterately -> IO (Maybe Value)
 uploadIt url filePath (BlogLiterately{..}) = do
-  putStrLn $ "Uploading " ++ filePath ++ "..."
+  putStr $ "Uploading " ++ filePath ++ "..."
   mmedia <- mkMediaObject filePath
   case mmedia of
     Nothing -> do
-      putStrLn $ "File not found: " ++ filePath
+      putStrLn $ "\nFile not found: " ++ filePath
       return Nothing
-    Just media ->
-      Just <$> remote url "metaWeblog.newMediaObject" blogid user (fromMaybe "" password) media
+    Just media -> do
+      val <- remote url "metaWeblog.newMediaObject" blogid user (fromMaybe "" password) media
+      putStrLn "done."
+      return $ Just val
 
 -- | Prepare a file for upload.
 mkMediaObject :: FilePath -> IO (Maybe Value)
