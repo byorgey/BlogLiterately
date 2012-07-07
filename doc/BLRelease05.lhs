@@ -11,7 +11,7 @@ d'awww.
 
 ([My previous
 post](http://byorgey.wordpress.com/2012/07/07/new-haxr-release/)
-explains what the problem and solution was with image uploads.)
+explains the problem and solution with image uploads.)
 
 It also allows you to specify *expected outputs* in a `ghci` session
 (a feature [suggested by Dan
@@ -45,7 +45,8 @@ Dan).
 Finally, one of the coolest new features (in my opinion) is that the
 internals are now [exposed as a
 library](http://hackage.haskell.org/package/BlogLiterately), and in
-particular you can [easily add your own custom transformation passes](XXX link to Run)
+particular you can [easily add your own custom transformation
+passes](http://hackage.haskell.org/packages/archive/BlogLiterately/0.5/doc/html/Text-BlogLiterately-Run.html)
 (of type `Pandoc -> IO Pandoc`) to the existing ones.  So, for
 example, you could do something particular with your own specially
 tagged blocks (like `[ghci]` blocks), or wrap images in some fancy
