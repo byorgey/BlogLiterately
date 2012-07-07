@@ -244,6 +244,14 @@ A few caveats:
   images).  Once you're confident everything looks good, do a final
   upload with `--upload-images` (and perhaps `--publish`) set.
 
+Customization
+-------------
+
+It is possible to create your own variants of `BlogLiterately` which
+include custom processing steps.  See the [`Text.BlogLiterately.Run`
+module](http://hackage.haskell.org/packages/archive/BlogLiterately/latest/doc/html/Text-BlogLiterately-Run.html)
+to get started.
+
 Command-line options
 --------------------
 
