@@ -71,6 +71,7 @@ Library
                    Text.BlogLiterately.Post
                    Text.BlogLiterately.Run
                    Text.BlogLiterately.Transform
+  Other-modules:   Paths_BlogLiterately
   hs-source-dirs:  src
 
 Executable BlogLiterately

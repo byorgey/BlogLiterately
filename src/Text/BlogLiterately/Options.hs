@@ -17,6 +17,9 @@ module Text.BlogLiterately.Options
     )
     where
 
+import Paths_BlogLiterately (version)
+import Data.Version
+
 import System.Console.CmdArgs
 
 import Text.BlogLiterately.Highlight
@@ -104,5 +107,5 @@ blOpts = BlogLiterately
      , file     = def &= argPos 0 &= typ "FILE"
   }
   &= program "BlogLiterately"
-  &= summary ("BlogLierately v0.4, (c) Robert Greayer 2008-2010, Brent Yorgey 2012\n" ++
+  &= summary ("BlogLierately v" ++ showVersion version ++ ", (c) Robert Greayer 2008-2010, Brent Yorgey 2012\n" ++
               "This program comes with ABSOLUTELY NO WARRANTY\n")
