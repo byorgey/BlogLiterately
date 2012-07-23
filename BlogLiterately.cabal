@@ -26,7 +26,7 @@ Description:    Write blog posts in Markdown format, then use BlogLiterately
                 But if pandoc is already installed against
                 blaze-html-0.4 you may need to reinstall it with the
                 blaze_html_0_5 flag explicitly set.
-Cabal-Version:  >= 1.8
+Cabal-Version:  >= 1.10
 Homepage:       http://byorgey.wordpress.com/blogliterately/
 License:        GPL
 License-file:   LICENSE
@@ -73,6 +73,13 @@ Library
                    Text.BlogLiterately.Transform
   Other-modules:   Paths_BlogLiterately
   hs-source-dirs:  src
+  Other-extensions: DeriveDataTypeable
+                    FlexibleContexts
+                    PatternGuards
+                    RecordWildCards
+                    TypeOperators
+                    ViewPatterns
+  Default-language: Haskell2010
 
 Executable BlogLiterately
   Build-Depends:   base,
@@ -82,3 +89,4 @@ Executable BlogLiterately
   Main-Is:        BlogLiterately.hs
   hs-source-dirs: main
   Ghc-Options:    -fwarn-unused-imports
+  Default-language: Haskell2010
