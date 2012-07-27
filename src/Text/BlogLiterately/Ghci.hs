@@ -218,7 +218,10 @@ coloredBlock color = unlines' . map (colored color) . lines
 ghciPrompt = colored "gray" "ghci&gt; "
 
 formatGhciResult (GhciLine (GhciInput input _) (OK output))
-  = ghciPrompt ++ input ++ "\n" ++ indent 2 output ++ "\n"
+  | all isSpace output
+    = ghciPrompt ++ input
+  | otherwise
+    = ghciPrompt ++ input ++ "\n" ++ indent 2 output ++ "\n"
 formatGhciResult (GhciLine (GhciInput input _) (Unexpected output exp))
   = ghciPrompt ++ input ++ "\n" ++ indent 2 (coloredBlock "red" output)
                         ++ "\n" ++ indent 2 (coloredBlock "blue" exp)
