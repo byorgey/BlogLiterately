@@ -219,12 +219,19 @@ ghciPrompt = colored "gray" "ghci&gt; "
 
 formatGhciResult (GhciLine (GhciInput input _) (OK output))
   | all isSpace output
-    = ghciPrompt ++ input
+    = ghciPrompt ++ esc input
   | otherwise
-    = ghciPrompt ++ input ++ "\n" ++ indent 2 output ++ "\n"
+    = ghciPrompt ++ esc input ++ "\n" ++ indent 2 (esc output) ++ "\n"
 formatGhciResult (GhciLine (GhciInput input _) (Unexpected output exp))
-  = ghciPrompt ++ input ++ "\n" ++ indent 2 (coloredBlock "red" output)
-                        ++ "\n" ++ indent 2 (coloredBlock "blue" exp)
-                        ++ "\n"
+  = ghciPrompt ++ esc input ++ "\n" ++ indent 2 (coloredBlock "red" (esc output))
+                            ++ "\n" ++ indent 2 (coloredBlock "blue" (esc exp))
+                            ++ "\n"
 
     -- XXX the styles above should be configurable...
+
+esc :: String -> String
+esc = concatMap escapeOne
+  where
+    escapeOne '<' = "&lt;"
+    escapeOne '>' = "&gt;"
+    escapeOne  c  = [c]

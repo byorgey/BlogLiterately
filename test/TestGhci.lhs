@@ -12,3 +12,5 @@ This is to test the ghci interaction.
     6
     :m +Data.List
     7
+    let (<-<) = (.)
+    :t (<-<)
