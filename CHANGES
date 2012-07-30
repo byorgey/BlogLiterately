@@ -1,3 +1,20 @@
+0.5.1: 30 July 2012
+
+  * Escape < and > characters in ghci output
+
+  * Supress vertical whitespace following ghci commands that produce
+    no output
+
+  * add centerImagesXF transform (disabled by default)
+
+  * create bug tracker and add Bug-reports: field to .cabal file
+
+  * re-export Text.BlogLiterately.Run from Text.BlogLiterately
+
+  * improved documentation
+
+  * fix output of --version
+
 0.5: 7 July 2012
 
   * expose internals as a library, and create framework for adding
