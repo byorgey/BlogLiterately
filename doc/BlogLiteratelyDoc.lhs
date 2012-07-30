@@ -322,7 +322,8 @@ Getting Help
 
 For questions, support, feature suggestions, etc., feel free to
 contact me (Brent Yorgey): `byorgey` on IRC (freenode), or `byorgey`
-at gmail.
+at gmail.  There is also a [bug tracker][] where you can file bugs and
+feature requests.
 
 [`BlogLiterately`]: http://hackage.haskell.org/package/BlogLiterately
 [markdown]: http://daringfireball.net/projects/markdown/
@@ -334,3 +335,4 @@ at gmail.
 [Hackage]: http://hackage.haskell.org/
 [MathML]: http://www.w3.org/Math/
 [MathJax]: http://www.mathjax.org/
+[bug tracker]: http://code.google.com/p/byorgey/issues/list?q=Project:BlogLiterately
