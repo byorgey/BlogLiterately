@@ -18,11 +18,18 @@ module Text.BlogLiterately.Transform
       Transform(..), runTransform, runTransforms
 
       -- * Standard transforms
+      -- $standard
+
     , wptexifyXF
     , ghciXF
     , imagesXF
     , highlightXF
     , standardTransforms
+
+      -- * Other transforms
+      -- $other
+
+    , centerImagesXF
 
       -- * Transforming documents
     , xformDoc
@@ -84,6 +91,14 @@ runTransform t bl = getTransform t bl `whenA` xfCond t bl
 runTransforms :: [Transform] -> BlogLiterately -> Kleisli IO Pandoc Pandoc
 runTransforms ts = foldr (>>>) (C.id) . T.traverse runTransform ts
 
+--------------------------------------------------
+-- Standard transforms
+--------------------------------------------------
+
+-- $standard
+-- These transforms are enabled by default in the standard
+-- BlogLiterately executable.
+
 -- | Format embedded LaTeX for WordPress (if the @wplatex@ flag is set).
 wptexifyXF :: Transform
 wptexifyXF = Transform (const (arr wpTeXify)) wplatex
@@ -107,6 +122,30 @@ highlightXF = Transform
 --   'wptexifyXF', 'ghciXF', 'imagesXF', 'highlightXF'.
 standardTransforms :: [Transform]
 standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF]
+
+--------------------------------------------------
+-- Other transforms
+--------------------------------------------------
+
+-- $other
+-- These transforms are not enabled by default.  To use them, see
+-- "Text.BlogLiterately.Run".
+
+-- | Center any images which occur in a paragraph by themselves.
+--   Inline images are not affected.
+centerImagesXF :: Transform
+centerImagesXF = Transform (const . arr $ centerImages) (const True)
+
+centerImages :: Pandoc -> Pandoc
+centerImages = bottomUp centerImage
+  where
+    centerImage :: [Block] -> [Block]
+    centerImage (img@(Para [Image altText (imgUrl, imgTitle)]) : bs) =
+        RawBlock "html" "<div style=\"text-align: center;\">"
+      : img
+      : RawBlock "html" "</div>"
+      : bs
+    centerImage bs = bs
 
 -- | Transform a complete input document string to an HTML output
 --   string, given a list of transformation passes.
