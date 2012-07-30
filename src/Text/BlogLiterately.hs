@@ -19,6 +19,7 @@ module Text.BlogLiterately
     , module Text.BlogLiterately.LaTeX
     , module Text.BlogLiterately.Options
     , module Text.BlogLiterately.Post
+    , module Text.BlogLiterately.Run
     , module Text.BlogLiterately.Transform
     ) where
 
@@ -29,4 +30,5 @@ import Text.BlogLiterately.Image
 import Text.BlogLiterately.LaTeX
 import Text.BlogLiterately.Options
 import Text.BlogLiterately.Post
+import Text.BlogLiterately.Run
 import Text.BlogLiterately.Transform

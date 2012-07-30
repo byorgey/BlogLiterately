@@ -15,6 +15,8 @@
 -- 'blogLiteratelyWith' or 'blogLiteratelyCustom'.  For example:
 --
 -- > module Main where
+-- > import Text.BlogLiterately
+-- >
 -- > myCustomXF = Transform ...
 -- > main = blogLiteratelyWith [myCustomXF]
 --
