@@ -53,6 +53,7 @@ Library
                    filepath,
                    directory,
                    bytestring,
+                   containers,
                    split >= 0.1.4 && < 0.2,
                    utf8-string >= 0.3 && < 0.4,
                    transformers >= 0.3 && < 0.4,

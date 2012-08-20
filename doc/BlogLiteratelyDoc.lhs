@@ -223,26 +223,26 @@ Such images, if they exist, will be uploaded to the server (using the
 `metaWeblog.newMediaObject` RPC call), and the local file name
 replaced with the URL returned by the server.
 
+Uploaded images, and their associated server URLs, will be tracked in
+a file called `.BlogLiterately-uploaded-images`.  A given image will
+only be uploaded once, even across multiple runs of @BlogLiterately@.
+In practice, this means that the @--upload-images@ option can be left
+on while uploading multiple draft versions of a post, and only new
+images will be uploaded each time.  Note, however, that images are
+tracked by *file name*, not contents, so modifications to an image
+(while leaving the name the same) will be ignored.  As a workaround,
+delete @.BlogLiterately-uploaded-images@ (or just the entry for the
+modified image), or give the modified image a different name.
+
 A few caveats:
 
-* There is no mechanism for uploading only some of the images.  So if
-  you upload a post with a bunch of images but then want to change just
-  one of the images, you must either re-upload them all, or upload the
-  single image manually.
-
-* Also, the `newMediaObject` call has an optional `replace` parameter, but
+* The `newMediaObject` call has an optional `replace` parameter, but
   `BlogLiterately` does not use it, since it's too dangerous: if
   `replace` is set and you happen to use the same file name as some
   other image file that already exists on your blog, the old image would
   be deleted.  However, this means that if you upload an image multiple
-  times you will get multiple copies on your blog.
-
-* As a consequence of the above, best practice is probably to write your
-  post while doing a combination of previewing locally to see the post
-  with images and uploading without the `--upload-images` flag to see
-  what the post looks like on your blog (except with a bunch of broken
-  images).  Once you're confident everything looks good, do a final
-  upload with `--upload-images` (and perhaps `--publish`) set.
+  times you will get multiple copies on your blog.  (Although this is mitigated
+  somewhat by the mechanism to cache uploaded image URLs.)
 
 Customization
 -------------
