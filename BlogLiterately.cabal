@@ -1,5 +1,5 @@
 Name:           BlogLiterately
-Version:        0.5.1
+Version:        0.5.2
 Synopsis:       A tool for posting Haskelly articles to blogs
 Description:    Write blog posts in Markdown format, then use BlogLiterately
                 to do syntax highlighting, format ghci sessions, and upload
@@ -48,7 +48,7 @@ Source-repository head
   location: http://patch-tag.com/r/byorgey/BlogLiterately
 
 Library
-  Build-Depends:   base >= 4.0 && < 4.6,
+  Build-Depends:   base >= 4.0 && < 4.7,
                    process,
                    filepath,
                    directory,

@@ -1,3 +1,11 @@
+0.5.2: 20 August 2012
+
+  * improvement to behavior of --upload-images flag: cache uploaded
+    image server URLs, even across multiple runs, to avoid uploading
+    the same image multiple times
+
+  * bump base upper bound and test with GHC-7.6 / base-4.6
+
 0.5.1: 30 July 2012
 
   * Escape < and > characters in ghci output
