@@ -4,7 +4,9 @@
     image server URLs, even across multiple runs, to avoid uploading
     the same image multiple times
 
-  * bump base upper bound and test with GHC-7.6 / base-4.6
+  * bump dep upper bounds:
+    - split to < 0.3
+    - cmdargs to < 0.11
 
 0.5.1: 30 July 2012
 
