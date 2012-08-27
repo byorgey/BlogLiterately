@@ -225,13 +225,13 @@ replaced with the URL returned by the server.
 
 Uploaded images, and their associated server URLs, will be tracked in
 a file called `.BlogLiterately-uploaded-images`.  A given image will
-only be uploaded once, even across multiple runs of @BlogLiterately@.
-In practice, this means that the @--upload-images@ option can be left
+only be uploaded once, even across multiple runs of `BlogLiterately`.
+In practice, this means that the `--upload-images` option can be left
 on while uploading multiple draft versions of a post, and only new
 images will be uploaded each time.  Note, however, that images are
 tracked by *file name*, not contents, so modifications to an image
 (while leaving the name the same) will be ignored.  As a workaround,
-delete @.BlogLiterately-uploaded-images@ (or just the entry for the
+delete `.BlogLiterately-uploaded-images` (or just the entry for the
 modified image), or give the modified image a different name.
 
 A few caveats:
