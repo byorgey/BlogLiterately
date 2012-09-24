@@ -1,3 +1,15 @@
+0.5.XXX: XXX
+
+  * Using highlighting-kate to highlight non-Haskell code was already
+    the default; make this more clear.
+
+    The --other-kate option is no more; now there are two options
+
+      --kate
+      --no-kate
+
+    with --kate the default.
+
 0.5.2.1: 19 September 2012
 
   * bump base upper bound to <4.7
