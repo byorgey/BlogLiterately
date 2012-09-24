@@ -30,3 +30,7 @@ Here's an image:
 ![A dog.](images/puppy.jpg "A puppy for you")
 
 I wonder why deleting a line only goes to the second column.
+
+    [python]
+    for x in a:
+        print x, len(x)

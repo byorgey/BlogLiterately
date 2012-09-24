@@ -78,8 +78,12 @@ blOpts = BlogLiterately
      , otherHighlight = enum
        [ True
          &= explicit
-         &= name "other-kate"
-         &= help "highlight other code with highlighting-kate"
+         &= name "kate"
+         &= help "highlight non-Haskell code with highlighting-kate (default)"
+       , False
+         &= explicit
+         &= name "no-kate"
+         &= help "don't highlight non-Haskell code"
        ]
      , wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
      , ghci    = def &= help "run [ghci] blocks through ghci and include output"
