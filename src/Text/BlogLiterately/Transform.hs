@@ -162,7 +162,9 @@ xformDoc bl xforms = runKleisli $
     writeOpts = defaultWriterOptions
                 { writerReferenceLinks = True }
     parseOpts = defaultParserState
-                { stateLiterateHaskell = True }
+                { stateLiterateHaskell = True
+                , stateSmart           = True
+                }
 
 -- | Turn @CRLF@ pairs into a single @LF@.  This is necessary since
 --   'readMarkdown' is picky about line endings.
