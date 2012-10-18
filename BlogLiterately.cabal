@@ -41,11 +41,11 @@ Extra-Source-Files: CHANGES
                     doc/BlogLiteratelyDoc.lhs
                     style/*.css
                     style/hs-style
-Bug-reports:    http://code.google.com/p/byorgey/issues/list?q=Project:BlogLiterately
+Bug-reports:    http://hub.darcs.net/byorgey/BlogLiterately/issues
 
 Source-repository head
   type:     darcs
-  location: http://patch-tag.com/r/byorgey/BlogLiterately
+  location: http://hub.darcs.net/byorgey/BlogLiterately
 
 Library
   Build-Depends:   base >= 4.0 && < 4.7,
