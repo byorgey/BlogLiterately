@@ -1,12 +1,14 @@
-[`BlogLiterately`][] is a tool for uploading blog posts to servers that
-support the [MetaWeblog API][metaweblog] (such as [WordPress][]-based
-blogs and many others).  Blog posts to be published via
-`BlogLiterately` are written in [markdown][] format, with extensions
-supported by [pandoc][].  Posts may be actual "bird-style" literate
-Haskell files, with commentary in markdown.  Though `BlogLiterately`
-offers special support for literate Haskell in particular, it is also
-useful for writing posts including code written in other languages, or
-even no code at all.
+[`BlogLiterately`][] is a tool for uploading blog posts to servers
+that support the [MetaWeblog API][metaweblog] (such as
+[WordPress][]-based blogs and many others).  Blog posts to be
+published via `BlogLiterately` are written in [markdown][] format,
+with
+[extensions supported](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
+by [pandoc][].  Posts may be actual "bird-style" literate Haskell
+files, with commentary in markdown.  Though `BlogLiterately` offers
+special support for literate Haskell in particular, it is also useful
+for writing posts including code written in other languages, or even
+no code at all.
 
 `BlogLiterately` includes support for syntax highlighting, $\LaTeX$
 (including special support for WordPress blogs), and automatic
