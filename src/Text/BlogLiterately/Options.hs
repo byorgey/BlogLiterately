@@ -31,6 +31,7 @@ data BlogLiterately = BlogLiterately
   , otherHighlight :: Bool          -- ^ Use highlighting-kate for
                                     --   non-Haskell?
   , wplatex        :: Bool          -- ^ Format LaTeX for WordPress?
+  , math           :: String        -- ^ Indicate how to format Math
   , ghci           :: Bool          -- ^ Automatically process ghci sessions?
   , uploadImages   :: Bool          -- ^ Automatically upload images?
   , categories     :: [String]      -- ^ Categories for the post
@@ -86,6 +87,7 @@ blOpts = BlogLiterately
          &= help "don't highlight non-Haskell code"
        ]
      , wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
+     , math    = def &= help "how to layout math, where --math=<pandoc-option>[=URL]"
      , ghci    = def &= help "run [ghci] blocks through ghci and include output"
      , uploadImages = def &= name "upload-images" &= explicit &= help "upload local images"
      , page    = def &= help "create a \"page\" instead of a post (WordPress only)"

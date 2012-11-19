@@ -43,6 +43,7 @@ import           Control.Arrow              ( first, (>>>), arr
 import qualified Control.Category as C      ( Category, id )
 import qualified Data.Traversable as T
 import           Data.Bool.Extras (whenA)
+import           Data.List (isPrefixOf)
 
 import           Text.Pandoc
 import           Text.Blaze.Html.Renderer.String      ( renderHtml )
@@ -160,12 +161,35 @@ xformDoc bl xforms = runKleisli $
     >>> arr     (writeHtml writeOpts)
     >>> arr     renderHtml
   where
-    writeOpts = defaultWriterOptions
-                { writerReferenceLinks = True }
     parseOpts = defaultParserState
                 { stateLiterateHaskell = True
                 , stateSmart           = True
                 }
+    writeOpts = defaultWriterOptions
+                { writerReferenceLinks = True
+                , writerHTMLMathMethod =
+                  case math bl of
+                    ""  -> PlainMath
+                    opt -> mathOption opt }
+    mathOption opt
+      | opt `isPrefixOf` "latexmathml" ||
+        opt `isPrefixOf` "asciimathml" = LaTeXMathML (mathUrlMaybe opt)
+      | opt `isPrefixOf` "mathml"      = MathML (mathUrlMaybe opt)
+      | opt `isPrefixOf` "mimetex"     =
+          WebTeX (mathUrl "/cgi-bin/mimetex.cgi?" opt)
+      | opt `isPrefixOf` "webtex"      = WebTeX (mathUrl webTeXURL opt)
+      | opt `isPrefixOf` "jsmath"      = JsMath (mathUrlMaybe opt)
+      | opt `isPrefixOf` "mathjax"     = MathJax (mathUrl mathJaxURL opt)
+      | opt `isPrefixOf` "gladtex"     = GladTeX
+
+    webTeXURL  = "http://chart.apis.google.com/chart?cht=tx&chl="
+    mathJaxURL = "http://cdn.mathjax.org/mathjax/latest/MathJax.js"
+                 ++ "?config=TeX-AMS-MML_HTMLorMML"
+
+    urlPart = drop 1 . dropWhile (/='=')
+
+    mathUrlMaybe opt = case urlPart opt of "" -> Nothing; x -> Just x
+    mathUrl def opt  = case urlPart opt of "" -> def; x -> x
 
 -- | Turn @CRLF@ pairs into a single @LF@.  This is necessary since
 --   'readMarkdown' is picky about line endings.
