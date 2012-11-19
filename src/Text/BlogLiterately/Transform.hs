@@ -42,6 +42,7 @@ import           Control.Arrow              ( first, (>>>), arr
                                             , Kleisli(..), runKleisli )
 import qualified Control.Category as C      ( Category, id )
 import qualified Data.Traversable as T
+import           Data.Bool.Extras (whenA)
 
 import           Text.Pandoc
 import           Text.Blaze.Html.Renderer.String      ( renderHtml )
@@ -172,9 +173,3 @@ fixLineEndings :: String -> String
 fixLineEndings [] = []
 fixLineEndings ('\r':'\n':cs) = '\n':fixLineEndings cs
 fixLineEndings (c:cs) = c:fixLineEndings cs
-
--- | A useful arrow utility for running some part of a pipeline
--- conditionally.
-whenA :: C.Category (~>) => (a ~> a) -> Bool -> (a ~> a)
-whenA a p | p         = a
-          | otherwise = C.id

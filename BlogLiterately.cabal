@@ -54,6 +54,7 @@ Library
                    directory,
                    bytestring,
                    containers,
+                   bool-extras,
                    split >= 0.1.4 && < 0.3,
                    utf8-string >= 0.3 && < 0.4,
                    transformers >= 0.3 && < 0.4,
