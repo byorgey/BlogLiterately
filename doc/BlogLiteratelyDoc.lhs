@@ -95,23 +95,20 @@ paragraph) produces
 
 $$\sum_{k=0}^\infty 1/k^2.$$
 
-By default, LaTeX is processed with Pandoc, meaning that a
-certain subset of LaTeX expressions (such as those above) will be
-transformed into [MathML][], and anything Pandoc cannot parse will be
-passed through as literal LaTeX enclosed in dollar signs.
+Using the `--math` option, any
+[Pandoc math rendering method may be chosen](http://johnmacfarlane.net/pandoc/README.html#math-rendering-in-html),
+including MathML, jsMath, MathJax, and others.  Note that for some
+methods to work properly, you may need to ensure that the generated
+HTML ends up in the proper CSS or JavaScript environment. (What that
+means depends on the method used.)
 
-Blogs hosted on [wordpress.com](http://www.wordpress.com), however,
-have built-in support for LaTeX, compiling LaTeX expressions to
-embedded images on-the-fly.  Passing the `--wplatex` option to
-`BlogLiterately` causes any embedded LaTeX to be output in the format
-expected by WordPress.  Note that an extra `$latex...` won't be added
-to the beginning of LaTeX expressions which already appear to be in
-WordPress format.
-
-When working with other blogging platforms that do not directly
-support LaTeX, it might be nice for `BlogLiterately` to have some sort
-of [MathJax][] support.  This is future work; drop a note (or a
-patch!)  if you would like to see this added.
+Alternatively, blogs hosted on
+[wordpress.com](http://www.wordpress.com) have built-in
+support for LaTeX, compiling LaTeX expressions to embedded images
+on-the-fly.  Passing the `--wplatex` option to `BlogLiterately` causes
+any embedded LaTeX to be output in the format expected by WordPress.
+Note that an extra `$latex...` won't be added to the beginning of
+LaTeX expressions which already appear to be in WordPress format.
 
 `ghci` sessions
 ---------------

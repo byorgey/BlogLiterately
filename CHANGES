@@ -1,4 +1,11 @@
-0.5.XXX: XXX
+0.5.3: 19 November 2012
+
+  * New --math option for selecting pandoc math writing mode
+
+  * Run the pandoc parser in "smart" mode, which generates proper en-
+    and em-dashes, quotation marks, etc.
+
+  * More updates for GHC 7.6.1 compatibility
 
   * Using highlighting-kate to highlight non-Haskell code was already
     the default; make this more clear.
