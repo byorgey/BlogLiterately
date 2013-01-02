@@ -1,7 +1,3 @@
-Short term:
-
-  - ability to upload/replace images
-
 Longer term:
 
   - add configuration file (with versioning?)
@@ -9,13 +5,7 @@ Longer term:
   - Syntax highlighting for ghci sessions.  Will probably require some
     refactoring.
 
-  - diagrams -- at first, just have it separate.  Maybe later make a
-    plugin system for BlogLiterately that can ship out specially marked
-    blocks to external tools?
-
   - Improve ghci interaction so it returns error messages, etc.
 
   - allow specifying whether display-style LaTeX should be centered
     when using --wplatex.
-
-  - allow output using MathJax.
