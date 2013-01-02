@@ -36,7 +36,7 @@ Author:         Robert Greayer <robgreayer@yahoo.com>
 Maintainer:     Brent Yorgey <byorgey@cis.upenn.edu>
 Stability:      experimental
 Build-Type:     Simple
-Tested-With:    GHC ==7.4.1
+Tested-With:    GHC ==7.4.2, GHC ==7.6.1
 Extra-Source-Files: CHANGES
                     doc/BlogLiteratelyDoc.lhs
                     style/*.css
