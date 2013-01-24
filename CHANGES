@@ -1,3 +1,7 @@
+0.5.4: 24 January 2013
+
+  * Require pandoc 1.10.
+
 0.5.3: 19 November 2012
 
   * New --math option for selecting pandoc math writing mode
