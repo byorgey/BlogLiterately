@@ -42,11 +42,14 @@ import           Control.Arrow              ( first, (>>>), arr
                                             , Kleisli(..), runKleisli )
 import qualified Control.Category as C      ( Category, id )
 import qualified Data.Traversable as T
-import           Data.Bool.Extras (whenA)
-import           Data.List (isPrefixOf)
+import           Data.Default               ( def )
+import qualified Data.Set         as S
+import           Data.Bool.Extras           ( whenA )
+import           Data.List                  ( isPrefixOf )
 
-import           Text.Pandoc
 import           Text.Blaze.Html.Renderer.String      ( renderHtml )
+import           Text.Pandoc
+import           Text.Pandoc.Options
 
 import           Text.BlogLiterately.Ghci
 import           Text.BlogLiterately.Highlight
@@ -161,11 +164,12 @@ xformDoc bl xforms = runKleisli $
     >>> arr     (writeHtml writeOpts)
     >>> arr     renderHtml
   where
-    parseOpts = defaultParserState
-                { stateLiterateHaskell = True
-                , stateSmart           = True
+    parseOpts = def
+                { readerExtensions = Ext_literate_haskell
+                                     `S.insert` readerExtensions def
+                , readerSmart      = True
                 }
-    writeOpts = defaultWriterOptions
+    writeOpts = def
                 { writerReferenceLinks = True
                 , writerHTMLMathMethod =
                   case math bl of
