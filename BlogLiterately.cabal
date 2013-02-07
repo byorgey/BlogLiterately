@@ -44,7 +44,9 @@ Library
                    bytestring,
                    containers,
                    bool-extras,
+                   mtl,
                    split >= 0.1.4 && < 0.3,
+                   configurator >= 0.2 && < 0.3,
                    utf8-string >= 0.3 && < 0.4,
                    transformers >= 0.3 && < 0.4,
                    parsec >= 3 && < 3.2,
@@ -54,9 +56,11 @@ Library
                    cmdargs >= 0.9.5 && < 0.11,
                    haxr >= 3000.9 && < 3000.10,
                    pandoc >= 1.10 && < 1.11,
-                   data-default >= 0.5 && < 0.6
+                   data-default >= 0.5 && < 0.6,
+                   lens >= 3.8 && < 3.9
   Exposed-modules: Text.BlogLiterately
                    Text.BlogLiterately.Block
+                   Text.BlogLiterately.Flag
                    Text.BlogLiterately.Ghci
                    Text.BlogLiterately.Highlight
                    Text.BlogLiterately.Image

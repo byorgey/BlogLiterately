@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -13,6 +14,7 @@
 
 module Text.BlogLiterately.Highlight
     ( HsHighlight(..)
+    , _HsColourInline
     , colourIt
     , litify
     , StylePrefs
@@ -24,6 +26,7 @@ module Text.BlogLiterately.Highlight
     , colourisePandoc
     ) where
 
+import           Control.Lens                        ( makePrisms )
 import           Control.Monad                       ( liftM )
 import           Data.Maybe                          ( isNothing )
 import qualified System.IO.UTF8 as U                 ( readFile )
@@ -38,7 +41,12 @@ import           Text.XML.HaXml
 import           Text.XML.HaXml.Posn                 ( noPos )
 import           Text.Blaze.Html.Renderer.String     ( renderHtml )
 
+import           Text.BlogLiterately.Flag
 import           Text.BlogLiterately.Block           ( unTag )
+
+-- | Style preferences are specified as a list of mappings from class
+--   attributes to CSS style attributes.
+type StylePrefs = [(String,String)]
 
 -- | Four modes for highlighting Haskell.
 data HsHighlight =
@@ -48,6 +56,8 @@ data HsHighlight =
     | HsKate                      -- ^ Use highlighting-kate.
     | HsNoHighlight               -- ^ Do not highlight Haskell.
   deriving (Data,Typeable,Show,Eq)
+
+makePrisms ''HsHighlight
 
 {-
 
@@ -156,10 +166,6 @@ source.  Style preferences are specified as a list of name/value
 pairs:
 -}
 
--- | Style preferences are specified as a list of mappings from class
---   attributes to CSS style attributes.
-type StylePrefs = [(String,String)]
-
 -- | A default style that produces something that looks like the
 --   source listings on Hackage.
 defaultStylePrefs :: StylePrefs
@@ -184,9 +190,9 @@ defaultStylePrefs =
 -- | Read style preferences in from a file using the @Read@ instance
 --   for @StylePrefs@, or return the default style if the file name is
 --   empty.
-getStylePrefs :: FilePath -> IO StylePrefs
-getStylePrefs ""    = return defaultStylePrefs
-getStylePrefs fname = liftM read (U.readFile fname)
+getStylePrefs :: Flag FilePath -> IO StylePrefs
+getStylePrefs NoFlag       = return defaultStylePrefs
+getStylePrefs (Flag fname) = liftM read (U.readFile fname)
 
 -- | Take a @String@ of HTML produced by hscolour, and \"bake\" styles
 --   into it by replacing class attributes with appropriate style

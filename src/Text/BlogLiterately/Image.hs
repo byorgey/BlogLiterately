@@ -44,6 +44,7 @@ import           Text.Pandoc
 import           Network.XmlRpc.Client      ( remote )
 import           Network.XmlRpc.Internals   ( Value(..), toValue )
 
+import           Text.BlogLiterately.Flag
 import           Text.BlogLiterately.Options
 
 type URL = String
@@ -56,8 +57,8 @@ type URL = String
 --   @.BlogLiterately-uploaded-images@.
 uploadAllImages :: BlogLiterately -> Pandoc -> IO Pandoc
 uploadAllImages bl@(BlogLiterately{..}) p =
-  case blog of
-    Just xmlrpc -> do
+  case _blog of
+    Flag xmlrpc -> do
       uploaded <- readUploadedImages
       (p', uploaded') <- runStateT (bottomUpM (uploadOneImage xmlrpc) p) uploaded
       writeUploadedImages uploaded'
@@ -120,7 +121,11 @@ uploadIt url filePath (BlogLiterately{..}) = do
       putStrLn $ "\nFile not found: " ++ filePath
       return Nothing
     Just media -> do
-      val <- remote url "metaWeblog.newMediaObject" blogid user (fromMaybe "" password) media
+      val <- remote url "metaWeblog.newMediaObject"
+               (fromFlag "default" _blogid)
+               (fromFlag "" _user)
+               (fromFlag "" _password)
+               media
       putStrLn "done."
       return $ Just val
 

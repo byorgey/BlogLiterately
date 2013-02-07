@@ -51,6 +51,7 @@ import           Text.Blaze.Html.Renderer.String      ( renderHtml )
 import           Text.Pandoc
 import           Text.Pandoc.Options
 
+import           Text.BlogLiterately.Flag
 import           Text.BlogLiterately.Ghci
 import           Text.BlogLiterately.Highlight
 import           Text.BlogLiterately.Image
@@ -106,21 +107,21 @@ runTransforms ts = foldr (>>>) (C.id) . T.traverse runTransform ts
 
 -- | Format embedded LaTeX for WordPress (if the @wplatex@ flag is set).
 wptexifyXF :: Transform
-wptexifyXF = Transform (const (arr wpTeXify)) wplatex
+wptexifyXF = Transform (const (arr wpTeXify)) wplatex'
 
 -- | Format embedded @ghci@ sessions (if the @ghci@ flag is set).
 ghciXF :: Transform
-ghciXF = Transform (Kleisli . formatInlineGhci . file) ghci
+ghciXF = Transform (Kleisli . formatInlineGhci . file') ghci'
 
 -- | Upload embedded local images to the server (if the @uploadImages@
 --   flag is set).
 imagesXF :: Transform
-imagesXF = Transform (Kleisli . uploadAllImages) uploadImages
+imagesXF = Transform (Kleisli . uploadAllImages) uploadImages'
 
 -- | Perform syntax highlighting on code blocks.
 highlightXF :: Transform
 highlightXF = Transform
-  (\bl -> arr (colourisePandoc (hsHighlight bl) (otherHighlight bl)))
+  (\bl -> arr (colourisePandoc (hsHighlight' bl) (otherHighlight' bl)))
   (const True)
 
 -- | The standard set of transforms that are run by default:
@@ -172,7 +173,7 @@ xformDoc bl xforms = runKleisli $
     writeOpts = def
                 { writerReferenceLinks = True
                 , writerHTMLMathMethod =
-                  case math bl of
+                  case math' bl of
                     ""  -> PlainMath
                     opt -> mathOption opt }
     mathOption opt

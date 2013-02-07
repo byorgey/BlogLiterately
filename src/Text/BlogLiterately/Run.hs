@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -34,14 +35,25 @@ module Text.BlogLiterately.Run
 
     ) where
 
+import           Control.Applicative
+import           Control.Lens           ( set, use, (&), (.~), (.=), (%=), (^.) )
+import           Control.Monad.State
+import           Data.Monoid
 import           System.Console.CmdArgs ( cmdArgs)
+import           System.Directory       ( getAppUserDataDirectory, doesFileExist )
+import           System.Exit
+import           System.FilePath        ( (</>), (<.>) )
 import           System.IO              ( hFlush, stdout )
 import qualified System.IO.UTF8 as U    ( readFile )
 
-import Text.BlogLiterately.Highlight
-import Text.BlogLiterately.Options
-import Text.BlogLiterately.Post
-import Text.BlogLiterately.Transform
+import qualified Data.Configurator as Conf
+import           Data.Configurator.Types (Config)
+
+import           Text.BlogLiterately.Flag
+import           Text.BlogLiterately.Highlight
+import           Text.BlogLiterately.Options
+import           Text.BlogLiterately.Post
+import           Text.BlogLiterately.Transform
 
 -- | The default BlogLiterately application.
 blogLiterately :: IO ()
@@ -58,25 +70,62 @@ blogLiteratelyWith ts = blogLiteratelyCustom (standardTransforms ++ ts)
 --   or all of the standard transforms, etc.
 blogLiteratelyCustom :: [Transform] -> IO ()
 blogLiteratelyCustom ts = do
-    bl <- cmdArgs blOpts
-    let (BlogLiterately{..}) = bl
+    bl <- loadProfile =<< cmdArgs blOpts
 
-    prefs <- getStylePrefs style
-    let hsHighlight' = case hsHighlight of
-            HsColourInline _ -> HsColourInline prefs
-            _                -> hsHighlight
-        bl' = bl { hsHighlight = hsHighlight' }
+    flip evalStateT bl $ do
+      prefs <- (liftIO . getStylePrefs) =<< use style
+      hsHighlight %= Flag . flag (HsColourInline prefs)
+                                 (_HsColourInline .~ prefs)
 
-    pwd <- case (blog, password) of
-      (Just _, Nothing) -> passwordPrompt
-      _                 -> return password
-    let bl'' = bl' { password = pwd }
+      b <- use blog
+      p <- use password
+      p' <- case (b,p) of
+        (Flag _, NoFlag) -> liftIO passwordPrompt
+        _                -> return p
+      password .= p'
 
-    html <- xformDoc bl'' ts =<< U.readFile file
-    postIt bl'' html
+      f <- gets file'
+      bl <- get
+      html <- liftIO $ xformDoc bl ts =<< U.readFile f
+      liftIO $ postIt bl html
 
-passwordPrompt :: IO (Maybe String)
+passwordPrompt :: IO (Flag String)
 passwordPrompt = do
   putStr "Password: " >> hFlush stdout
   pwd <- getLine
-  return $ Just pwd
+  return $ Flag pwd
+
+loadProfile :: BlogLiterately -> IO BlogLiterately
+loadProfile bl =
+  case bl^.profile of
+    NoFlag           -> return bl
+    Flag profileName -> do
+      appDir <- getAppUserDataDirectory "BlogLiterately"
+
+      let profileCfg = appDir </> profileName <.> "cfg"
+      e <- doesFileExist profileCfg
+      case e of
+        False -> do
+          putStrLn $ profileCfg ++ ": file not found"
+          exitFailure
+        True  -> do
+          p <- profileToBL =<< Conf.load [Conf.Required profileCfg]
+          return $ mappend p bl
+
+profileToBL :: Config -> IO BlogLiterately
+profileToBL c = pure mempty
+  <**> style       <.~> lookupFlag "style"
+--  <**> hsHighlight <.~> undefined
+  <**> otherHighlight <.~> lookupFlag "otherHighlight"
+  <**> wplatex <.~> lookupFlag "wplatex"
+  <**> math <.~> lookupFlag "math"
+  <**> ghci <.~> lookupFlag "ghci"
+  <**> uploadImages <.~> lookupFlag "uploadImages"
+  <**> categories <.~> lookupList "categories"
+
+  where
+    lookupFlag n = maybeToFlag <$> Conf.lookup c n
+    lookupList n = undefined -- Conf.lookupDefault
+    f <.~> x = set f <$> x
+
+

@@ -1,0 +1,14 @@
+* Configuration files
+
+  + Use getAppUserDataDirectory to figure out where to look for config
+    file.
+
+  + How to combine cmdline input + info from profile?  Should probably
+    do what cabal does and use a 'Flag' type + Monoid instance for
+    config record...?  Then we can ensure that command line always
+    overrides anything in profile.
+
+
+  
+
+  

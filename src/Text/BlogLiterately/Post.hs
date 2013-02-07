@@ -23,6 +23,7 @@ import Data.Maybe                           ( fromMaybe )
 import Network.XmlRpc.Client                ( remote )
 import Network.XmlRpc.Internals             ( Value(..), toValue, XmlRpcType )
 
+import Text.BlogLiterately.Flag
 import Text.BlogLiterately.Options
 
 {-
@@ -98,17 +99,28 @@ appropriate:
 -- | Given a configuration and a formatted post, upload it to the server.
 postIt :: BlogLiterately -> String -> IO ()
 postIt (BlogLiterately{..}) html =
-  case blog of
-    Nothing  -> putStr html
-    Just url -> do
-      let pwd = fromMaybe "" password
-      case postid of
-        Nothing  -> do
-          pid <- remote url "metaWeblog.newPost" blogid user pwd
-                   (mkPost title html categories tags page) publish
+  case _blog of
+    NoFlag   -> putStr html
+    Flag url -> do
+      let pwd = fromFlag "" _password
+      case _postid of
+        NoFlag   -> do
+          pid <- remote url "metaWeblog.newPost"
+                   (fromFlag "default" _blogid)
+                   (fromFlag "" _user)
+                   pwd
+                   post
+                   (fromFlag False _publish)
           putStrLn $ "Post ID: " ++ pid
-        Just pid -> do
-          success <- remote url "metaWeblog.editPost" pid user pwd
-                       (mkPost title html categories tags page) publish
+        Flag pid -> do
+          success <- remote url "metaWeblog.editPost" pid
+                       (fromFlag "" _user)
+                       pwd
+                       post
+                       (fromFlag False _publish)
           unless success $ putStrLn "update failed!"
-
+  where
+    post = mkPost
+             (fromFlag "" _title)
+             html _categories _tags
+             (fromFlag False _page)
