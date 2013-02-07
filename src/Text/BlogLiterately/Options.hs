@@ -133,7 +133,7 @@ blOpts :: BlogLiterately
 blOpts = BlogLiterately
      { _style = def &= help "style specification (for --hscolour-icss)"
                     &= typFile
-                    &= name "style" &= explicit
+                    &= name "style" &= name "s" &= explicit
      , _hsHighlight = enum
        [ Just (HsColourInline defaultStylePrefs)
          &= explicit
@@ -163,42 +163,42 @@ blOpts = BlogLiterately
          &= help "don't highlight non-Haskell code"
        ]
      , _wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
-                  &= name "wplatex" &= explicit
+                  &= name "wplatex" &= name "w" &= explicit
      , _math    = def &= help "how to layout math, where --math=<pandoc-option>[=URL]"
-                  &= name "math" &= explicit
+                  &= name "math" &= name "m" &= explicit
      , _ghci    = def &= help "run [ghci] blocks through ghci and include output"
-                  &= name "ghci" &= explicit
-     , _uploadImages = def &= name "upload-images" &= explicit &= help "upload local images"
+                  &= name "ghci" &= name "g" &= explicit
+     , _uploadImages = def &= name "upload-images" &= name "I" &= explicit &= help "upload local images"
      , _page    = def &= help "create a \"page\" instead of a post (WordPress only)"
                   &= name "page" &= explicit
      , _publish = def &= help "publish post (otherwise it's uploaded as a draft)"
                   &= name "publish" &= explicit
      , _categories = def
        &= explicit
-       &= name "category"
+       &= name "category" &= name "C"
        &= help "post category (can specify more than one)"
      , _tags = def
        &= explicit
-       &= name "tag"
+       &= name "tag" &= name "T"
        &= help "tag (can specify more than one)"
 
      , _xtra     = def
                    &= help "extension arguments, for use with custom extensions"
-                   &= name "xtra" &= explicit
+                   &= name "xtra" &= name "x" &= explicit
      , _blogid   = def &= help "Blog specific identifier" &= typ "ID"
                    &= name "blogid" &= explicit
      , _postid   = def &= help "Post to replace (if any)" &= typ "ID"
-                   &= name "postid" &= explicit
+                   &= name "postid" &= name "i" &= explicit
      , _profile  = def &= typ "STRING"   &= help "profile to use"
-                   &= name "profile" &= explicit
+                   &= name "profile" &= name "P" &= explicit
      , _blog     = def &= typ "URL"      &= help "blog XML-RPC url (if omitted, html goes to stdout)"
-                   &= name "blog" &= explicit
+                   &= name "blog" &= name "b" &= explicit
      , _user     = def &= typ "USER"     &= help "user name"
-                   &= name "user" &= explicit
+                   &= name "user" &= name "u" &= explicit
      , _password = def &= typ "PASSWORD" &= help "password"
-                   &= name "password" &= explicit
+                   &= name "password" &= name "p" &= explicit
      , _title    = def &= typ "TITLE"    &= help "post title"
-                   &= name "title" &= explicit
+                   &= name "title" &= name "t" &= explicit
      , _file     = def &= argPos 0 &= typ "FILE"
   }
   &= program "BlogLiterately"
