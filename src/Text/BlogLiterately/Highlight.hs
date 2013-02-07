@@ -41,7 +41,6 @@ import           Text.XML.HaXml
 import           Text.XML.HaXml.Posn                 ( noPos )
 import           Text.Blaze.Html.Renderer.String     ( renderHtml )
 
-import           Text.BlogLiterately.Flag
 import           Text.BlogLiterately.Block           ( unTag )
 
 -- | Style preferences are specified as a list of mappings from class
@@ -190,9 +189,9 @@ defaultStylePrefs =
 -- | Read style preferences in from a file using the @Read@ instance
 --   for @StylePrefs@, or return the default style if the file name is
 --   empty.
-getStylePrefs :: Flag FilePath -> IO StylePrefs
-getStylePrefs NoFlag       = return defaultStylePrefs
-getStylePrefs (Flag fname) = liftM read (U.readFile fname)
+getStylePrefs :: Maybe FilePath -> IO StylePrefs
+getStylePrefs Nothing      = return defaultStylePrefs
+getStylePrefs (Just fname) = liftM read (U.readFile fname)
 
 -- | Take a @String@ of HTML produced by hscolour, and \"bake\" styles
 --   into it by replacing class attributes with appropriate style

@@ -15,44 +15,44 @@
 module Text.BlogLiterately.Options
     where
 
-import Control.Lens (makeLenses, view)
+import Control.Lens  ( makeLenses, view )
+import Control.Monad ( mplus )
+import Data.Maybe    ( fromMaybe )
 import Data.Monoid
 import Data.Version
 import Paths_BlogLiterately (version)
 
 import System.Console.CmdArgs
 
-import Text.BlogLiterately.Flag
 import Text.BlogLiterately.Highlight
-
 
 -- | Configuration record (and command-line options) for @BlogLiterately@.
 data BlogLiterately = BlogLiterately
-  { _style          :: Flag String        -- ^ Name of a style file
-  , _hsHighlight    :: Flag HsHighlight   -- ^ Haskell highlighting mode
-  , _otherHighlight :: Flag Bool          -- ^ Use highlighting-kate for
-                                          --   non-Haskell?
-  , _wplatex        :: Flag Bool          -- ^ Format LaTeX for WordPress?
-  , _math           :: Flag String        -- ^ Indicate how to format math
-  , _ghci           :: Flag Bool          -- ^ Automatically process ghci sessions?
-  , _uploadImages   :: Flag Bool          -- ^ Automatically upload images?
-  , _categories     :: [String]           -- ^ Categories for the post
-  , _tags           :: [String]           -- ^ Tags for the post
-  , _blogid         :: Flag String        -- ^ Blog-specific identifier
-                                          --   (e.g. for blogging software
-                                          --   handling multiple blogs)
-  , _profile        :: Flag String        -- ^ Name of profile to use.
-  , _blog           :: Flag String        -- ^ Blog xmlrpc URL
-  , _user           :: Flag String        -- ^ Blog user name
-  , _password       :: Flag String        -- ^ Blog password (omit to be interactively prompted)
-  , _title          :: Flag String        -- ^ Post title
-  , _file           :: Flag String        -- ^ File to post
-  , _postid         :: Flag String        -- ^ ID of a post to update
-  , _page           :: Flag Bool          -- ^ Create a \"page\" instead of a post
-  , _publish        :: Flag Bool          -- ^ Should the post be published?
-                                          --   (Otherwise it is uploaded as a draft.)
-  , _xtra           :: [String]           -- ^ Extension arguments, for use e.g. by
-                                          --   custom transforms
+  { _style          :: Maybe String        -- ^ Name of a style file
+  , _hsHighlight    :: Maybe HsHighlight   -- ^ Haskell highlighting mode
+  , _otherHighlight :: Maybe Bool          -- ^ Use highlighting-kate for
+                                           --   non-Haskell?
+  , _wplatex        :: Maybe Bool          -- ^ Format LaTeX for WordPress?
+  , _math           :: Maybe String        -- ^ Indicate how to format math
+  , _ghci           :: Maybe Bool          -- ^ Automatically process ghci sessions?
+  , _uploadImages   :: Maybe Bool          -- ^ Automatically upload images?
+  , _categories     :: [String]            -- ^ Categories for the post
+  , _tags           :: [String]            -- ^ Tags for the post
+  , _blogid         :: Maybe String        -- ^ Blog-specific identifier
+                                           --   (e.g. for blogging software
+                                           --   handling multiple blogs)
+  , _profile        :: Maybe String        -- ^ Name of profile to use.
+  , _blog           :: Maybe String        -- ^ Blog xmlrpc URL
+  , _user           :: Maybe String        -- ^ Blog user name
+  , _password       :: Maybe String        -- ^ Blog password (omit to be interactively prompted)
+  , _title          :: Maybe String        -- ^ Post title
+  , _file           :: Maybe String        -- ^ File to post
+  , _postid         :: Maybe String        -- ^ ID of a post to update
+  , _page           :: Maybe Bool          -- ^ Create a \"page\" instead of a post
+  , _publish        :: Maybe Bool          -- ^ Should the post be published?
+                                           --   (Otherwise it is uploaded as a draft.)
+  , _xtra           :: [String]            -- ^ Extension arguments, for use e.g. by
+                                           --   custom transforms
   }
   deriving (Show,Data,Typeable)
 
@@ -61,26 +61,26 @@ makeLenses ''BlogLiterately
 instance Monoid BlogLiterately where
   mempty =
     BlogLiterately
-    { _style          = mempty
-    , _hsHighlight    = mempty
-    , _otherHighlight = mempty
-    , _wplatex        = mempty
-    , _math           = mempty
-    , _ghci           = mempty
-    , _uploadImages   = mempty
-    , _categories     = mempty
-    , _tags           = mempty
-    , _blogid         = mempty
-    , _profile        = mempty
-    , _blog           = mempty
-    , _user           = mempty
-    , _password       = mempty
-    , _title          = mempty
-    , _file           = mempty
-    , _postid         = mempty
-    , _page           = mempty
-    , _publish        = mempty
-    , _xtra           = mempty
+    { _style          = Nothing
+    , _hsHighlight    = Nothing
+    , _otherHighlight = Nothing
+    , _wplatex        = Nothing
+    , _math           = Nothing
+    , _ghci           = Nothing
+    , _uploadImages   = Nothing
+    , _categories     = []
+    , _tags           = []
+    , _blogid         = Nothing
+    , _profile        = Nothing
+    , _blog           = Nothing
+    , _user           = Nothing
+    , _password       = Nothing
+    , _title          = Nothing
+    , _file           = Nothing
+    , _postid         = Nothing
+    , _page           = Nothing
+    , _publish        = Nothing
+    , _xtra           = []
     }
 
   mappend bl1 bl2 =
@@ -106,67 +106,73 @@ instance Monoid BlogLiterately where
     , _publish        = combine _publish
     , _xtra           = combine _xtra
     }
-    where combine f = f bl1 `mappend` f bl2
+    where combine f = f bl1 `mplus` f bl2
 
 -- Some convenient accessors that include defaulting
 
-style'          = fromFlag ""    . view style
-hsHighlight'    = fromFlag (HsColourInline defaultStylePrefs) . view hsHighlight
-otherHighlight' = fromFlag True  . view otherHighlight
-wplatex'        = fromFlag False . view wplatex
-math'           = fromFlag ""    . view math
-ghci'           = fromFlag False . view ghci
-uploadImages'   = fromFlag False . view uploadImages
-blogid'         = fromFlag ""    . view blogid
-profile'        = fromFlag ""    . view profile
-blog'           = fromFlag ""    . view blog
-user'           = fromFlag ""    . view user
-password'       = fromFlag ""    . view password
-title'          = fromFlag ""    . view title
-file'           = fromFlag ""    . view file
-postid'         = fromFlag ""    . view postid
-page'           = fromFlag False . view page
-publish'        = fromFlag False . view publish
+style'          = fromMaybe ""    . view style
+hsHighlight'    = fromMaybe (HsColourInline defaultStylePrefs) . view hsHighlight
+otherHighlight' = fromMaybe True  . view otherHighlight
+wplatex'        = fromMaybe False . view wplatex
+math'           = fromMaybe ""    . view math
+ghci'           = fromMaybe False . view ghci
+uploadImages'   = fromMaybe False . view uploadImages
+blogid'         = fromMaybe "default" . view blogid
+profile'        = fromMaybe ""    . view profile
+blog'           = fromMaybe ""    . view blog
+user'           = fromMaybe ""    . view user
+password'       = fromMaybe ""    . view password
+title'          = fromMaybe ""    . view title
+file'           = fromMaybe ""    . view file
+postid'         = fromMaybe ""    . view postid
+page'           = fromMaybe False . view page
+publish'        = fromMaybe False . view publish
 
 -- | Command-line configuration for use with @cmdargs@.
 blOpts :: BlogLiterately
 blOpts = BlogLiterately
      { _style = def &= help "style specification (for --hscolour-icss)"
                     &= typFile
+                    &= name "style" &= explicit
      , _hsHighlight = enum
-       [ Flag (HsColourInline defaultStylePrefs)
+       [ Just (HsColourInline defaultStylePrefs)
          &= explicit
          &= name "hscolour-icss"
          &= help "highlight haskell: hscolour, inline style (default)"
-       , Flag HsColourCSS
+       , Just HsColourCSS
          &= explicit
          &= name "hscolour-css"
          &= help "highlight haskell: hscolour, separate stylesheet"
-       , Flag HsNoHighlight
+       , Just HsNoHighlight
          &= explicit
          &= name "hs-nohighlight"
          &= help "no haskell highlighting"
-       , Flag HsKate
+       , Just HsKate
          &= explicit
          &= name "hs-kate"
          &= help "highlight haskell with highlighting-kate"
        ]
      , _otherHighlight = enum
-       [ Flag True
+       [ Just True
          &= explicit
          &= name "kate"
          &= help "highlight non-Haskell code with highlighting-kate (default)"
-       , Flag False
+       , Just False
          &= explicit
          &= name "no-kate"
          &= help "don't highlight non-Haskell code"
        ]
      , _wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
+                  &= name "wplatex" &= explicit
      , _math    = def &= help "how to layout math, where --math=<pandoc-option>[=URL]"
+                  &= name "math" &= explicit
      , _ghci    = def &= help "run [ghci] blocks through ghci and include output"
+                  &= name "ghci" &= explicit
      , _uploadImages = def &= name "upload-images" &= explicit &= help "upload local images"
      , _page    = def &= help "create a \"page\" instead of a post (WordPress only)"
+                  &= name "page" &= explicit
      , _publish = def &= help "publish post (otherwise it's uploaded as a draft)"
+                  &= name "publish" &= explicit
      , _categories = def
        &= explicit
        &= name "category"
@@ -176,16 +182,23 @@ blOpts = BlogLiterately
        &= name "tag"
        &= help "tag (can specify more than one)"
 
-     , _xtra = def
-       &= help "extension arguments, for use with custom extensions"
+     , _xtra     = def
+                   &= help "extension arguments, for use with custom extensions"
+                   &= name "xtra" &= explicit
      , _blogid   = def &= help "Blog specific identifier" &= typ "ID"
+                   &= name "blogid" &= explicit
      , _postid   = def &= help "Post to replace (if any)" &= typ "ID"
-
+                   &= name "postid" &= explicit
      , _profile  = def &= typ "STRING"   &= help "profile to use"
+                   &= name "profile" &= explicit
      , _blog     = def &= typ "URL"      &= help "blog XML-RPC url (if omitted, html goes to stdout)"
+                   &= name "blog" &= explicit
      , _user     = def &= typ "USER"     &= help "user name"
+                   &= name "user" &= explicit
      , _password = def &= typ "PASSWORD" &= help "password"
+                   &= name "password" &= explicit
      , _title    = def &= typ "TITLE"    &= help "post title"
+                   &= name "title" &= explicit
      , _file     = def &= argPos 0 &= typ "FILE"
   }
   &= program "BlogLiterately"

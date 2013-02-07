@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -47,9 +48,8 @@ import           System.IO              ( hFlush, stdout )
 import qualified System.IO.UTF8 as U    ( readFile )
 
 import qualified Data.Configurator as Conf
-import           Data.Configurator.Types (Config)
+import           Data.Configurator.Types (Config, Configured(..), Value(..), Name)
 
-import           Text.BlogLiterately.Flag
 import           Text.BlogLiterately.Highlight
 import           Text.BlogLiterately.Options
 import           Text.BlogLiterately.Post
@@ -74,14 +74,14 @@ blogLiteratelyCustom ts = do
 
     flip evalStateT bl $ do
       prefs <- (liftIO . getStylePrefs) =<< use style
-      hsHighlight %= Flag . flag (HsColourInline prefs)
-                                 (_HsColourInline .~ prefs)
+      hsHighlight %= Just . maybe (HsColourInline prefs)
+                                  (_HsColourInline .~ prefs)
 
       b <- use blog
       p <- use password
       p' <- case (b,p) of
-        (Flag _, NoFlag) -> liftIO passwordPrompt
-        _                -> return p
+        (Just _, Nothing) -> liftIO passwordPrompt
+        _                 -> return p
       password .= p'
 
       f <- gets file'
@@ -89,17 +89,17 @@ blogLiteratelyCustom ts = do
       html <- liftIO $ xformDoc bl ts =<< U.readFile f
       liftIO $ postIt bl html
 
-passwordPrompt :: IO (Flag String)
+passwordPrompt :: IO (Maybe String)
 passwordPrompt = do
   putStr "Password: " >> hFlush stdout
   pwd <- getLine
-  return $ Flag pwd
+  return $ Just pwd
 
 loadProfile :: BlogLiterately -> IO BlogLiterately
 loadProfile bl =
   case bl^.profile of
-    NoFlag           -> return bl
-    Flag profileName -> do
+    Nothing          -> return bl
+    Just profileName -> do
       appDir <- getAppUserDataDirectory "BlogLiterately"
 
       let profileCfg = appDir </> profileName <.> "cfg"
@@ -114,18 +114,35 @@ loadProfile bl =
 
 profileToBL :: Config -> IO BlogLiterately
 profileToBL c = pure mempty
-  <**> style       <.~> lookupFlag "style"
---  <**> hsHighlight <.~> undefined
-  <**> otherHighlight <.~> lookupFlag "otherHighlight"
-  <**> wplatex <.~> lookupFlag "wplatex"
-  <**> math <.~> lookupFlag "math"
-  <**> ghci <.~> lookupFlag "ghci"
-  <**> uploadImages <.~> lookupFlag "uploadImages"
-  <**> categories <.~> lookupList "categories"
+  <**> style          <.~> lookupV    "style"
+--  <**> hsHighlight  <.~> undefined
+--  <**> otherHighlight <.~> lookupV    "otherHighlight"
+  <**> wplatex        <.~> lookupV    "wplatex"
+  <**> math           <.~> lookupV    "math"
+  <**> ghci           <.~> lookupV    "ghci"
+  <**> uploadImages   <.~> lookupV    "upload-images"
+  <**> categories     <.~> lookupList "categories"
+  <**> tags           <.~> lookupList "tags"
+  <**> blogid         <.~> lookupV    "blogid"
+  <**> blog           <.~> lookupV    "blog"
+  <**> user           <.~> lookupV    "user"
+  <**> password       <.~> lookupV    "password"
+  <**> title          <.~> lookupV    "title"
+  <**> postid         <.~> lookupV    "postid"
+  <**> page           <.~> lookupV    "page"
+  <**> publish        <.~> lookupV    "publish"
+  <**> xtra           <.~> lookupList "xtra"
 
   where
-    lookupFlag n = maybeToFlag <$> Conf.lookup c n
-    lookupList n = undefined -- Conf.lookupDefault
+    lookupV :: Configured a => Name -> IO (Maybe a)
+    lookupV = Conf.lookup c
+
+--    lookupList :: Configured [a] => Name -> IO [a]
+    lookupList = Conf.lookupDefault [] c
+
+--    (<.~>) :: Functor f => ASetter s t a b -> f b -> f (s -> t)
     f <.~> x = set f <$> x
 
-
+instance Configured [String] where
+  convert (List vs) = mapM convert vs
+  convert _         = Nothing

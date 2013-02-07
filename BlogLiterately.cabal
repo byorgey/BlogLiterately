@@ -60,7 +60,6 @@ Library
                    lens >= 3.8 && < 3.9
   Exposed-modules: Text.BlogLiterately
                    Text.BlogLiterately.Block
-                   Text.BlogLiterately.Flag
                    Text.BlogLiterately.Ghci
                    Text.BlogLiterately.Highlight
                    Text.BlogLiterately.Image

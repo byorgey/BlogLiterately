@@ -17,13 +17,13 @@ module Text.BlogLiterately.Post
       mkPost, mkArray, postIt
     ) where
 
+import Control.Lens                         ( (^.) )
 import Control.Monad                        ( unless )
 import Data.Maybe                           ( fromMaybe )
 
 import Network.XmlRpc.Client                ( remote )
 import Network.XmlRpc.Internals             ( Value(..), toValue, XmlRpcType )
 
-import Text.BlogLiterately.Flag
 import Text.BlogLiterately.Options
 
 {-
@@ -98,29 +98,29 @@ appropriate:
 
 -- | Given a configuration and a formatted post, upload it to the server.
 postIt :: BlogLiterately -> String -> IO ()
-postIt (BlogLiterately{..}) html =
-  case _blog of
-    NoFlag   -> putStr html
-    Flag url -> do
-      let pwd = fromFlag "" _password
-      case _postid of
-        NoFlag   -> do
+postIt bl html =
+  case bl^.blog of
+    Nothing  -> putStr html
+    Just url -> do
+      let pwd = password' bl
+      case bl^.postid of
+        Nothing  -> do
           pid <- remote url "metaWeblog.newPost"
-                   (fromFlag "default" _blogid)
-                   (fromFlag "" _user)
+                   (blogid' bl)
+                   (user' bl)
                    pwd
                    post
-                   (fromFlag False _publish)
+                   (publish' bl)
           putStrLn $ "Post ID: " ++ pid
-        Flag pid -> do
+        Just pid -> do
           success <- remote url "metaWeblog.editPost" pid
-                       (fromFlag "" _user)
+                       (user' bl)
                        pwd
                        post
-                       (fromFlag False _publish)
+                       (publish' bl)
           unless success $ putStrLn "update failed!"
   where
     post = mkPost
-             (fromFlag "" _title)
-             html _categories _tags
-             (fromFlag False _page)
+             (title' bl)
+             html (bl^.categories) (bl^.tags)
+             (page' bl)

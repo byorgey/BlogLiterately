@@ -51,7 +51,6 @@ import           Text.Blaze.Html.Renderer.String      ( renderHtml )
 import           Text.Pandoc
 import           Text.Pandoc.Options
 
-import           Text.BlogLiterately.Flag
 import           Text.BlogLiterately.Ghci
 import           Text.BlogLiterately.Highlight
 import           Text.BlogLiterately.Image
