@@ -202,5 +202,5 @@ blOpts = BlogLiterately
      , _file     = def &= argPos 0 &= typ "FILE"
   }
   &= program "BlogLiterately"
-  &= summary ("BlogLierately v" ++ showVersion version ++ ", (c) Robert Greayer 2008-2010, Brent Yorgey 2012\n" ++
-              "This program comes with ABSOLUTELY NO WARRANTY\n")
+  &= summary ("BlogLierately v" ++ showVersion version ++ ", (c) Robert Greayer 2008-2010, Brent Yorgey 2012-2013\n" ++
+              "For help, see http://byorgey.wordpress.com/blogliterately/"
