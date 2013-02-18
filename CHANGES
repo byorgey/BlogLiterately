@@ -1,3 +1,7 @@
+0.5.4.1: 18 February 2013
+
+  * bump blaze-html upper bound to < 0.7
+
 0.5.4: 24 January 2013
 
   * Require pandoc 1.10.
