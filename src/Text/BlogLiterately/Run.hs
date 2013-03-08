@@ -20,7 +20,7 @@
 -- > import Text.BlogLiterately
 -- >
 -- > myCustomXF = Transform ...
--- > main = blogLiteratelyWith [myCustomXF, centerImagesXF]
+-- > main = blogLiteratelyWith [myCustomXF1, myCustomXF2]
 --
 -- See "Text.BlogLiterately.Transform" for examples of transforms,
 -- additional transforms which are not enabled by default, and help in
