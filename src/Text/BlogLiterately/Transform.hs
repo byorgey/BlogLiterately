@@ -15,7 +15,7 @@
 
 module Text.BlogLiterately.Transform
     ( -- * Transforms
-      Transform(..), runTransform, runTransforms
+      Transform(..), pureTransform, ioTransform, runTransform, runTransforms
 
       -- * Standard transforms
       -- $standard
