@@ -1,6 +1,6 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -37,18 +37,21 @@ module Text.BlogLiterately.Run
     ) where
 
 import           Control.Applicative
-import           Control.Lens           ( set, use, (&), (.~), (.=), (%=), (^.) )
+import           Control.Lens                  (set, use, (%=), (&), (.=), (.~),
+                                                (^.))
 import           Control.Monad.State
 import           Data.Monoid
-import           System.Console.CmdArgs ( cmdArgs)
-import           System.Directory       ( getAppUserDataDirectory, doesFileExist )
+import           System.Console.CmdArgs        (cmdArgs)
+import           System.Directory              (doesFileExist,
+                                                getAppUserDataDirectory)
 import           System.Exit
-import           System.FilePath        ( (</>), (<.>) )
-import           System.IO              ( hFlush, stdout )
-import qualified System.IO.UTF8 as U    ( readFile )
+import           System.FilePath               ((<.>), (</>))
+import           System.IO                     (hFlush, stdout)
+import qualified System.IO.UTF8                as U (readFile)
 
-import qualified Data.Configurator as Conf
-import           Data.Configurator.Types (Config, Configured(..), Value(..), Name)
+import qualified Data.Configurator             as Conf
+import           Data.Configurator.Types       (Config, Configured (..), Name,
+                                                Value (..))
 
 import           Text.BlogLiterately.Highlight
 import           Text.BlogLiterately.Options
