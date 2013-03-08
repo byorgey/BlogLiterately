@@ -25,10 +25,6 @@ module Text.BlogLiterately.Transform
     , imagesXF
     , highlightXF
     , standardTransforms
-
-      -- * Other transforms
-      -- $other
-
     , centerImagesXF
 
       -- * Transforming documents
@@ -143,15 +139,7 @@ highlightXF = pureTransform
 -- | The standard set of transforms that are run by default:
 --   'wptexifyXF', 'ghciXF', 'imagesXF', 'highlightXF'.
 standardTransforms :: [Transform]
-standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF]
-
---------------------------------------------------
--- Other transforms
---------------------------------------------------
-
--- $other
--- These transforms are not enabled by default.  To use them, see
--- "Text.BlogLiterately.Run".
+standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF, centerImagesXF]
 
 -- | Center any images which occur in a paragraph by themselves.
 --   Inline images are not affected.
@@ -168,6 +156,10 @@ centerImages = bottomUp centerImage
       : RawBlock "html" "</div>"
       : bs
     centerImage bs = bs
+
+--------------------------------------------------
+-- Transforming documents
+--------------------------------------------------
 
 -- | Transform a complete input document string to an HTML output
 --   string, given a list of transformation passes.
