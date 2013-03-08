@@ -26,6 +26,7 @@ module Text.BlogLiterately.Transform
     , highlightXF
     , standardTransforms
     , centerImagesXF
+    , titleXF
 
       -- * Transforming documents
     , xformDoc
@@ -36,11 +37,11 @@ module Text.BlogLiterately.Transform
 
 import           Control.Applicative             ((<$>))
 import           Control.Arrow                   ((>>>))
-import           Control.Lens                    ((%=), _2)
+import           Control.Lens                    ((%=), _1, _2)
 import           Control.Monad.State
 import           Data.Bool.Extras                (whenA)
 import           Data.Default                    (def)
-import           Data.List                       (isPrefixOf)
+import           Data.List                       (intercalate, isPrefixOf)
 import qualified Data.Set                        as S
 import qualified Data.Traversable                as T
 
@@ -136,11 +137,6 @@ highlightXF = pureTransform
   (\bl -> colourisePandoc (hsHighlight' bl) (otherHighlight' bl))
   (const True)
 
--- | The standard set of transforms that are run by default:
---   'wptexifyXF', 'ghciXF', 'imagesXF', 'highlightXF'.
-standardTransforms :: [Transform]
-standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF, centerImagesXF]
-
 -- | Center any images which occur in a paragraph by themselves.
 --   Inline images are not affected.
 centerImagesXF :: Transform
@@ -157,9 +153,30 @@ centerImages = bottomUp centerImage
       : bs
     centerImage bs = bs
 
+-- | Potentially extract a title from the metadata block, and set it
+--   in the options record.
+titleXF :: Transform
+titleXF = Transform extractTitle (const True)
+  where
+    extractTitle = do
+      (Pandoc (Meta t _ _) _) <- gets snd
+      case t of
+        [] -> return ()
+        is ->
+          -- title set explicitly with --title takes precedence.
+          _1.title %= (`mplus` Just (intercalate " " [s | Str s <- is]))
+
+-- | The standard set of transforms that are run by default:
+--   'wptexifyXF', 'ghciXF', 'imagesXF', 'highlightXF'.
+standardTransforms :: [Transform]
+standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF, centerImagesXF, titleXF]
+
 --------------------------------------------------
 -- Transforming documents
 --------------------------------------------------
+
+-- XXX need to return new BlogLiterately record here and do something
+-- with it at the call site!
 
 -- | Transform a complete input document string to an HTML output
 --   string, given a list of transformation passes.
