@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeOperators   #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -38,16 +38,17 @@ module Text.BlogLiterately.Transform
     , whenA, fixLineEndings
     ) where
 
-import           Control.Arrow              ( first, (>>>), arr
-                                            , Kleisli(..), runKleisli )
-import qualified Control.Category as C      ( Category, id )
-import qualified Data.Traversable as T
-import           Data.Default               ( def )
-import qualified Data.Set         as S
-import           Data.Bool.Extras           ( whenA )
-import           Data.List                  ( isPrefixOf )
+import           Control.Applicative             ((<$>))
+import           Control.Arrow                   ((>>>))
+import           Control.Lens                    ((%=), _2)
+import           Control.Monad.State
+import           Data.Bool.Extras                (whenA)
+import           Data.Default                    (def)
+import           Data.List                       (isPrefixOf)
+import qualified Data.Set                        as S
+import qualified Data.Traversable                as T
 
-import           Text.Blaze.Html.Renderer.String      ( renderHtml )
+import           Text.Blaze.Html.Renderer.String (renderHtml)
 import           Text.Pandoc
 import           Text.Pandoc.Options
 
@@ -70,31 +71,47 @@ import           Text.BlogLiterately.Options
 --   passed via @-x@ on the command line are available from the 'xtra'
 --   field of the 'BlogLiterately' configuration.
 --
---   The transformation is then specified as a @'Kleisli' IO 'Pandoc'
---   'Pandoc'@ arrow, which is isomorphic to @Pandoc -> IO Pandoc@.  If
---   you have a pure function of type @Pandoc -> Pandoc@, wrap it in a
---   call to 'arr' to produce a 'Kleisli' arrow.  If you have a
---   function @Pandoc -> IO Pandoc@, wrap it in the 'Kleisli'
---   constructor.
+--   The transformation is then specified as a stateful computation
+--   over both a @BlogLiterately@ options record, and a @Pandoc@
+--   document.  It may also have effects in the @IO@ monad.  If you
+--   have a pure function of type @BlogLiterately -> Pandoc ->
+--   Pandoc@, you can use the 'pureTransform' function to create a
+--   'Transform'; if you have a function of type @BlogLiterately ->
+--   Pandoc -> IO Pandoc@, you can use 'ioTransform'.
 --
 --   For examples, see the implementations of the standard transforms
 --   below.
 data Transform = Transform
-                 { getTransform :: BlogLiterately -> Kleisli IO Pandoc Pandoc
-                   -- ^ A document transformation, which can depend on
-                   --   BlogLiterately options and can have effects in
-                   --   the @IO@ monad.
+                 { getTransform :: StateT (BlogLiterately, Pandoc) IO ()
+                   -- ^ A document transformation, which can transform
+                   --   both the document and the options and have
+                   --   effects in the IO monad.  The options record
+                   --   can be transformed because the document itself
+                   --   may contain information which affects the options.
                  , xfCond       :: BlogLiterately -> Bool
                    -- ^ A condition under which to run the transformation.
                  }
 
+-- | Construct a transformation from a pure function.
+pureTransform :: (BlogLiterately -> Pandoc -> Pandoc)
+              -> (BlogLiterately -> Bool) -> Transform
+pureTransform transf cond = Transform (gets fst >>= \bl -> _2 %= transf bl) cond
+
+-- | Construct a transformation from a function in the @IO@ monad.
+ioTransform :: (BlogLiterately -> Pandoc -> IO Pandoc)
+            -> (BlogLiterately -> Bool) -> Transform
+ioTransform transf cond = Transform (StateT . fmap (fmap $ (,) ()) $ transf') cond
+  where transf' (bl,p) = ((,) bl) <$> transf bl p
+
 -- | Run a 'Transform' (if its condition is met).
-runTransform :: Transform -> BlogLiterately -> Kleisli IO Pandoc Pandoc
-runTransform t bl = getTransform t bl `whenA` xfCond t bl
+runTransform :: Transform -> StateT (BlogLiterately, Pandoc) IO ()
+runTransform t = do
+  bl <- gets fst
+  when (xfCond t bl) $ getTransform t
 
 -- | Run a pipeline of 'Transform's.
-runTransforms :: [Transform] -> BlogLiterately -> Kleisli IO Pandoc Pandoc
-runTransforms ts = foldr (>>>) (C.id) . T.traverse runTransform ts
+runTransforms :: [Transform] -> BlogLiterately -> Pandoc -> IO Pandoc
+runTransforms ts bl p = snd <$> execStateT (mapM_ runTransform ts) (bl,p)
 
 --------------------------------------------------
 -- Standard transforms
@@ -106,21 +123,21 @@ runTransforms ts = foldr (>>>) (C.id) . T.traverse runTransform ts
 
 -- | Format embedded LaTeX for WordPress (if the @wplatex@ flag is set).
 wptexifyXF :: Transform
-wptexifyXF = Transform (const (arr wpTeXify)) wplatex'
+wptexifyXF = pureTransform (const wpTeXify) wplatex'
 
 -- | Format embedded @ghci@ sessions (if the @ghci@ flag is set).
 ghciXF :: Transform
-ghciXF = Transform (Kleisli . formatInlineGhci . file') ghci'
+ghciXF = ioTransform (formatInlineGhci . file') ghci'
 
 -- | Upload embedded local images to the server (if the @uploadImages@
 --   flag is set).
 imagesXF :: Transform
-imagesXF = Transform (Kleisli . uploadAllImages) uploadImages'
+imagesXF = ioTransform uploadAllImages uploadImages'
 
 -- | Perform syntax highlighting on code blocks.
 highlightXF :: Transform
-highlightXF = Transform
-  (\bl -> arr (colourisePandoc (hsHighlight' bl) (otherHighlight' bl)))
+highlightXF = pureTransform
+  (\bl -> colourisePandoc (hsHighlight' bl) (otherHighlight' bl))
   (const True)
 
 -- | The standard set of transforms that are run by default:
@@ -139,7 +156,7 @@ standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF]
 -- | Center any images which occur in a paragraph by themselves.
 --   Inline images are not affected.
 centerImagesXF :: Transform
-centerImagesXF = Transform (const . arr $ centerImages) (const True)
+centerImagesXF = pureTransform (const centerImages) (const True)
 
 centerImages :: Pandoc -> Pandoc
 centerImages = bottomUp centerImage
@@ -155,14 +172,14 @@ centerImages = bottomUp centerImage
 -- | Transform a complete input document string to an HTML output
 --   string, given a list of transformation passes.
 xformDoc :: BlogLiterately -> [Transform] -> (String -> IO String)
-xformDoc bl xforms = runKleisli $
-        arr     fixLineEndings
-    >>> arr     (readMarkdown parseOpts)
+xformDoc bl xforms =
+        (fixLineEndings >>> readMarkdown parseOpts)
 
     >>> runTransforms xforms bl
 
-    >>> arr     (writeHtml writeOpts)
-    >>> arr     renderHtml
+    >=> writeHtml writeOpts
+    >>> renderHtml
+    >>> return
   where
     parseOpts = def
                 { readerExtensions = Ext_literate_haskell
