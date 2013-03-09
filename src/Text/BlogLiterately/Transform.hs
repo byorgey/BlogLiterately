@@ -37,11 +37,13 @@ module Text.BlogLiterately.Transform
 
 import           Control.Applicative             ((<$>))
 import           Control.Arrow                   ((>>>))
-import           Control.Lens                    ((%=), _1, _2)
+import           Control.Lens                    ((%=), (.=), _1, _2)
 import           Control.Monad.State
 import           Data.Bool.Extras                (whenA)
+import           Data.Char                       (toLower)
 import           Data.Default                    (def)
 import           Data.List                       (intercalate, isPrefixOf)
+import           Data.Monoid                     (mempty, (<>))
 import qualified Data.Set                        as S
 import qualified Data.Traversable                as T
 
@@ -49,6 +51,7 @@ import           Text.Blaze.Html.Renderer.String (renderHtml)
 import           Text.Pandoc
 import           Text.Pandoc.Options
 
+import           Text.BlogLiterately.Block
 import           Text.BlogLiterately.Ghci
 import           Text.BlogLiterately.Highlight
 import           Text.BlogLiterately.Image
@@ -165,6 +168,36 @@ titleXF = Transform extractTitle (const True)
         is ->
           -- title set explicitly with --title takes precedence.
           _1.title %= (`mplus` Just (intercalate " " [s | Str s <- is]))
+
+optionsXF :: Transform
+optionsXF = Transform optionsXF' (const True)
+  where
+    optionsXF' = do
+      p <- gets snd
+      let opts = queryWith extractOptions p
+      _1 %= (<> opts)
+
+      let p' = bottomUp killOptionBlocks p
+      _2 .= p'
+
+-- XXX need to extract out some common functionality below.
+
+extractOptions :: Block -> BlogLiterately
+extractOptions (CodeBlock (_, as, _) s)
+  | "blopts" `elem` (map.map) toLower (maybe id (:) tag $ as)
+    = undefined  -- XXX need to parse options record here.
+                 -- configurator doesn't look promising.  Doesn't
+                 -- export the actual parser; all API functions work
+                 -- in terms of files.
+  | otherwise = mempty
+  where (tag, src) = unTag s
+
+killOptionBlocks :: Block -> Block
+killOptionBlocks cb@(CodeBlock (_, as, _) s)
+  | "blopts" `elem` (map.map) toLower (maybe id (:) tag $ as)
+              = Null
+  | otherwise = cb
+  where (tag, src) = unTag s
 
 -- | The standard set of transforms that are run by default:
 --   'wptexifyXF', 'ghciXF', 'imagesXF', 'highlightXF'.
