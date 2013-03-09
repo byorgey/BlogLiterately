@@ -89,8 +89,8 @@ blogLiteratelyCustom ts = do
 
       f <- gets file'
       bl <- get
-      html <- liftIO $ xformDoc bl ts =<< U.readFile f
-      liftIO $ postIt bl html
+      (bl',html) <- liftIO $ xformDoc bl ts =<< U.readFile f
+      liftIO $ postIt bl' html
 
 passwordPrompt :: IO (Maybe String)
 passwordPrompt = do

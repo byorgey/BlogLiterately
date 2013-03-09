@@ -107,8 +107,8 @@ runTransform t = do
   when (xfCond t bl) $ getTransform t
 
 -- | Run a pipeline of 'Transform's.
-runTransforms :: [Transform] -> BlogLiterately -> Pandoc -> IO Pandoc
-runTransforms ts bl p = snd <$> execStateT (mapM_ runTransform ts) (bl,p)
+runTransforms :: [Transform] -> BlogLiterately -> Pandoc -> IO (BlogLiterately, Pandoc)
+runTransforms ts bl p = execStateT (mapM_ runTransform ts) (bl,p)
 
 --------------------------------------------------
 -- Standard transforms
@@ -175,20 +175,16 @@ standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF, centerImagesXF,
 -- Transforming documents
 --------------------------------------------------
 
--- XXX need to return new BlogLiterately record here and do something
--- with it at the call site!
-
 -- | Transform a complete input document string to an HTML output
 --   string, given a list of transformation passes.
-xformDoc :: BlogLiterately -> [Transform] -> (String -> IO String)
+xformDoc :: BlogLiterately -> [Transform] -> String -> IO (BlogLiterately, String)
 xformDoc bl xforms =
         (fixLineEndings >>> readMarkdown parseOpts)
 
     >>> runTransforms xforms bl
 
-    >=> writeHtml writeOpts
-    >>> renderHtml
-    >>> return
+    >=> _2 (return . writeHtml writeOpts)
+    >=> _2 (return . renderHtml)
   where
     parseOpts = def
                 { readerExtensions = Ext_literate_haskell
