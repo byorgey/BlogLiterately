@@ -3,8 +3,8 @@ syntax highlighting, format ghci sessions, and upload to any blog
 supporting the metaWeblog API (such as Wordpress).
 
 To get started, use the provided executable `BlogLiterately`; see
-[http://byorgey.wordpress.com/blogliterately/]() for complete
-documentation.
+[http://byorgey.wordpress.com/blogliterately/](http://byorgey.wordpress.com/blogliterately/)
+for complete documentation.
 
 To make further customization possible, the internals of the
 executable are made available as a library.  In particular, it is easy
