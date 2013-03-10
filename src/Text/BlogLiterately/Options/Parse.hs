@@ -57,6 +57,7 @@ parseBLOption =
   <|> parseField profile      "profile"       parseStr
   <|> parseField blog         "blog"          parseStr
   <|> parseField user         "user"          parseStr
+  <|> parseField password     "password"      parseStr
   <|> parseField title        "title"         parseStr
   <|> parseField postid       "postid"        parseStr
   <|> parseField page         "page"          parseBool
