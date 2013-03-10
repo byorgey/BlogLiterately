@@ -1,3 +1,25 @@
+0.6: 10 March 2013
+------------------
+
+  * Add support for "profiles" with sets of common options
+
+  * Add support for reading options from inline blocks tagged `[BLOpts]`
+
+  * Add support for reading post titles using pandoc-supported title
+    block format, `% Title`
+
+  * Transforms are now of type StateT (BlogLiterately, Pandoc) IO (),
+    to allow transforms to alter the options record as well as the
+    document
+
+  * Add `centerImagesXF` to standard transforms
+
+  * Move a bunch of ad-hoc functionality into standard transforms
+
+  * Add `--html-only` option
+
+  * bump `pandoc` upper bound to < 1.12
+
 0.5.4.1: 18 February 2013
 -------------------------
 
