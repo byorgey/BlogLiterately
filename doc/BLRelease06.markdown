@@ -3,7 +3,8 @@
     [BLOpts]
     profile = wp
 
-I'm very proud to announce the release of `BlogLiterately` version 0.6,
+I'm very proud to announce the release of
+[`BlogLiterately` version 0.6](http://hackage.haskell.org/package/BlogLiterately-0.6),
 a tool for formatting and uploading blog posts, including syntax
 highlighting, generation of `ghci` sessions, LaTeX support, automatic
 image uploading, and more.
@@ -15,7 +16,8 @@ password) and options embedded within the `.markdown` or `.lhs`
 documents themselves (*e.g.* for post-specific options like title,
 tags, and categories).
 
-For more information, see the
+There are a few other changes and improvements as well.  For more
+information, see the
 [documentation](http://byorgey.wordpress.com/blogliterately/) or keep
 reading below!
 
@@ -124,3 +126,13 @@ miscellaneous sorts of things I use `darcs` and `hub.darcs.net`; for
 larger projects where I want to raise the visibility and encourage
 contributions from other users, I use github.  At some point
 `BlogLiterately` crossed the line.
+
+Learning more, and contacting me
+--------------------------------
+
+For more information, see the
+[full documentation](http://byorgey.wordpress.com/blogliterately/).
+I'm always happy to receive comments, questions, feature requests, bug
+reports, and so on, via the
+[bug tracker on github](https://github.com/byorgey/BlogLiterately/issues),
+IRC (`byorgey` on freenode), or email (the same as my IRC nick, at gmail).
