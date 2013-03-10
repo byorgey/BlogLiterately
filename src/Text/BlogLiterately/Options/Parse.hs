@@ -18,6 +18,7 @@ module Text.BlogLiterately.Options.Parse
 import           Control.Applicative         (pure, (*>), (<$>), (<*))
 import           Control.Arrow               (second)
 import           Control.Lens                ((&), (.~))
+import           Data.Char                   (isSpace)
 import           Data.Either                 (partitionEithers)
 import           Data.Monoid                 (mconcat, mempty)
 import           Text.Parsec                 (ParseError, char, many, noneOf,
@@ -37,7 +38,11 @@ import           Text.BlogLiterately.Options
 -- | Convert the contents of a @[BLOpts]@ block into an options record
 --   and a list of parse errors.
 readBLOptions :: String -> ([ParseError], BlogLiterately)
-readBLOptions = second mconcat . partitionEithers . map readBLOption . lines
+readBLOptions = second mconcat
+              . partitionEithers
+              . map readBLOption
+              . filter (not . all isSpace)
+              . lines
 
 -- | Read a single line from a @[BLOpts]@ block.
 readBLOption :: String -> Either ParseError BlogLiterately
