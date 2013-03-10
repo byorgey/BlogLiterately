@@ -16,13 +16,11 @@
 -----------------------------------------------------------------------------
 
 module Text.BlogLiterately.Transform
-    ( -- * Transforms
-      Transform(..), pureTransform, ioTransform, runTransform, runTransforms
-
+    (
       -- * Standard transforms
       -- $standard
 
-    , standardTransforms
+      standardTransforms
 
     , optionsXF
     , profileXF
@@ -31,9 +29,12 @@ module Text.BlogLiterately.Transform
     , titleXF
     , wptexifyXF
     , ghciXF
-    , imagesXF
+    , uploadImagesXF
     , highlightXF
     , centerImagesXF
+
+      -- * Transforms
+    , Transform(..), pureTransform, ioTransform, runTransform, runTransforms
 
       -- * Transforming documents
     , xformDoc
@@ -154,8 +155,8 @@ ghciXF = ioTransform (formatInlineGhci . file') ghci'
 
 -- | Upload embedded local images to the server (if the @uploadImages@
 --   flag is set).
-imagesXF :: Transform
-imagesXF = ioTransform uploadAllImages uploadImages'
+uploadImagesXF :: Transform
+uploadImagesXF = ioTransform uploadAllImages uploadImages'
 
 -- | Perform syntax highlighting on code blocks.
 highlightXF :: Transform
@@ -270,37 +271,46 @@ loadProfile bl =
 -- | The standard set of transforms that are run by default (in order
 --   from top to bottom):
 --
---   * 'optionsXF' -- extract options specified in @[BLOpts]@ blocks in the file
+--   * 'optionsXF': extract options specified in @[BLOpts]@ blocks in the file
 --
---   * 'profileXF' -- load the requested profile (if any)
+--   * 'profileXF': load the requested profile (if any)
 --
---   * 'highlightOptsXF' -- load the requested highlighting style file
+--   * 'passwordXF': prompt the user for a password if needed
 --
---   * 'passwordXF' -- prompt the user for a password if needed
+--   * 'titleXF': extract the title from a special title block
 --
---   * 'titleXF' -- extract the title from a special title block
+--   * 'wptexifyXF': turn LaTeX into WordPress format if requested
 --
---   * 'wptexifyXF' -- turn LaTeX into WordPress format if requested
+--   * 'ghciXF': run and typeset ghci sessions if requested
 --
---   * 'ghciXF' -- run and typeset ghci sessions if requested
+--   * 'uploadImagesXF': upload images if requested
 --
---   * 'imagesXF' -- upload images if requested
+--   * 'centerImagesXF': center images occurring in their own paragraph
 --
---   * 'highlightXF' -- perform syntax highlighting
+--   * 'highlightOptsXF': load the requested highlighting style file
 --
---   * 'centerImagesXF' -- center images occurring in their own paragraph
+--   * 'highlightXF': perform syntax highlighting
+--
 standardTransforms :: [Transform]
 standardTransforms =
-  [ optionsXF       -- has to go first since it may affect later transforms
+  [ -- Has to go first, since it may affect later transforms.
+    optionsXF
+
+    -- Has to go second, since we may not know which profile to load
+    -- until after the optionsXF pass, and loading a profile may
+    -- affect later transforms.
   , profileXF
-  , highlightOptsXF
+
+    -- The order of the rest of these probably doesn't matter that
+    -- much, except highlightOptsXF should go before highlightXF.
   , passwordXF
   , titleXF
   , wptexifyXF
   , ghciXF
-  , imagesXF
-  , highlightXF
+  , uploadImagesXF
   , centerImagesXF
+  , highlightOptsXF
+  , highlightXF
   ]
 
 --------------------------------------------------
