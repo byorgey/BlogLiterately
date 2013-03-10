@@ -30,11 +30,11 @@ Extra-Source-Files: CHANGES
                     doc/BlogLiteratelyDoc.lhs
                     style/*.css
                     style/hs-style
-Bug-reports:    http://hub.darcs.net/byorgey/BlogLiterately/issues
+Bug-reports:    http://github.com/byorgey/BlogLiterately/issues
 
 Source-repository head
-  type:     darcs
-  location: http://hub.darcs.net/byorgey/BlogLiterately
+  type:     git
+  location: git://github.com/byorgey/BlogLiterately.git
 
 Library
   Build-Depends:   base >= 4.0 && < 4.7,
