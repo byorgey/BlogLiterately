@@ -7,7 +7,7 @@ before_install:
   - cd haskell-platform-2012.2.0.0
   - ls packages | grep -v '\.packages' | egrep -v 'haskell-platform|cabal-install|alex|happy' | sed -e 's/-\([0-9]*\.\)*[0-9]\+//' | xargs -L 1 sudo ghc-pkg --global --force unregister
   - ghc-pkg unregister language-c
-  - ghc-pkg unregister MonadCatchIO-mtl
+  - sudo ghc-pkg unregister MonadCatchIO-mtl
   - ghc-pkg list
   - ghc-pkg check
   - ./configure && make install
