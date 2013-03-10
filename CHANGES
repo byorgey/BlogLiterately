@@ -1,62 +1,69 @@
 0.5.4.1: 18 February 2013
+-------------------------
 
-  * bump blaze-html upper bound to < 0.7
+  * bump `blaze-html` upper bound to < 0.7
 
 0.5.4: 24 January 2013
+----------------------
 
-  * Require pandoc 1.10.
+  * Require `pandoc` 1.10.
 
 0.5.3: 19 November 2012
+-----------------------
 
-  * New --math option for selecting pandoc math writing mode
+  * New `--math` option for selecting pandoc math writing mode
 
   * Run the pandoc parser in "smart" mode, which generates proper en-
     and em-dashes, quotation marks, etc.
 
   * More updates for GHC 7.6.1 compatibility
 
-  * Using highlighting-kate to highlight non-Haskell code was already
+  * Using `highlighting-kate` to highlight non-Haskell code was already
     the default; make this more clear.
 
-    The --other-kate option is no more; now there are two options
+    The `--other-kate` option is no more; now there are two options
 
-      --kate
-      --no-kate
+      `--kate`
+      `--no-kate`
 
-    with --kate the default.
+    with `--kate` the default.
 
 0.5.2.1: 19 September 2012
+--------------------------
 
-  * bump base upper bound to <4.7
+  * bump `base` upper bound to <4.7
 
 0.5.2: 20 August 2012
+---------------------
 
-  * improvement to behavior of --upload-images flag: cache uploaded
+  * improvement to behavior of `--upload-images` flag: cache uploaded
     image server URLs, even across multiple runs, to avoid uploading
     the same image multiple times
 
   * bump dep upper bounds:
-    - split to < 0.3
-    - cmdargs to < 0.11
+    - `split` to < 0.3
+    - `cmdargs` to < 0.11
 
 0.5.1: 30 July 2012
+-------------------
 
-  * Escape < and > characters in ghci output
+  * Escape `<` and `>` characters in `ghci` output
 
-  * Supress vertical whitespace following ghci commands that produce
+  * Supress vertical whitespace following `ghci` commands that produce
     no output
 
-  * add centerImagesXF transform (disabled by default)
+  * add `centerImagesXF` transform (disabled by default)
 
-  * create bug tracker and add Bug-reports: field to .cabal file
+  * create bug tracker and add `Bug-reports:` field to `.cabal` file
 
-  * re-export Text.BlogLiterately.Run from Text.BlogLiterately
+  * re-export `Text.BlogLiterately.Run` from `Text.BlogLiterately`
 
   * improved documentation
 
-  * fix output of --version
+  * fix output of `--version`
 
 0.5: 7 July 2012
+----------------
 
   * expose internals as a library, and create framework for adding
     custom transformations to the pipeline
@@ -67,14 +74,15 @@
 
   * prompt for password if not provided
 
-  * bump HaXml upper bound to allow 1.23.*
+  * bump `HaXml` upper bound to allow 1.23.*
 
 0.4: 2 July 2012
+----------------
 
   * Add special support for wordpress.com's LaTeX format
 
-  * Support for [ghci] blocks with contents automatically passed
-    through ghci and results typeset
+  * Support for `[ghci]` blocks with contents automatically passed
+    through `ghci` and results typeset
 
   * Support for tags
 
