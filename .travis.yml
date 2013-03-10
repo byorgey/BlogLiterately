@@ -5,6 +5,7 @@ before_install:
   - wget http://lambda.haskell.org/platform/download/2012.2.0.0/haskell-platform-2012.2.0.0.tar.gz
   - tar xf haskell-platform-2012.2.0.0.tar.gz
   - cd haskell-platform-2012.2.0.0
-  - ls packages | grep -v '\.packages' | grep -v 'haskell-platform' | sed -e 's/-\([0-9]*\.\)*[0-9]\+//' | xargs -L 1 sudo ghc-pkg --global unregister
+  - ls packages | grep -v '\.packages' | grep -v 'haskell-platform' | sed -e 's/-\([0-9]*\.\)*[0-9]\+//' | xargs -L 1 sudo ghc-pkg --global --force unregister
   - ghc-pkg list
+  - ghc-pkg check
   - ./configure && make install
