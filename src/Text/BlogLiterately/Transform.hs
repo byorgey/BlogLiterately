@@ -267,30 +267,28 @@ loadProfile bl =
           mapM_ print errs
           return $ mappend blProfile bl
 
--- XXX finish writing about these
-
 -- | The standard set of transforms that are run by default (in order
 --   from top to bottom):
 --
---   * 'optionsXF' -- extract options specified in a @[BLOpts]@ block in the file
+--   * 'optionsXF' -- extract options specified in @[BLOpts]@ blocks in the file
 --
---   * 'profileXF'
+--   * 'profileXF' -- load the requested profile (if any)
 --
---   * 'highlightOptsXF'
+--   * 'highlightOptsXF' -- load the requested highlighting style file
 --
---   * 'passwordXF'
+--   * 'passwordXF' -- prompt the user for a password if needed
 --
---   * 'titleXF'
+--   * 'titleXF' -- extract the title from a special title block
 --
---   * 'wptexifyXF'
+--   * 'wptexifyXF' -- turn LaTeX into WordPress format if requested
 --
---   * 'ghciXF'
+--   * 'ghciXF' -- run and typeset ghci sessions if requested
 --
---   * 'imagesXF'
+--   * 'imagesXF' -- upload images if requested
 --
---   * 'highlightXF'
+--   * 'highlightXF' -- perform syntax highlighting
 --
---   * 'centerImagesXF'
+--   * 'centerImagesXF' -- center images occurring in their own paragraph
 standardTransforms :: [Transform]
 standardTransforms =
   [ optionsXF       -- has to go first since it may affect later transforms
