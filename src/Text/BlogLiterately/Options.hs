@@ -13,18 +13,68 @@
 -----------------------------------------------------------------------------
 
 module Text.BlogLiterately.Options
+    (
+      -- * BlogLiterately options record
+      BlogLiterately(..), blOpts
+
+      -- ** Lenses
+      -- $lenses
+
+    , style
+    , hsHighlight
+    , otherHighlight
+    , wplatex
+    , math
+    , ghci
+    , uploadImages
+    , categories
+    , tags
+    , blogid
+    , profile
+    , blog
+    , user
+    , password
+    , title
+    , file
+    , postid
+    , page
+    , publish
+    , xtra
+
+    -- ** Default accessors
+    -- $defaccess
+
+    , style'
+    , hsHighlight'
+    , otherHighlight'
+    , wplatex'
+    , math'
+    , ghci'
+    , uploadImages'
+    , blogid'
+    , profile'
+    , blog'
+    , user'
+    , password'
+    , title'
+    , file'
+    , postid'
+    , page'
+    , publish'
+
+    )
     where
 
-import Control.Lens  ( makeLenses, view )
-import Control.Monad ( mplus )
-import Data.Maybe    ( fromMaybe )
-import Data.Monoid
-import Data.Version
-import Paths_BlogLiterately (version)
+import           Control.Lens                  (makeLenses, view)
+import           Control.Monad                 (mplus)
+import           Data.Maybe                    (fromMaybe)
+import           Data.Monoid
+import           Data.Version
+import           Paths_BlogLiterately          (version)
 
-import System.Console.CmdArgs
+import           System.Console.CmdArgs
 
-import Text.BlogLiterately.Highlight
+import           Text.BlogLiterately.Highlight
 
 -- | Configuration record (and command-line options) for @BlogLiterately@.
 data BlogLiterately = BlogLiterately
@@ -55,6 +105,10 @@ data BlogLiterately = BlogLiterately
                                            --   custom transforms
   }
   deriving (Show,Data,Typeable)
+
+-- $lenses
+-- We derive lenses for all the @BlogLiterately@ fields using the
+-- @lens@ library.
 
 makeLenses ''BlogLiterately
 
@@ -108,7 +162,13 @@ instance Monoid BlogLiterately where
     }
     where combine f = f bl1 `mplus` f bl2
 
--- Some convenient accessors that include defaulting
+--------------------------------------------------
+-- Default accessors
+--------------------------------------------------
+
+-- $defaccess
+-- Some convenient accessors that strip off the Maybe and return an
+-- appropriate default value.
 
 style'          = fromMaybe ""    . view style
 hsHighlight'    = fromMaybe (HsColourInline defaultStylePrefs) . view hsHighlight

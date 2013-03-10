@@ -1,10 +1,12 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeOperators   #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TypeOperators     #-}
 
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.BlogLiterately.Transform
--- Copyright   :  (c) 2008-2010 Robert Greayer, 2012 Brent Yorgey
+-- Copyright   :  (c) 2008-2010 Robert Greayer, 2012-2013 Brent Yorgey
 -- License     :  GPL (see LICENSE)
 -- Maintainer  :  Brent Yorgey <byorgey@gmail.com>
 --
@@ -20,36 +22,51 @@ module Text.BlogLiterately.Transform
       -- * Standard transforms
       -- $standard
 
+    , standardTransforms
+
+    , optionsXF
+    , profileXF
+    , highlightOptsXF
+    , passwordXF
+    , titleXF
     , wptexifyXF
     , ghciXF
     , imagesXF
     , highlightXF
-    , standardTransforms
     , centerImagesXF
-    , titleXF
 
       -- * Transforming documents
     , xformDoc
 
       -- * Utilities
-    , whenA, fixLineEndings
+    , fixLineEndings
     ) where
 
-import           Control.Applicative             ((<$>))
-import           Control.Arrow                   ((>>>))
-import           Control.Lens                    ((%=), (.=), _1, _2)
+import           Control.Applicative               (pure, (<$>), (<**>))
+import           Control.Arrow                     ((>>>))
+import           Control.Lens                      (has, isn't, set, use, (%=),
+                                                    (&), (.=), (.~), (^.), _1,
+                                                    _2, _Just)
 import           Control.Monad.State
-import           Data.Bool.Extras                (whenA)
-import           Data.Char                       (toLower)
-import           Data.Default                    (def)
-import           Data.List                       (intercalate, isPrefixOf)
-import           Data.Monoid                     (mempty, (<>))
-import qualified Data.Set                        as S
-import qualified Data.Traversable                as T
-
-import           Text.Blaze.Html.Renderer.String (renderHtml)
+import           Data.Char                         (toLower)
+import qualified Data.Configurator                 as Conf
+import           Data.Configurator.Types           (Config, Configured (..),
+                                                    Name, Value (..))
+import           Data.Default                      (def)
+import           Data.List                         (intercalate, isPrefixOf)
+import           Data.Monoid                       (mappend)
+import           Data.Monoid                       (mempty, (<>))
+import qualified Data.Set                          as S
+import qualified Data.Traversable                  as T
+import           System.Directory                  (doesFileExist,
+                                                    getAppUserDataDirectory)
+import           System.Exit                       (exitFailure)
+import           System.FilePath                   ((<.>), (</>))
+import           System.IO                         (hFlush, stdout)
+import           Text.Blaze.Html.Renderer.String   (renderHtml)
 import           Text.Pandoc
 import           Text.Pandoc.Options
+import           Text.Parsec                       (ParseError)
 
 import           Text.BlogLiterately.Block
 import           Text.BlogLiterately.Ghci
@@ -57,6 +74,7 @@ import           Text.BlogLiterately.Highlight
 import           Text.BlogLiterately.Image
 import           Text.BlogLiterately.LaTeX
 import           Text.BlogLiterately.Options
+import           Text.BlogLiterately.Options.Parse
 
 -- | A document transformation consists of two parts: an actual
 --   transformation, expressed as a function over Pandoc documents, and
@@ -73,11 +91,17 @@ import           Text.BlogLiterately.Options
 --
 --   The transformation is then specified as a stateful computation
 --   over both a @BlogLiterately@ options record, and a @Pandoc@
---   document.  It may also have effects in the @IO@ monad.  If you
---   have a pure function of type @BlogLiterately -> Pandoc ->
---   Pandoc@, you can use the 'pureTransform' function to create a
---   'Transform'; if you have a function of type @BlogLiterately ->
---   Pandoc -> IO Pandoc@, you can use 'ioTransform'.
+--   document.  It may also have effects in the @IO@ monad.
+--
+--   * If you have a pure function of type @BlogLiterately -> Pandoc
+--     -> Pandoc@, you can use the 'pureTransform' function to create a
+--     'Transform'.
+--
+--   * If you have a function of type @BlogLiterately -> Pandoc -> IO
+--     Pandoc@, you can use 'ioTransform'.
+--
+--   * Otherwise you can directly create something of type @StateT
+--     (BlogLiterately, Pandoc) IO ()@.
 --
 --   For examples, see the implementations of the standard transforms
 --   below.
@@ -119,7 +143,7 @@ runTransforms ts bl p = execStateT (mapM_ runTransform ts) (bl,p)
 
 -- $standard
 -- These transforms are enabled by default in the standard
--- BlogLiterately executable.
+-- @BlogLiterately@ executable.
 
 -- | Format embedded LaTeX for WordPress (if the @wplatex@ flag is set).
 wptexifyXF :: Transform
@@ -169,12 +193,15 @@ titleXF = Transform extractTitle (const True)
           -- title set explicitly with --title takes precedence.
           _1.title %= (`mplus` Just (intercalate " " [s | Str s <- is]))
 
+-- | Extract blocks tagged with @[BLOpts]@ and use their contents as
+--   options.
 optionsXF :: Transform
 optionsXF = Transform optionsXF' (const True)
   where
     optionsXF' = do
       p <- gets snd
-      let opts = queryWith extractOptions p
+      let (errs, opts) = queryWith extractOptions p
+      mapM_ (liftIO . print) errs
       _1 %= (<> opts)
 
       let p' = bottomUp killOptionBlocks p
@@ -182,16 +209,19 @@ optionsXF = Transform optionsXF' (const True)
 
 -- XXX need to extract out some common functionality below.
 
-extractOptions :: Block -> BlogLiterately
+-- | Take a block and extract from it a list of parse errors and an
+--   options record.  If the blog is not tagged with @[BLOpts]@ these
+--   will just be empty.
+extractOptions :: Block -> ([ParseError], BlogLiterately)
 extractOptions (CodeBlock (_, as, _) s)
   | "blopts" `elem` (map.map) toLower (maybe id (:) tag $ as)
-    = undefined  -- XXX need to parse options record here.
-                 -- configurator doesn't look promising.  Doesn't
-                 -- export the actual parser; all API functions work
-                 -- in terms of files.
+    = readBLOptions src
   | otherwise = mempty
   where (tag, src) = unTag s
 
+extractOptions b = mempty
+
+-- | Delete any blocks tagged with @[BLOpts]@.
 killOptionBlocks :: Block -> Block
 killOptionBlocks cb@(CodeBlock (_, as, _) s)
   | "blopts" `elem` (map.map) toLower (maybe id (:) tag $ as)
@@ -199,10 +229,130 @@ killOptionBlocks cb@(CodeBlock (_, as, _) s)
   | otherwise = cb
   where (tag, src) = unTag s
 
--- | The standard set of transforms that are run by default:
---   'wptexifyXF', 'ghciXF', 'imagesXF', 'highlightXF'.
+killOptionBlocks b = b
+
+-- | Prompt the user for a password if the @blog@ field is set but no
+--   password has been provided.
+passwordXF :: Transform
+passwordXF = Transform passwordPrompt passwordCond
+  where
+    passwordCond bl = ((bl ^. blog)     & has   _Just)
+                   && ((bl ^. password) & isn't _Just)
+    passwordPrompt  = do
+      liftIO $ putStr "Password: " >> hFlush stdout
+      pwd <- liftIO getLine
+      _1 . password .= Just pwd
+
+-- | Read a user-supplied style file and add its contents to the
+--   highlighting options.
+highlightOptsXF :: Transform
+highlightOptsXF = Transform doHighlightOptsXF (const True)
+  where
+    doHighlightOptsXF = do
+      prefs <- (liftIO . getStylePrefs) =<< use (_1 . style)
+      (_1 . hsHighlight) %= Just . maybe (HsColourInline prefs)
+                                         (_HsColourInline .~ prefs)
+
+-- | Load options from a profile if one is specified.
+profileXF :: Transform
+profileXF = Transform doProfileXF (const True)
+  where
+    doProfileXF = do
+      bl  <- use _1
+      bl' <- liftIO $ loadProfile bl
+      _1 .= bl'
+
+-- | Load additional options from a profile specified in the options
+--   record.
+loadProfile :: BlogLiterately -> IO BlogLiterately
+loadProfile bl =
+  case bl^.profile of
+    Nothing          -> return bl
+    Just profileName -> do
+      appDir <- getAppUserDataDirectory "BlogLiterately"
+
+      let profileCfg = appDir </> profileName <.> "cfg"
+      e <- doesFileExist profileCfg
+      case e of
+        False -> do
+          putStrLn $ profileCfg ++ ": file not found"
+          exitFailure
+        True  -> do
+          p <- profileToBL =<< Conf.load [Conf.Required profileCfg]
+          return $ mappend p bl
+
+-- | Convert a configuration to an options record.
+profileToBL :: Config -> IO BlogLiterately
+profileToBL c = pure mempty
+  <**> style          <.~> lookupV    "style"
+--  <**> hsHighlight  <.~> undefined
+--  <**> otherHighlight <.~> lookupV    "otherHighlight"
+  <**> wplatex        <.~> lookupV    "wplatex"
+  <**> math           <.~> lookupV    "math"
+  <**> ghci           <.~> lookupV    "ghci"
+  <**> uploadImages   <.~> lookupV    "upload-images"
+  <**> categories     <.~> lookupList "categories"
+  <**> tags           <.~> lookupList "tags"
+  <**> blogid         <.~> lookupV    "blogid"
+  <**> blog           <.~> lookupV    "blog"
+  <**> user           <.~> lookupV    "user"
+  <**> password       <.~> lookupV    "password"
+  <**> title          <.~> lookupV    "title"
+  <**> postid         <.~> lookupV    "postid"
+  <**> page           <.~> lookupV    "page"
+  <**> publish        <.~> lookupV    "publish"
+  <**> xtra           <.~> lookupList "xtra"
+
+  where
+    lookupV :: Configured a => Name -> IO (Maybe a)
+    lookupV = Conf.lookup c
+
+--    lookupList :: Configured [a] => Name -> IO [a]
+    lookupList = Conf.lookupDefault [] c
+
+--    (<.~>) :: Functor f => ASetter s t a b -> f b -> f (s -> t)
+    f <.~> x = set f <$> x
+
+instance Configured [String] where
+  convert (List vs) = mapM convert vs
+  convert _         = Nothing
+
+
+-- | The standard set of transforms that are run by default (in order
+--   from top to bottom):
+--
+--   * 'optionsXF' -- extract options specified in a @[BLOpts]@ block in the file
+--
+--   * 'profileXF'
+--
+--   * 'highlightOptsXF'
+--
+--   * 'passwordXF'
+--
+--   * 'titleXF'
+--
+--   * 'wptexifyXF'
+--
+--   * 'ghciXF'
+--
+--   * 'imagesXF'
+--
+--   * 'highlightXF'
+--
+--   * 'centerImagesXF'
 standardTransforms :: [Transform]
-standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF, centerImagesXF, titleXF]
+standardTransforms =
+  [ optionsXF       -- has to go first since it may affect later transforms
+  , profileXF
+  , highlightOptsXF
+  , passwordXF
+  , titleXF
+  , wptexifyXF
+  , ghciXF
+  , imagesXF
+  , highlightXF
+  , centerImagesXF
+  ]
 
 --------------------------------------------------
 -- Transforming documents
@@ -212,7 +362,8 @@ standardTransforms = [wptexifyXF, ghciXF, imagesXF, highlightXF, centerImagesXF,
 --   string, given a list of transformation passes.
 xformDoc :: BlogLiterately -> [Transform] -> String -> IO (BlogLiterately, String)
 xformDoc bl xforms =
-        (fixLineEndings >>> readMarkdown parseOpts)
+        fixLineEndings
+    >>> readMarkdown parseOpts
 
     >>> runTransforms xforms bl
 
