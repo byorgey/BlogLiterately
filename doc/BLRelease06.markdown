@@ -98,12 +98,12 @@ In order to make the above features possible, the definition of
 `Transform` has changed.  This only affects those users who have
 created their own custom transformations.  The definition used to be
 
-   [haskell]
-   data Transform
-     = Transform
-       { getTransform :: BlogLiterately -> Kleisli IO Pandoc Pandoc
-       , xfCond       :: BlogLiterately -> Bool
-       }
+    [haskell]
+    data Transform
+      = Transform
+        { getTransform :: BlogLiterately -> Kleisli IO Pandoc Pandoc
+        , xfCond       :: BlogLiterately -> Bool
+        }
 
 that is, a `Transform` was a transformation on `Pandoc` documents,
 parameterized by an options record and able to have effects in the
