@@ -113,7 +113,7 @@ we don't know all the options until we start processing the document!
 Also, I switched from using `Kleisli` arrows to using `StateT`, since
 I find it simpler to work with, especially now that multiple pieces of
 state are involved.  For more information and help upgrading, see the
-[documentation for `Text.BlogLiterately.Transform`](XXX).
+[documentation for `Text.BlogLiterately.Transform`](http://hackage.haskell.org/packages/archive/BlogLiterately/latest/doc/html/Text-BlogLiterately-Transform.html).
 
 Move to github
 --------------
