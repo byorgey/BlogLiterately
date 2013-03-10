@@ -291,7 +291,7 @@ profileToBL c = pure mempty
   <**> postid         <.~> lookupV    "postid"
   <**> page           <.~> lookupV    "page"
   <**> publish        <.~> lookupV    "publish"
-  <**> xtra           <.~> lookupList "xtra"
+  <**> xtra           <.~> lookupList "xtras"
 
   where
     lookupV :: Configured a => Name -> IO (Maybe a)
