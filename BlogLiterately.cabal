@@ -26,7 +26,8 @@ Maintainer:     Brent Yorgey <byorgey@cis.upenn.edu>
 Stability:      experimental
 Build-Type:     Simple
 Tested-With:    GHC ==7.4.2, GHC ==7.6.1
-Extra-Source-Files: CHANGES
+Extra-Source-Files: CHANGES.md
+                    README.markdown
                     doc/BlogLiteratelyDoc.lhs
                     style/*.css
                     style/hs-style
