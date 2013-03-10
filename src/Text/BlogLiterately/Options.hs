@@ -260,7 +260,7 @@ blOpts = BlogLiterately
                    &= name "postid" &= name "i" &= explicit
      , _profile  = def &= typ "STRING"   &= help "profile to use"
                    &= name "profile" &= name "P" &= explicit
-     , _blog     = def &= typ "URL"      &= help "blog XML-RPC url (if omitted, html goes to stdout)"
+     , _blog     = def &= typ "URL"      &= help "blog XML-RPC url (if omitted, HTML goes to stdout)"
                    &= name "blog" &= name "b" &= explicit
      , _user     = def &= typ "USER"     &= help "user name"
                    &= name "user" &= name "u" &= explicit
