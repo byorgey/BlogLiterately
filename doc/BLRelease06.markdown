@@ -2,6 +2,10 @@
 
     [BLOpts]
     profile = wp
+    postid = 1053
+
+    tags = release, BlogLiterately, options
+    categories = haskell, writing
 
 I'm very proud to announce the release of
 [`BlogLiterately` version 0.6](http://hackage.haskell.org/package/BlogLiterately-0.6),
@@ -28,7 +32,7 @@ With previous releases, uploading a post usually went something like
 this:
 
     BlogLiterately MyPost.md --blog "http://my.blog.url/xmlrpc.php \
-      --user me --password 1234567 --title "My awesome post" \
+      --user me --password 1234567 --postid 9999 --title "My awesome post" \
       --tag tag1 --tag tag2 --tag tag3 --category Stuff \
       --category OtherStuff --ghci --wplatex
 
@@ -41,26 +45,27 @@ options.  Suppose we put this in `$HOME/.BlogLiterately/foo.cfg` (or
 in something like `C:/Documents And Settings/user/Application
 Data/BlogLiterately/foo.cfg` on Windows):
 
-    blog	= http://my.blog.url/xmlrpc.php
-    user	= me
-    password	= 1234567
+    blog        = http://my.blog.url/xmlrpc.php
+    user        = me
+    password    = 1234567
     wplatex     = true
 
 Now the previous command line is reduced to
 
-    BlogLiterately MyPost.md -P foo --title "My awesome post" \
+    BlogLiterately MyPost.md -P foo --postid 9999 --title "My awesome post" \
       --tag tag1 --tag tag2 --tag tag3 --category Stuff \
       --category OtherStuff --ghci
 
 which is already a big improvement!  But it doesn't stop there.  The
 title, tags, categories, and other such things are really inherent to
-the post itself; there's no reason they should go on the command
-line.  So, we add this block somewhere in `MyPost.md` (probably near the
-top, though it doesn't matter):
+the post itself; there's no reason they should go on the command line.
+So, we add this indented block somewhere in `MyPost.md` (probably near
+the top, though it doesn't matter):
 
     [other]
         [BLOpts]
-	profile    = foo
+        profile    = foo
+	postid     = 9999
         title      = "My awesome post"
         tags       = tag1, tag2, tag3
         categories = Stuff, OtherStuff
@@ -71,7 +76,10 @@ And now we only have to write
     BlogLiterately MyPost.md
 
 with no options on the command line at all!  Notice how we can even
-specify which profile to use in the `[BLOpts]` block.
+specify which profile to use in the `[BLOpts]` block.  When we're
+satisfied with the post we can publish it with
+
+    BlogLiterately MyPost.md --publish
 
 Generating HTML only
 --------------------
@@ -106,7 +114,7 @@ parameterized by an options record and able to have effects in the
       = Transform
         { getTransform :: StateT (BlogLiterately, Pandoc) IO ()
         , xfCond       :: BlogLiterately -> Bool
-	}
+        }
 
 meaning that a `Transform` is able to transform *both* a `Pandoc`
 document *and* the options record.  This is crucial for being able to
