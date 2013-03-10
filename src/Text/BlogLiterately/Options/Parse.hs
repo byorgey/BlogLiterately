@@ -65,7 +65,9 @@ parseBLOption =
 
 str = stringLiteral haskell <|> many (noneOf " \t\n\r,\"[]")
 parseStr = Just <$> str
-parseBool = Just <$> ((string "True" *> pure True) <|> (string "False" *> pure False))
+parseBool = Just <$> ( ((string "true"  <|> try (string "on")) *> pure True)
+                   <|> ((string "false" <|>      string "off") *> pure False)
+                     )
 
 parseStrList = optional (char '[') *> paddedStr `sepBy` (char ',') <* optional (char ']')
   where
