@@ -17,7 +17,8 @@
 -- > module Main where
 -- > import Text.BlogLiterately
 -- >
--- > myCustomXF = Transform ...
+-- > myCustomXF1 = pureTransform ...
+-- > myCustomXF2 = Transform ...
 -- > main = blogLiteratelyWith [myCustomXF1, myCustomXF2]
 --
 -- See "Text.BlogLiterately.Transform" for examples of transforms,
