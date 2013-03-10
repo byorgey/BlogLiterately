@@ -65,7 +65,7 @@ the top, though it doesn't matter):
     [other]
         [BLOpts]
         profile    = foo
-	postid     = 9999
+        postid     = 9999
         title      = "My awesome post"
         tags       = tag1, tag2, tag3
         categories = Stuff, OtherStuff
