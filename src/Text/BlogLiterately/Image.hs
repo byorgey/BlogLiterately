@@ -1,5 +1,5 @@
-{-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ViewPatterns    #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -19,30 +19,31 @@ module Text.BlogLiterately.Image
     , mkMediaObject
     ) where
 
-import           Control.Arrow              ( first, second, (>>>), arr
-                                            , Kleisli(..), runKleisli )
-import qualified Control.Category as C      ( Category, id )
-import           Control.Monad              ( liftM, unless )
-import           Control.Monad.IO.Class     ( liftIO )
-import           Control.Monad.Trans.Class  ( lift )
-import           Control.Monad.Trans.Reader ( ReaderT, runReaderT, ask )
-import           Control.Monad.Trans.State  ( StateT, runStateT, get, modify )
-import qualified Data.ByteString.Char8 as B
-import           Data.Char                  ( toLower )
-import           Data.Functor               ( (<$>) )
-import           Data.List                  ( isPrefixOf, intercalate )
-import qualified Data.Map as M
-import           Data.Maybe                 ( fromMaybe )
-import           System.Directory           ( doesFileExist )
-import           System.FilePath            ( takeFileName, takeExtension )
+import           Control.Arrow               (Kleisli (..), arr, first,
+                                              runKleisli, second, (>>>))
+import qualified Control.Category            as C (Category, id)
+import           Control.Monad               (liftM, unless)
+import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad.Trans.Class   (lift)
+import           Control.Monad.Trans.Reader  (ReaderT, ask, runReaderT)
+import           Control.Monad.Trans.State   (StateT, get, modify, runStateT)
+import qualified Data.ByteString.Char8       as B
+import           Data.Char                   (toLower)
+import           Data.Functor                ((<$>))
+import           Data.List                   (intercalate, isPrefixOf)
+import qualified Data.Map                    as M
+import           Data.Maybe                  (fromMaybe)
+import           System.Directory            (doesFileExist)
+import           System.FilePath             (takeExtension, takeFileName)
 import           System.IO
-import qualified System.IO.UTF8 as U        ( readFile )
-import           System.Process             ( ProcessHandle, waitForProcess
-                                            , runInteractiveCommand )
+import qualified System.IO.UTF8              as U (readFile)
+import           System.Process              (ProcessHandle,
+                                              runInteractiveCommand,
+                                              waitForProcess)
 
+import           Network.XmlRpc.Client       (remote)
+import           Network.XmlRpc.Internals    (Value (..), toValue)
 import           Text.Pandoc
-import           Network.XmlRpc.Client      ( remote )
-import           Network.XmlRpc.Internals   ( Value(..), toValue )
 
 import           Text.BlogLiterately.Options
 
@@ -56,8 +57,8 @@ type URL = String
 --   @.BlogLiterately-uploaded-images@.
 uploadAllImages :: BlogLiterately -> Pandoc -> IO Pandoc
 uploadAllImages bl@(BlogLiterately{..}) p =
-  case _blog of
-    Just xmlrpc -> do
+  case (_blog, _htmlOnly) of
+    (Just xmlrpc, h) | h /= Just True -> do
       uploaded <- readUploadedImages
       (p', uploaded') <- runStateT (bottomUpM (uploadOneImage xmlrpc) p) uploaded
       writeUploadedImages uploaded'
