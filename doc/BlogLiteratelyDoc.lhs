@@ -419,6 +419,16 @@ this format too, so the above example could also have been written as:
         postid = 2000
     ...
 
+Generating HTML only
+--------------------
+
+In the past, to get a "preview" version of the HTML output written to
+stdout, all you had to do was omit a `--blog` option.  However, if you
+specify a profile with a `blog` field, this is more problematic.  For
+this reason, a new option `--html-only` has been added.  When this
+option is specified, nothing is uploaded, and the HTML output is
+written to stdout.
+
 Getting Help
 ------------
 
