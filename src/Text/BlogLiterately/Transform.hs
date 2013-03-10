@@ -206,8 +206,6 @@ optionsXF = Transform optionsXF' (const True)
       let p' = bottomUp killOptionBlocks p
       _2 .= p'
 
--- XXX need to extract out some common functionality below.
-
 -- | Take a block and extract from it a list of parse errors and an
 --   options record.  If the blog is not tagged with @[BLOpts]@ these
 --   will just be empty.
