@@ -11,7 +11,7 @@
 
 module Text.BlogLiterately.Options.Parse
     ( readBLOptions
-    , readBLOptions
+    , readBLOption
     , parseBLOption
     ) where
 
