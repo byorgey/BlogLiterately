@@ -39,6 +39,7 @@ module Text.BlogLiterately.Options
     , postid
     , page
     , publish
+    , htmlOnly
     , xtra
 
     -- ** Default accessors
@@ -61,7 +62,7 @@ module Text.BlogLiterately.Options
     , postid'
     , page'
     , publish'
-
+    , htmlOnly'
     )
     where
 
@@ -101,6 +102,9 @@ data BlogLiterately = BlogLiterately
   , _page           :: Maybe Bool          -- ^ Create a \"page\" instead of a post
   , _publish        :: Maybe Bool          -- ^ Should the post be published?
                                            --   (Otherwise it is uploaded as a draft.)
+  , _htmlOnly       :: Maybe Bool          -- ^ Don't upload anything;
+                                           --   just output HTML to
+                                           --   stdout.
   , _xtra           :: [String]            -- ^ Extension arguments, for use e.g. by
                                            --   custom transforms
   }
@@ -134,6 +138,7 @@ instance Monoid BlogLiterately where
     , _postid         = Nothing
     , _page           = Nothing
     , _publish        = Nothing
+    , _htmlOnly       = Nothing
     , _xtra           = []
     }
 
@@ -158,6 +163,7 @@ instance Monoid BlogLiterately where
     , _postid         = combine _postid
     , _page           = combine _page
     , _publish        = combine _publish
+    , _htmlOnly       = combine _htmlOnly
     , _xtra           = combine _xtra
     }
     where combine f = f bl1 `mplus` f bl2
@@ -187,6 +193,7 @@ file'           = fromMaybe ""    . view file
 postid'         = fromMaybe ""    . view postid
 page'           = fromMaybe False . view page
 publish'        = fromMaybe False . view publish
+htmlOnly'       = fromMaybe False . view htmlOnly
 
 -- | Command-line configuration for use with @cmdargs@.
 blOpts :: BlogLiterately
@@ -233,6 +240,8 @@ blOpts = BlogLiterately
                   &= name "page" &= explicit
      , _publish = def &= help "publish post (otherwise it's uploaded as a draft)"
                   &= name "publish" &= explicit
+     , _htmlOnly = def &= help "don't upload anything; output HTML to stdout"
+                  &= name "html-only" &= name "h" &= explicit
      , _categories = def
        &= explicit
        &= name "category" &= name "C"

@@ -1,5 +1,5 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RecordWildCards  #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -17,14 +17,14 @@ module Text.BlogLiterately.Post
       mkPost, mkArray, postIt
     ) where
 
-import Control.Lens                         ( (^.) )
-import Control.Monad                        ( unless )
-import Data.Maybe                           ( fromMaybe )
+import           Control.Lens                ((^.))
+import           Control.Monad               (unless)
+import           Data.Maybe                  (fromMaybe)
 
-import Network.XmlRpc.Client                ( remote )
-import Network.XmlRpc.Internals             ( Value(..), toValue, XmlRpcType )
+import           Network.XmlRpc.Client       (remote)
+import           Network.XmlRpc.Internals    (Value (..), XmlRpcType, toValue)
 
-import Text.BlogLiterately.Options
+import           Text.BlogLiterately.Options
 
 {-
 The metaWeblog API defines `newPost` and `editPost` procedures that
@@ -99,9 +99,10 @@ appropriate:
 -- | Given a configuration and a formatted post, upload it to the server.
 postIt :: BlogLiterately -> String -> IO ()
 postIt bl html =
-  case bl^.blog of
-    Nothing  -> putStr html
-    Just url -> do
+  case (bl^.blog, bl^.htmlOnly) of
+    (Nothing  , _         ) -> putStr html
+    (_        , Just True ) -> putStr html
+    (Just url , _         ) -> do
       let pwd = password' bl
       case bl^.postid of
         Nothing  -> do
