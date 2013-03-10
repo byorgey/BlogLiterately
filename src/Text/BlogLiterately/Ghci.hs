@@ -35,20 +35,22 @@ module Text.BlogLiterately.Ghci
 
     ) where
 
-import Control.Arrow              ( first)
-import Control.Monad.IO.Class     ( liftIO )
-import Control.Monad.Trans.Reader ( ReaderT, runReaderT, ask )
-import Data.Char                  ( isSpace )
-import Data.Functor               ( (<$>) )
-import Data.List                  ( isPrefixOf, intercalate )
-import System.IO
-import System.Process             ( ProcessHandle, waitForProcess
-                                  , runInteractiveCommand )
+import           Control.Arrow              (first)
+import           Control.Monad.IO.Class     (liftIO)
+import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
+import           Data.Char                  (isSpace)
+import           Data.Functor               ((<$>))
+import           Data.List                  (intercalate, isPrefixOf)
+import           System.IO
+import           System.Process             (ProcessHandle,
+                                             runInteractiveCommand,
+                                             waitForProcess)
 
-import Data.List.Split
-import Text.Pandoc                ( Pandoc, Block(CodeBlock), bottomUpM )
+import           Data.List.Split
+import           Text.Pandoc                (Block (CodeBlock), Pandoc,
+                                             bottomUpM)
 
-import Text.BlogLiterately.Block  ( unTag )
+import           Text.BlogLiterately.Block  (onTag)
 
 -- | Information about a running process: stdin, stdout, stderr, and a
 --   handle.
@@ -172,17 +174,12 @@ formatInlineGhci :: FilePath -> Pandoc -> IO Pandoc
 formatInlineGhci f = withGhciProcess f . bottomUpM formatInlineGhci'
   where
     formatInlineGhci' :: Block -> ReaderT ProcessInfo IO Block
-    formatInlineGhci' b@(CodeBlock attr s)
-      | Just "ghci" <- tag =  do
-          results <- zipWith GhciLine inputs <$> mapM ghciEval inputs
-          return $ CodeBlock attr (intercalate "\n" $ map formatGhciResult results)
+    formatInlineGhci' = onTag "ghci" formatGhciBlock return
 
-      | otherwise = return b
-
-      where (tag,src) = unTag s
-            inputs    = parseGhciInputs src
-
-    formatInlineGhci' b = return b
+    formatGhciBlock attr src = do
+      let inputs = parseGhciInputs src
+      results <- zipWith GhciLine inputs <$> mapM ghciEval inputs
+      return $ CodeBlock attr (intercalate "\n" $ map formatGhciResult results)
 
 parseGhciInputs :: String -> [GhciInput]
 parseGhciInputs = map mkGhciInput

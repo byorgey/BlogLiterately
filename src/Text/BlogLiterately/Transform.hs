@@ -48,7 +48,6 @@ import           Control.Lens                      (has, isn't, set, use, (%=),
                                                     (&), (.=), (.~), (^.), _1,
                                                     _2, _Just)
 import           Control.Monad.State
-import           Data.Char                         (toLower)
 import qualified Data.Configurator                 as Conf
 import           Data.Configurator.Types           (Config, Configured (..),
                                                     Name, Value (..))
@@ -68,13 +67,16 @@ import           Text.Pandoc
 import           Text.Pandoc.Options
 import           Text.Parsec                       (ParseError)
 
-import           Text.BlogLiterately.Block
-import           Text.BlogLiterately.Ghci
-import           Text.BlogLiterately.Highlight
-import           Text.BlogLiterately.Image
-import           Text.BlogLiterately.LaTeX
+import           Text.BlogLiterately.Block         (onTag)
+import           Text.BlogLiterately.Ghci          (formatInlineGhci)
+import           Text.BlogLiterately.Highlight     (HsHighlight (HsColourInline),
+                                                    colourisePandoc,
+                                                    getStylePrefs,
+                                                    _HsColourInline)
+import           Text.BlogLiterately.Image         (uploadAllImages)
+import           Text.BlogLiterately.LaTeX         (wpTeXify)
 import           Text.BlogLiterately.Options
-import           Text.BlogLiterately.Options.Parse
+import           Text.BlogLiterately.Options.Parse (readBLOptions)
 
 -- | A document transformation consists of two parts: an actual
 --   transformation, expressed as a function over Pandoc documents, and
@@ -213,23 +215,11 @@ optionsXF = Transform optionsXF' (const True)
 --   options record.  If the blog is not tagged with @[BLOpts]@ these
 --   will just be empty.
 extractOptions :: Block -> ([ParseError], BlogLiterately)
-extractOptions (CodeBlock (_, as, _) s)
-  | "blopts" `elem` (map.map) toLower (maybe id (:) tag $ as)
-    = readBLOptions src
-  | otherwise = mempty
-  where (tag, src) = unTag s
-
-extractOptions b = mempty
+extractOptions = onTag "blopts" (const readBLOptions) (const mempty)
 
 -- | Delete any blocks tagged with @[BLOpts]@.
 killOptionBlocks :: Block -> Block
-killOptionBlocks cb@(CodeBlock (_, as, _) s)
-  | "blopts" `elem` (map.map) toLower (maybe id (:) tag $ as)
-              = Null
-  | otherwise = cb
-  where (tag, src) = unTag s
-
-killOptionBlocks b = b
+killOptionBlocks = onTag "blopts" (const (const Null)) id
 
 -- | Prompt the user for a password if the @blog@ field is set but no
 --   password has been provided.
