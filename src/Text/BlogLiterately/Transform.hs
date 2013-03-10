@@ -48,9 +48,6 @@ import           Control.Lens                      (has, isn't, set, use, (%=),
                                                     (&), (.=), (.~), (^.), _1,
                                                     _2, _Just)
 import           Control.Monad.State
-import qualified Data.Configurator                 as Conf
-import           Data.Configurator.Types           (Config, Configured (..),
-                                                    Name, Value (..))
 import           Data.Default                      (def)
 import           Data.List                         (intercalate, isPrefixOf)
 import           Data.Monoid                       (mappend)
@@ -268,45 +265,11 @@ loadProfile bl =
           putStrLn $ profileCfg ++ ": file not found"
           exitFailure
         True  -> do
-          p <- profileToBL =<< Conf.load [Conf.Required profileCfg]
-          return $ mappend p bl
+          (errs, blProfile) <- readBLOptions <$> readFile profileCfg
+          mapM_ print errs
+          return $ mappend blProfile bl
 
--- | Convert a configuration to an options record.
-profileToBL :: Config -> IO BlogLiterately
-profileToBL c = pure mempty
-  <**> style          <.~> lookupV    "style"
---  <**> hsHighlight  <.~> undefined
---  <**> otherHighlight <.~> lookupV    "otherHighlight"
-  <**> wplatex        <.~> lookupV    "wplatex"
-  <**> math           <.~> lookupV    "math"
-  <**> ghci           <.~> lookupV    "ghci"
-  <**> uploadImages   <.~> lookupV    "upload-images"
-  <**> categories     <.~> lookupList "categories"
-  <**> tags           <.~> lookupList "tags"
-  <**> blogid         <.~> lookupV    "blogid"
-  <**> blog           <.~> lookupV    "blog"
-  <**> user           <.~> lookupV    "user"
-  <**> password       <.~> lookupV    "password"
-  <**> title          <.~> lookupV    "title"
-  <**> postid         <.~> lookupV    "postid"
-  <**> page           <.~> lookupV    "page"
-  <**> publish        <.~> lookupV    "publish"
-  <**> xtra           <.~> lookupList "xtras"
-
-  where
-    lookupV :: Configured a => Name -> IO (Maybe a)
-    lookupV = Conf.lookup c
-
---    lookupList :: Configured [a] => Name -> IO [a]
-    lookupList = Conf.lookupDefault [] c
-
---    (<.~>) :: Functor f => ASetter s t a b -> f b -> f (s -> t)
-    f <.~> x = set f <$> x
-
-instance Configured [String] where
-  convert (List vs) = mapM convert vs
-  convert _         = Nothing
-
+-- XXX finish writing about these
 
 -- | The standard set of transforms that are run by default (in order
 --   from top to bottom):

@@ -46,7 +46,6 @@ Library
                    bool-extras,
                    mtl,
                    split >= 0.1.4 && < 0.3,
-                   configurator >= 0.2 && < 0.3,
                    utf8-string >= 0.3 && < 0.4,
                    transformers >= 0.3 && < 0.4,
                    parsec >= 3 && < 3.2,
