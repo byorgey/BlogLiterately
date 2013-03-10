@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -26,22 +26,27 @@ module Text.BlogLiterately.Highlight
     , colourisePandoc
     ) where
 
-import           Control.Lens                        ( makePrisms )
-import           Control.Monad                       ( liftM )
-import           Data.Maybe                          ( isNothing )
-import qualified System.IO.UTF8 as U                 ( readFile )
+import           Control.Lens                        (makePrisms)
+import           Control.Monad                       (liftM)
+import           Data.Char                           (toLower)
+import           Data.List                           (find)
+import           Data.Maybe                          (fromMaybe, isNothing)
+import qualified System.IO.UTF8                      as U (readFile)
 
-import           Text.Pandoc                         ( Pandoc(..)
-                                                     , Block (CodeBlock, RawBlock) )
-import           Text.Pandoc.Highlighting            ( highlight, formatHtmlBlock )
-import           Language.Haskell.HsColour           ( hscolour, Output(..) )
-import           Language.Haskell.HsColour.Colourise ( defaultColourPrefs )
-import           System.Console.CmdArgs              ( Data, Typeable )
-import           Text.XML.HaXml
-import           Text.XML.HaXml.Posn                 ( noPos )
-import           Text.Blaze.Html.Renderer.String     ( renderHtml )
+import           Language.Haskell.HsColour           (Output (..), hscolour)
+import           Language.Haskell.HsColour.Colourise (defaultColourPrefs)
+import           System.Console.CmdArgs              (Data, Typeable)
+import           Text.Blaze.Html.Renderer.String     (renderHtml)
+import           Text.Highlighting.Kate
+import           Text.Highlighting.Kate.Format.HTML  (formatHtmlBlock)
+import           Text.Pandoc                         (Block (CodeBlock, RawBlock),
+                                                      Pandoc (..))
+import           Text.Pandoc.Definition
+import           Text.Pandoc.Shared                  (safeRead)
+import           Text.XML.HaXml                      hiding (find)
+import           Text.XML.HaXml.Posn                 (noPos)
 
-import           Text.BlogLiterately.Block           ( unTag )
+import           Text.BlogLiterately.Block           (unTag)
 
 -- | Style preferences are specified as a list of mappings from class
 --   attributes to CSS style attributes.
@@ -283,3 +288,37 @@ colouriseCodeBlock _ _ b = b
 colourisePandoc :: HsHighlight -> Bool -> Pandoc -> Pandoc
 colourisePandoc hsHighlight otherHighlight (Pandoc m blocks) =
     Pandoc m $ map (colouriseCodeBlock hsHighlight otherHighlight) blocks
+
+--------------------------------------------------
+-- highlight function
+--------------------------------------------------
+
+-- Copied here from
+--
+--   https://github.com/jgm/pandoc/blob/8b3a81e4dd8bf46a822980781e28d9777a076c6a/src/Text/Pandoc/Highlighting.hs#L63
+--
+-- Pandoc 1.11 hid the Text.Pandoc.Highlighting module so we can't
+-- import it from there anymore (at least not for the moment).
+
+lcLanguages :: [String]
+lcLanguages = map (map toLower) languages
+
+highlight :: (FormatOptions -> [SourceLine] -> a) -- ^ Formatter
+          -> Attr -- ^ Attributes of the CodeBlock
+          -> String -- ^ Raw contents of the CodeBlock
+          -> Maybe a -- ^ Maybe the formatted result
+highlight formatter (_, classes, keyvals) rawCode =
+  let firstNum = case safeRead (fromMaybe "1" $ lookup "startFrom" keyvals) of
+                      Just n -> n
+                      Nothing -> 1
+      fmtOpts = defaultFormatOpts{
+                  startNumber = firstNum,
+                  numberLines = any (`elem`
+                        ["number","numberLines", "number-lines"]) classes }
+      lcclasses = map (map toLower) classes
+  in case find (`elem` lcLanguages) lcclasses of
+            Nothing -> Nothing
+            Just language -> Just
+                              $ formatter fmtOpts{ codeClasses = [language],
+                                                   containerClasses = classes }
+                              $ highlightAs language rawCode
