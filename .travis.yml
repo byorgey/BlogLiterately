@@ -10,4 +10,4 @@ before_install:
   - sudo ghc-pkg unregister MonadCatchIO-mtl
   - ghc-pkg list
   - ghc-pkg check
-  - ./configure && make install
+  - ./configure && make && sudo make install
