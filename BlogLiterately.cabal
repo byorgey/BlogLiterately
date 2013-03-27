@@ -59,7 +59,7 @@ Library
                    pandoc-types >= 1.10 && < 1.11,
                    highlighting-kate >= 0.5 && < 0.6,
                    data-default >= 0.5 && < 0.6,
-                   lens >= 3.8 && < 3.9
+                   lens >= 3.8 && < 3.10
   Exposed-modules: Text.BlogLiterately
                    Text.BlogLiterately.Block
                    Text.BlogLiterately.Ghci
