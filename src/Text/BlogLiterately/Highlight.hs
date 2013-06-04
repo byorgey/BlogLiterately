@@ -153,9 +153,19 @@ style based rendering (for people who can't update their stylesheet).
 -- argument indicates whether the code is literate Haskell.
 colourIt :: Bool -> String -> String
 colourIt literate srcTxt =
-    hscolour CSS defaultColourPrefs False True "" literate srcTxt'
+    wrapCode $ hscolour CSS defaultColourPrefs False True "" literate srcTxt'
     where srcTxt' | literate  = litify srcTxt
                   | otherwise = srcTxt
+          -- wrap the result in a <pre><code> tag, similar to
+          -- highlighting-kate results
+          wrapCode s = verbatim $ 
+              (\(Document _ _ e _) -> foldXml filt (CElem e noPos))
+                             (xmlParse "colourIt" s)
+
+          attrs = [("class", (("sourceCode haskell")!))]
+                    
+          filt = mkElemAttr "pre" attrs [mkElemAttr "code" attrs [children]]
+                    `when` tag "pre"
 
 -- | Prepend literate Haskell markers to some source code.
 litify :: String -> String
@@ -210,7 +220,7 @@ bakeStyles prefs s = verbatim $ filtDoc (xmlParse "bake-input" s)
         [c] = filts (CElem e noPos)
 
     -- the filter is a fold of individual filters for each CSS class
-    filts = mkElem "pre" [(foldXml $ foldl o keep $ map filt prefs) `o` replaceTag "code"]
+    filts = foldXml $ foldl o keep $ map filt prefs
 
     -- an individual filter replaces the attributes of a tag with
     -- a style attribute when it has a specific 'class' attribute.
