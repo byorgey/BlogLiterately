@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards  #-}
+{-# LANGUAGE TemplateHaskell  #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -17,9 +18,10 @@ module Text.BlogLiterately.Post
       mkPost, mkArray, postIt
     ) where
 
-import           Control.Lens                ((^.))
+import           Control.Lens                (at, makePrisms, to, traverse,
+                                              (^.), (^?), _Just)
 import           Control.Monad               (unless)
-import           Data.Maybe                  (fromMaybe)
+import qualified Data.Map                    as M
 
 import           Network.XmlRpc.Client       (remote)
 import           Network.XmlRpc.Internals    (Value (..), XmlRpcType, toValue)
@@ -96,6 +98,14 @@ it will typecheck.  `postIt` calls `metaWeblog.newPost` or
 appropriate:
 -}
 
+makePrisms ''Value
+
+-- | Get the URL for a given post.
+getPostURL :: String -> String -> String -> String -> IO (Maybe String)
+getPostURL url pid usr pwd = do
+  v <- remote url "metaWeblog.getPost" pid usr pwd
+  return (v ^? _ValueStruct . to M.fromList . at "link" . traverse . _ValueString)
+
 -- | Given a configuration and a formatted post, upload it to the server.
 postIt :: BlogLiterately -> String -> IO ()
 postIt bl html =
@@ -113,13 +123,16 @@ postIt bl html =
                    post
                    (publish' bl)
           putStrLn $ "Post ID: " ++ pid
+          getPostURL url pid (user' bl) pwd >>= maybe (return ()) putStrLn
         Just pid -> do
           success <- remote url "metaWeblog.editPost" pid
                        (user' bl)
                        pwd
                        post
                        (publish' bl)
-          unless success $ putStrLn "update failed!"
+          case success of
+            True  -> getPostURL url pid (user' bl) pwd >>= maybe (return ()) putStrLn
+            False -> putStrLn "Update failed!"
   where
     post = mkPost
              (title' bl)
