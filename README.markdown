@@ -1,6 +1,6 @@
 Write blog posts in Markdown format, then use BlogLiterately to do
 syntax highlighting, format ghci sessions, and upload to any blog
-supporting the metaWeblog API (such as Wordpress).
+supporting the [metaWeblog API (such as Wordpress)](http://codex.wordpress.org/XML-RPC_MetaWeblog_API).
 
 To get started, use the provided executable `BlogLiterately`; see
 [http://byorgey.wordpress.com/blogliterately/](http://byorgey.wordpress.com/blogliterately/)
