@@ -1,0 +1,17 @@
+Input:
+'<br/></div>'
+
+Output:
+'<br/></div>'
+
+Input:
+
+'
+<br/>
+</div>'
+
+Output:
+'<br/>
+<pre><code><span style="">&gt;</span> <span style="">/</span><span style="">div</span><span style="">&gt;</span>
+</code></pre>'
+
