@@ -23,7 +23,7 @@ Inline $\LaTeX$: $\sum_{i=1}^n i^2$ vs. display-style:
 
 $$\sum_{i=1}^n i^2$$
 
-Neato!  And also $latex \pi$.
+Neato!  And also $\pi$.
 
 Here's an image:
 
