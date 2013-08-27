@@ -339,7 +339,18 @@ xformDoc bl xforms =
                 , writerHTMLMathMethod =
                   case math' bl of
                     ""  -> PlainMath
-                    opt -> mathOption opt }
+                    opt -> mathOption opt
+                , writerStandalone     = True
+                , writerTemplate       = unlines
+                  [ "$for(css)$"
+                  , "  <linkrel=\"stylesheet\" href=\"$css$\" $if(html5)$$else$type=\"text/css\" $endif$/>"
+                  , "$endfor$"
+                  , "$if(math)$"
+                  , "  $math$"
+                  , "$endif$"
+                  , "$body$"
+                  ]
+                }
     mathOption opt
       | opt `isPrefixOf` "latexmathml" ||
         opt `isPrefixOf` "asciimathml" = LaTeXMathML (mathUrlMaybe opt)
