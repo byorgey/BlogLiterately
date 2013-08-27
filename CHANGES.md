@@ -1,3 +1,12 @@
+0.6.1 (27 August 2013)
+----------------------
+
+  * Automatically include necessary preamble (e.g. `<script>` tags)
+    for the math mode chosen (*e.g.* MathJax)
+  * Wrap the results of `hscolour` in `pre` and `code` tags with
+    classes, to conform more closely to the style used by
+    `highlighting-kate`
+
 0.6.0.2 (15 May 2013)
 ---------------------
 
