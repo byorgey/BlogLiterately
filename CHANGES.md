@@ -1,3 +1,8 @@
+0.6.2 (29 August 2013)
+----------------------
+
+  * Enable input in reStructuredText format
+
 0.6.1 (27 August 2013)
 ----------------------
 
@@ -6,6 +11,7 @@
   * Wrap the results of `hscolour` in `pre` and `code` tags with
     classes, to conform more closely to the style used by
     `highlighting-kate`
+  * Output an entire URL upon a successful post
 
 0.6.0.2 (15 May 2013)
 ---------------------
