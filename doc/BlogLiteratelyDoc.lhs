@@ -9,14 +9,17 @@
 [`BlogLiterately`][] is a tool for uploading blog posts to servers
 that support the [MetaWeblog API][metaweblog] (such as
 [WordPress][]-based blogs and many others).  Blog posts to be
-published via `BlogLiterately` are written in [markdown][] format,
-with
-[extensions supported](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
+published via `BlogLiterately` are written in [markdown][] or
+[reStructuredText][] format, with [extensions
+supported](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
 by [pandoc][].  Posts may be actual "bird-style" literate Haskell
-files, with commentary in markdown.  Though `BlogLiterately` offers
-special support for literate Haskell in particular, it is also useful
-for writing posts including code written in other languages, or even
-no code at all.
+files, with commentary formatted using markdown or reStructuredText.
+Though `BlogLiterately` offers special support for literate Haskell in
+particular, it is also useful for writing posts including code written
+in other languages, or even no code at all.  You may also be
+interested in the [BlogLiterately-diagrams][] package, a plugin for
+`BlogLiterately` which allows embedding images in your posts defined
+using the [diagrams][] vector graphics framework.
 
 `BlogLiterately` includes support for syntax highlighting, $\LaTeX$
 (including special support for WordPress blogs), automatic image
@@ -61,19 +64,34 @@ within the source file itself; these features are explained below.
 Markdown and pandoc
 -------------------
 
-`BlogLiterately` takes as input files written using the [markdown][]
-format.  See the [markdown website][markdown] for detailed
-documentation.  `BlogLiterately` uses [pandoc][] for reading markdown,
-which also [supports a few
-extensions](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
+`BlogLiterately` can take as input files written using the
+[markdown][] format (as well as [reStructuredText][]).  See the
+[markdown website][markdown] for detailed documentation.
+`BlogLiterately` uses [pandoc][] for reading markdown, which also
+[supports a few extensions](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
 to the basic format.
+
+Determining input format
+------------------------
+
+`BlogLiterately` takes the following steps to determine whether an
+input file is in markdown or reStructuredText format:
+
+  1. If the format is explicitly specified on the command line with
+     `--format=markdown` or `--format=rst`, the specified format will be
+     used regardless of the file name.
+
+  2. Otherwise, the filename extension is consulted: if it is `.rst`,
+     `.rest`, or `.txt`, reStructuredText will be assumed; otherwise,
+     markdown is assumed.
 
 Code blocks and syntax highlighting
 -----------------------------------
 
 Code segments (including actual source lines from literate haskell
-files, as well as markdown code blocks) may be syntax highlighted.
-Two different syntax highlighting libraries are supported:
+files, as well as markdown or reStructuredText code blocks) may be
+syntax highlighted.  Two different syntax highlighting libraries are
+supported:
 
   * [hscolour][] is specifically for syntax highlighting of Haskell
       code, and is the standard highlighter used on [Hackage][] and
@@ -92,10 +110,18 @@ by indenting at least four spaces:
         -- This is a code segment, but what language is it?
         foo :: String -> String
 
-However, markdown has no way of specifying the language used in a code
-block, making support for syntax highlighting problematic.  Pandoc
-offers [an alternative
-syntax](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
+Similarly, in reStructuredText, a code block is constructed by a double colon
+followed by an indented block:
+
+    ::
+    
+      -- This is a code segment, but what language is it?
+      foo :: String -> String
+
+However, markdown does not have a way of specifying the language used
+in a code block, making support for syntax highlighting problematic.
+Pandoc offers
+[an alternative syntax](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
 for code segments which does allow specifying the language:
 
     ~~~~ { .haskell }
@@ -103,9 +129,11 @@ for code segments which does allow specifying the language:
     foo :: String -> String
     ~~~~
 
-`BlogLiterately` also supports one additional style, consisting of a
-normal markdown indented code block with an extra tag at the top,
-enclosed in square brackets:
+The above syntax works only with markdown. `BlogLiterately` also
+supports one additional style which works with both markdown and
+reStructuredText, consisting of a normal code block (indented and/or
+preceded by a double colon) with an extra tag at the top, enclosed in
+square brackets:
 
         [haskell]
         -- This is also a Haskell code segment!
@@ -257,6 +285,8 @@ server, replacing the local references with appropriate URLs.
 To include images in blog posts, use the Markdown syntax
 
     ![alt text](URL "title")
+
+(or the corresponding reStructuredText syntax).
 
 The URL determines whether the image will be uploaded. A *remote* URL
 is any beginning with `http` or a forward slash (interpreted as a URL
@@ -439,6 +469,9 @@ feature requests.
 
 [`BlogLiterately`]: http://hackage.haskell.org/package/BlogLiterately
 [markdown]: http://daringfireball.net/projects/markdown/
+[reStructuredText]: http://docutils.sourceforge.net/docs/user/rst/quickref.html
+[BlogLiterately-diagrams]: http://hackage.haskell.org/package/BlogLiterately%2Ddiagrams
+[diagrams]: http://projects.haskell.org/diagrams/
 [pandoc]: http://johnmacfarlane.net/pandoc/
 [hscolour]: http://www.cs.york.ac.uk/fp/darcs/hscolour/
 [highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/

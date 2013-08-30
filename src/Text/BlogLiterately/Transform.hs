@@ -58,7 +58,7 @@ import qualified Data.Traversable                  as T
 import           System.Directory                  (doesFileExist,
                                                     getAppUserDataDirectory)
 import           System.Exit                       (exitFailure)
-import           System.FilePath                   ((<.>), (</>))
+import           System.FilePath                   (takeExtension, (<.>), (</>))
 import           System.IO                         (hFlush, stdout)
 import           Text.Blaze.Html.Renderer.String   (renderHtml)
 import           Text.Pandoc
@@ -322,13 +322,24 @@ standardTransforms =
 xformDoc :: BlogLiterately -> [Transform] -> String -> IO (BlogLiterately, String)
 xformDoc bl xforms =
         fixLineEndings
-    >>> readMarkdown parseOpts
+    >>> parseFile bl parseOpts
 
     >>> runTransforms xforms bl
 
     >=> _2 (return . writeHtml writeOpts)
     >=> _2 (return . renderHtml)
   where
+    parseFile bl opts =
+      case bl^.format of
+        Just "rst"      -> readRST      opts
+        Just _          -> readMarkdown opts
+        Nothing         ->
+          case takeExtension (file' bl) of
+            ".rst"  -> readRST opts
+            ".rest" -> readRST opts
+            ".txt"  -> readRST opts
+            _       -> readMarkdown opts
+
     parseOpts = def
                 { readerExtensions = Ext_literate_haskell
                                      `S.insert` readerExtensions def

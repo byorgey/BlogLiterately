@@ -36,6 +36,7 @@ module Text.BlogLiterately.Options
     , password
     , title
     , file
+    , format
     , postid
     , page
     , publish
@@ -59,6 +60,7 @@ module Text.BlogLiterately.Options
     , password'
     , title'
     , file'
+    , format'
     , postid'
     , page'
     , publish'
@@ -98,6 +100,9 @@ data BlogLiterately = BlogLiterately
   , _password       :: Maybe String        -- ^ Blog password (omit to be interactively prompted)
   , _title          :: Maybe String        -- ^ Post title
   , _file           :: Maybe String        -- ^ File to post
+  , _format         :: Maybe String        -- ^ Format of the file
+                                           --   (currently supported:
+                                           --   markdown, rst)
   , _postid         :: Maybe String        -- ^ ID of a post to update
   , _page           :: Maybe Bool          -- ^ Create a \"page\" instead of a post
   , _publish        :: Maybe Bool          -- ^ Should the post be published?
@@ -135,6 +140,7 @@ instance Monoid BlogLiterately where
     , _password       = Nothing
     , _title          = Nothing
     , _file           = Nothing
+    , _format         = Nothing
     , _postid         = Nothing
     , _page           = Nothing
     , _publish        = Nothing
@@ -160,6 +166,7 @@ instance Monoid BlogLiterately where
     , _password       = combine _password
     , _title          = combine _title
     , _file           = combine _file
+    , _format         = combine _format
     , _postid         = combine _postid
     , _page           = combine _page
     , _publish        = combine _publish
@@ -190,6 +197,7 @@ user'           = fromMaybe ""    . view user
 password'       = fromMaybe ""    . view password
 title'          = fromMaybe ""    . view title
 file'           = fromMaybe ""    . view file
+format'         = fromMaybe ""    . view format
 postid'         = fromMaybe ""    . view postid
 page'           = fromMaybe False . view page
 publish'        = fromMaybe False . view publish
@@ -268,6 +276,8 @@ blOpts = BlogLiterately
                    &= name "password" &= name "p" &= explicit
      , _title    = def &= typ "TITLE"    &= help "post title"
                    &= name "title" &= name "t" &= explicit
+     , _format   = def &= typ "FORMAT"   &= help "input format: markdown or rst"
+                   &= name "format" &= name "f" &= explicit
      , _file     = def &= argPos 0 &= typ "FILE"
   }
   &= program "BlogLiterately"
