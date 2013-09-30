@@ -1,3 +1,9 @@
+0.6.3 (30 September 2013)
+-------------------------
+
+  * Update to build against pandoc-1.12.  Note that BlogLiterately no
+    longer builds with pandoc < 1.12.
+
 0.6.2 (29 August 2013)
 ----------------------
 
