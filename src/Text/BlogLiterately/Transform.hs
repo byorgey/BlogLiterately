@@ -51,6 +51,7 @@ import           Control.Lens                      (has, isn't, set, use, (%=),
 import           Control.Monad.State
 import           Data.Default                      (def)
 import           Data.List                         (intercalate, isPrefixOf)
+import qualified Data.Map                          as M
 import           Data.Monoid                       (mappend)
 import           Data.Monoid                       (mempty, (<>))
 import qualified Data.Set                          as S
@@ -186,12 +187,16 @@ titleXF :: Transform
 titleXF = Transform extractTitle (const True)
   where
     extractTitle = do
-      (Pandoc (Meta t _ _) _) <- gets snd
-      case t of
-        [] -> return ()
-        is ->
-          -- title set explicitly with --title takes precedence.
-          _1.title %= (`mplus` Just (intercalate " " [s | Str s <- is]))
+      (Pandoc (Meta m) _) <- gets snd
+      case M.lookup "title" m of
+        Just (MetaString s) ->
+          setTitle s
+        Just (MetaInlines is) ->
+          setTitle (intercalate " " [s | Str s <- is])
+        _ -> return ()
+
+    -- title set explicitly with --title takes precedence.
+    setTitle s = _1.title %= (`mplus` Just s)
 
 -- | Extract blocks tagged with @[BLOpts]@ and use their contents as
 --   options.

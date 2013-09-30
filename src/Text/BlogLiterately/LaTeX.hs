@@ -15,8 +15,8 @@ module Text.BlogLiterately.LaTeX
       wpTeXify
     ) where
 
-import Data.List   ( isPrefixOf )
-import Text.Pandoc
+import           Data.List   (isPrefixOf)
+import           Text.Pandoc
 
 -- | WordPress can render LaTeX, but expects it in a special non-standard
 --   format (@\$latex foo\$@).  The @wpTeXify@ function formats LaTeX code
@@ -30,9 +30,9 @@ wpTeXify = bottomUp formatDisplayTex . bottomUp formatInlineTex
 
         formatDisplayTex :: [Block] -> [Block]
         formatDisplayTex (Para [Math DisplayMath tex] : bs)
-          = RawBlock "html" "<p><div style=\"text-align: center\">"
+          = RawBlock (Format "html") "<p><div style=\"text-align: center\">"
           : Plain [Str $ "$latex " ++ "\\displaystyle " ++ unPrefix "latex" tex ++ "$"]
-          : RawBlock "html" "</div></p>"
+          : RawBlock (Format "html") "</div></p>"
           : bs
         formatDisplayTex bs = bs
 

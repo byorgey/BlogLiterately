@@ -158,12 +158,12 @@ colourIt literate srcTxt =
                   | otherwise = srcTxt
           -- wrap the result in a <pre><code> tag, similar to
           -- highlighting-kate results
-          wrapCode s = verbatim $ 
+          wrapCode s = verbatim $
               (\(Document _ _ e _) -> foldXml filt (CElem e noPos))
                              (xmlParse "colourIt" s)
 
           attrs = [("class", (("sourceCode haskell")!))]
-                    
+
           filt = mkElemAttr "pre" attrs [mkElemAttr "code" attrs [children]]
                     `when` tag "pre"
 
@@ -263,9 +263,9 @@ colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
   | tag == Just "haskell" || haskell
   = case hsHighlight of
         HsColourInline style ->
-            RawBlock "html" $ bakeStyles style $ colourIt lit src
-        HsColourCSS   -> RawBlock "html" $ colourIt lit src
-        HsNoHighlight -> RawBlock "html" $ simpleHTML hsrc
+            rawHtml $ bakeStyles style $ colourIt lit src
+        HsColourCSS   -> rawHtml $ colourIt lit src
+        HsNoHighlight -> rawHtml $ simpleHTML hsrc
         HsKate        -> case tag of
             Nothing -> myHighlightK attr hsrc
             Just t  -> myHighlightK ("", t:classes,[]) hsrc
@@ -276,7 +276,7 @@ colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
         Just t  -> myHighlightK ("",[t],[]) src
 
   | otherwise
-  = RawBlock "html" $ simpleHTML src
+  = rawHtml $ simpleHTML src
 
   where
     (tag,src)
@@ -289,8 +289,9 @@ colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
     haskell      = "haskell" `elem` classes
     simpleHTML s = "<pre><code>" ++ s ++ "</code></pre>"
     myHighlightK attr s = case highlight formatHtmlBlock attr s of
-        Nothing   -> RawBlock "html" $ simpleHTML s
-        Just html -> RawBlock "html" $ replaceBreaks $ renderHtml html
+        Nothing   -> rawHtml $ simpleHTML s
+        Just html -> rawHtml $ replaceBreaks $ renderHtml html
+    rawHtml = RawBlock (Format "html")
 
 colouriseCodeBlock _ _ b = b
 
