@@ -8,4 +8,5 @@ cabal-dev
 *~
 dist_*
 .hsenv_*
+.hsenv
 TAGS
