@@ -58,6 +58,7 @@ Library
                    haxr >= 3000.9 && < 3000.11,
                    pandoc >= 1.12 && < 1.13,
                    pandoc-types >= 1.12 && < 1.13,
+                   pandoc-citeproc >= 0.1.2 && < 0.2,
                    highlighting-kate >= 0.5 && < 0.6,
                    data-default >= 0.5 && < 0.6,
                    lens >= 3.8 && < 3.10

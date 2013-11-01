@@ -32,6 +32,7 @@ module Text.BlogLiterately.Transform
     , uploadImagesXF
     , highlightXF
     , centerImagesXF
+    , citationsXF
 
       -- * Transforms
     , Transform(..), pureTransform, ioTransform, runTransform, runTransforms
@@ -60,6 +61,7 @@ import           System.Exit                       (exitFailure)
 import           System.FilePath                   (takeExtension, (<.>), (</>))
 import           System.IO                         (hFlush, stdout)
 import           Text.Blaze.Html.Renderer.String   (renderHtml)
+import           Text.CSL.Pandoc                   (processCites')
 import           Text.Pandoc
 import           Text.Parsec                       (ParseError)
 
@@ -241,6 +243,10 @@ highlightOptsXF = Transform doHighlightOptsXF (const True)
       (_1 . hsHighlight) %= Just . maybe (HsColourInline prefs)
                                          (_HsColourInline .~ prefs)
 
+-- | Format citations.
+citationsXF :: Transform
+citationsXF = ioTransform (const processCites') (const True)
+
 -- | Load options from a profile if one is specified.
 profileXF :: Transform
 profileXF = Transform doProfileXF (const True)
@@ -293,6 +299,7 @@ loadProfile bl =
 --
 --   * 'highlightXF': perform syntax highlighting
 --
+--   * 'citationsXF': process citations
 standardTransforms :: [Transform]
 standardTransforms =
   [ -- Has to go first, since it may affect later transforms.
@@ -313,6 +320,7 @@ standardTransforms =
   , centerImagesXF
   , highlightOptsXF
   , highlightXF
+  , citationsXF
   ]
 
 --------------------------------------------------
