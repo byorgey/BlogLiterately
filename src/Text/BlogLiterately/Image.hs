@@ -19,27 +19,16 @@ module Text.BlogLiterately.Image
     , mkMediaObject
     ) where
 
-import           Control.Arrow               (Kleisli (..), arr, first,
-                                              runKleisli, second, (>>>))
-import qualified Control.Category            as C (Category, id)
-import           Control.Monad               (liftM, unless)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Trans.Class   (lift)
-import           Control.Monad.Trans.Reader  (ReaderT, ask, runReaderT)
 import           Control.Monad.Trans.State   (StateT, get, modify, runStateT)
 import qualified Data.ByteString.Char8       as B
 import           Data.Char                   (toLower)
-import           Data.Functor                ((<$>))
-import           Data.List                   (intercalate, isPrefixOf)
+import           Data.List                   (isPrefixOf)
 import qualified Data.Map                    as M
 import           Data.Maybe                  (fromMaybe)
 import           System.Directory            (doesFileExist)
 import           System.FilePath             (takeExtension, takeFileName)
-import           System.IO
-import qualified System.IO.UTF8              as U (readFile)
-import           System.Process              (ProcessHandle,
-                                              runInteractiveCommand,
-                                              waitForProcess)
 
 import           Network.XmlRpc.Client       (remote)
 import           Network.XmlRpc.Internals    (Value (..), toValue)
@@ -84,8 +73,9 @@ uploadAllImages bl@(BlogLiterately{..}) p =
     uploadOneImage _ i = return i
 
     isLocal imgUrl = none (`isPrefixOf` imgUrl) ["http", "/"]
-    none p = all (not . p)
+    none pr = all (not . pr)
 
+uploadedImagesFile :: String
 uploadedImagesFile = ".BlogLiterately-uploaded-images"
 
 -- | Read the list of previously uploaded images and their associated URLs from
@@ -149,3 +139,4 @@ mkMediaObject filePath = do
                  "jpg"  -> "image/jpeg"
                  "jpeg" -> "image/jpeg"
                  "gif"  -> "image/gif"
+                 _      -> "image/png"

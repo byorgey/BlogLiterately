@@ -58,7 +58,7 @@ type ProcessInfo = (Handle, Handle, Handle, ProcessHandle)
 
 -- | An input to ghci consists of an expression/command, possibly
 --   paired with an expected output.
-data GhciInput  = GhciInput { expr :: String, expected :: Maybe String }
+data GhciInput  = GhciInput String (Maybe String)
   deriving Show
 
 -- | An output from ghci is either a correct output, or an incorrect
@@ -85,19 +85,19 @@ ghciEval (GhciInput expr expected) =  do
   let out' = strip out
   case expected of
     Nothing -> return $ OK out'
-    Just exp
-      | out' == exp -> return $ OK out'
-      | otherwise   -> return $ Unexpected out' exp
+    Just e
+      | out' == e -> return $ OK out'
+      | otherwise -> return $ Unexpected out' e
 
 -- | Start an external ghci process, run a computation with access to
 --   it, and finally stop the process.
 withGhciProcess :: FilePath -> ReaderT ProcessInfo IO a -> IO a
 withGhciProcess f m = do
   isLit <- isLiterate f
-  pi    <- runInteractiveCommand $ "ghci -v0 -ignore-dot-ghci "
+  h     <- runInteractiveCommand $ "ghci -v0 -ignore-dot-ghci "
                                    ++ (if isLit then f else "")
-  res   <- runReaderT m pi
-  stopGhci pi
+  res   <- runReaderT m h
+  stopGhci h
   return res
 
 -- | Poor man's check to see whether we have a literate Haskell file.
@@ -149,7 +149,7 @@ extract s                     =  v
           -- we look for the next occurrence of prefix plus magic
 
 breaks                        :: ([a] -> Bool) -> [a] -> ([a], [a])
-breaks p []                   =  ([], [])
+breaks _ []                   =  ([], [])
 breaks p as@(a : as')
     | p as                    =  ([], as)
     | otherwise               =  first (a:) $ breaks p as'
@@ -192,8 +192,9 @@ parseGhciInputs = map mkGhciInput
                 . lines
 
 mkGhciInput :: [String] -> GhciInput
-mkGhciInput [i]     = GhciInput i Nothing
-mkGhciInput (i:exp) = GhciInput i (Just . unlines' . unindent $ exp)
+mkGhciInput []       = GhciInput "" Nothing
+mkGhciInput [i]      = GhciInput i Nothing
+mkGhciInput (i:expr) = GhciInput i (Just . unlines' . unindent $ expr)
 
 unlines' :: [String] -> String
 unlines' = intercalate "\n"
@@ -203,25 +204,29 @@ strip = f . f
   where f = dropWhile isSpace . reverse
 
 unindent :: [String] -> [String]
+unindent [] = []
 unindent (x:xs) = map (drop indentAmt) (x:xs)
   where indentAmt = length . takeWhile (==' ') $ x
 
 indent :: Int -> String -> String
 indent n = unlines' . map (replicate n ' '++) . lines
 
+colored, coloredBlock :: String -> String -> String
 colored color txt = "<span style=\"color: " ++ color ++ ";\">" ++ txt ++ "</span>"
 coloredBlock color = unlines' . map (colored color) . lines
 
+ghciPrompt :: String
 ghciPrompt = colored "gray" "ghci&gt; "
 
+formatGhciResult :: GhciLine -> String
 formatGhciResult (GhciLine (GhciInput input _) (OK output))
   | all isSpace output
     = ghciPrompt ++ esc input
   | otherwise
     = ghciPrompt ++ esc input ++ "\n" ++ indent 2 (esc output) ++ "\n"
-formatGhciResult (GhciLine (GhciInput input _) (Unexpected output exp))
+formatGhciResult (GhciLine (GhciInput input _) (Unexpected output expr))
   = ghciPrompt ++ esc input ++ "\n" ++ indent 2 (coloredBlock "red" (esc output))
-                            ++ "\n" ++ indent 2 (coloredBlock "blue" (esc exp))
+                            ++ "\n" ++ indent 2 (coloredBlock "blue" (esc expr))
                             ++ "\n"
 
     -- XXX the styles above should be configurable...

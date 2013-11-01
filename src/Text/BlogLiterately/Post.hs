@@ -19,8 +19,7 @@ module Text.BlogLiterately.Post
     ) where
 
 import           Control.Lens                (at, makePrisms, to, traverse,
-                                              (^.), (^?), _Just)
-import           Control.Monad               (unless)
+                                              (^.), (^?))
 import qualified Data.Map                    as M
 
 import           Network.XmlRpc.Client       (remote)
@@ -61,13 +60,13 @@ mkPost :: String    -- ^ Post title
        -> [String]  -- ^ List of tags
        -> Bool      -- ^ @True@ = page, @False@ = post
        -> [(String, Value)]
-mkPost title text categories tags page =
-       mkArray "categories" categories
-    ++ mkArray "mt_keywords" tags
-    ++ [ ("title", toValue title)
-       , ("description", toValue text)
+mkPost title_ text_ categories_ tags_ page_ =
+       mkArray "categories" categories_
+    ++ mkArray "mt_keywords" tags_
+    ++ [ ("title", toValue title_)
+       , ("description", toValue text_)
        ]
-    ++ [ ("post_type", toValue "page") | page ]
+    ++ [ ("post_type", toValue "page") | page_ ]
 
 -- | Given a name and a list of values, create a named \"array\" field
 --   suitable for inclusion in an XML-RPC struct.

@@ -30,7 +30,7 @@ import           Control.Lens                        (makePrisms)
 import           Control.Monad                       (liftM)
 import           Data.Char                           (toLower)
 import           Data.List                           (find)
-import           Data.Maybe                          (fromMaybe, isNothing)
+import           Data.Maybe                          (fromMaybe)
 import qualified System.IO.UTF8                      as U (readFile)
 
 import           Language.Haskell.HsColour           (Output (..), hscolour)
@@ -38,12 +38,9 @@ import           Language.Haskell.HsColour.Colourise (defaultColourPrefs)
 import           System.Console.CmdArgs              (Data, Typeable)
 import           Text.Blaze.Html.Renderer.String     (renderHtml)
 import           Text.Highlighting.Kate
-import           Text.Highlighting.Kate.Format.HTML  (formatHtmlBlock)
-import           Text.Pandoc                         (Block (CodeBlock, RawBlock),
-                                                      Pandoc (..))
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Shared                  (safeRead)
-import           Text.XML.HaXml                      hiding (find)
+import           Text.XML.HaXml                      hiding (find, attr, html)
 import           Text.XML.HaXml.Posn                 (noPos)
 
 import           Text.BlogLiterately.Block           (unTag)
@@ -216,7 +213,7 @@ bakeStyles prefs s = verbatim $ filtDoc (xmlParse "bake-input" s)
   where
 
     -- filter the document (an Hscoloured fragment of Haskell source)
-    filtDoc (Document p s e m) =  c where
+    filtDoc (Document _ _ e _) =  c where
         [c] = filts (CElem e noPos)
 
     -- the filter is a fold of individual filters for each CSS class
@@ -240,7 +237,7 @@ replaceBreaks s = verbatim $ filtDoc (xmlParse "input" s)
   where
     -- filter the document (a highlighting-kate highlighted fragment of
     -- haskell source)
-    filtDoc (Document p s e m) = c where
+    filtDoc (Document _ _ e _) = c where
         [c] = filts (CElem e noPos)
     filts = foldXml (literal "\n" `when` tag "br")
 
@@ -258,20 +255,20 @@ the highlighting-kate styles.
 --   markers), or marked up non-Haskell, if highlighting of non-Haskell has
 --   been selected.
 colouriseCodeBlock :: HsHighlight -> Bool -> Block -> Block
-colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
+colouriseCodeBlock hsHighlight otherHighlight (CodeBlock attr@(_,classes,_) s)
 
-  | tag == Just "haskell" || haskell
+  | ctag == Just "haskell" || haskell
   = case hsHighlight of
         HsColourInline style ->
             rawHtml $ bakeStyles style $ colourIt lit src
         HsColourCSS   -> rawHtml $ colourIt lit src
         HsNoHighlight -> rawHtml $ simpleHTML hsrc
-        HsKate        -> case tag of
+        HsKate        -> case ctag of
             Nothing -> myHighlightK attr hsrc
             Just t  -> myHighlightK ("", t:classes,[]) hsrc
 
   | otherHighlight
-  = case tag of
+  = case ctag of
         Nothing -> myHighlightK attr src
         Just t  -> myHighlightK ("",[t],[]) src
 
@@ -279,7 +276,7 @@ colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
   = rawHtml $ simpleHTML src
 
   where
-    (tag,src)
+    (ctag,src)
         | null classes = unTag s
         | otherwise    = (Nothing, s)
     hsrc
@@ -287,8 +284,8 @@ colouriseCodeBlock hsHighlight otherHighlight b@(CodeBlock attr@(_,classes,_) s)
         | otherwise    = src
     lit          = "sourceCode" `elem` classes
     haskell      = "haskell" `elem` classes
-    simpleHTML s = "<pre><code>" ++ s ++ "</code></pre>"
-    myHighlightK attr s = case highlight formatHtmlBlock attr s of
+    simpleHTML h = "<pre><code>" ++ h ++ "</code></pre>"
+    myHighlightK attrs h = case highlight formatHtmlBlock attrs h of
         Nothing   -> rawHtml $ simpleHTML s
         Just html -> rawHtml $ replaceBreaks $ renderHtml html
     rawHtml = RawBlock (Format "html")

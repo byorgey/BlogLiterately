@@ -29,7 +29,7 @@ unTag s = either (const (Nothing, s)) id $ parse tag "" s
     tag = do
       tg <- between (char '[') (char ']') $ many $ noneOf "[]"
       skipMany $ oneOf " \t"
-      (string "\r\n" <|> string "\n")
+      _   <- (string "\r\n" <|> string "\n")
       txt <- many $ anyToken
       eof
       return (Just tg, txt)

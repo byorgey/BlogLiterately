@@ -17,10 +17,10 @@ module Text.BlogLiterately.Options.Parse
 
 import           Control.Applicative         (pure, (*>), (<$>), (<*))
 import           Control.Arrow               (second)
-import           Control.Lens                ((&), (.~))
+import           Control.Lens                ((&), (.~), ASetter')
 import           Data.Char                   (isSpace)
 import           Data.Either                 (partitionEithers)
-import           Data.Monoid                 (mconcat, mempty)
+import           Data.Monoid                 (mconcat, mempty, Monoid)
 import           Text.Parsec                 (ParseError, char, many, noneOf,
                                               optional, parse, sepBy, spaces,
                                               string, try, (<|>))
@@ -70,20 +70,27 @@ parseBLOption =
   <|> parseField htmlOnly     "html-only"     parseBool
   <|> parseField xtra         "xtras"         parseStrList
 
+str :: Parser String
 str = stringLiteral haskell <|> many (noneOf " \t\n\r,\"[]")
+
+parseStr :: Parser (Maybe String)
 parseStr = Just <$> str
+
+parseBool :: Parser (Maybe Bool)
 parseBool = Just <$> ( ((string "true"  <|> try (string "on")) *> pure True)
                    <|> ((string "false" <|>      string "off") *> pure False)
                      )
 
+parseStrList :: Parser [String]
 parseStrList = optional (char '[') *> paddedStr `sepBy` (char ',') <* optional (char ']')
   where
     paddedStr = spaces *> str <* spaces
 
+parseField :: ASetter' BlogLiterately a -> String -> Parser a -> Parser BlogLiterately
 parseField fld name p = do
-  try (string name)
+  _ <- try (string name)
   spaces
-  char '='
+  _ <- char '='
   spaces
   value <- p
   return (mempty & fld .~ value)

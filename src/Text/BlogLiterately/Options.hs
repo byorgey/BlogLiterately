@@ -183,24 +183,61 @@ instance Monoid BlogLiterately where
 -- Some convenient accessors that strip off the Maybe and return an
 -- appropriate default value.
 
+style' :: BlogLiterately -> String
 style'          = fromMaybe ""    . view style
+
+hsHighlight' :: BlogLiterately -> HsHighlight
 hsHighlight'    = fromMaybe (HsColourInline defaultStylePrefs) . view hsHighlight
+
+otherHighlight' :: BlogLiterately -> Bool
 otherHighlight' = fromMaybe True  . view otherHighlight
+
+wplatex' :: BlogLiterately -> Bool
 wplatex'        = fromMaybe False . view wplatex
+
+math' :: BlogLiterately -> String
 math'           = fromMaybe ""    . view math
+
+ghci' :: BlogLiterately -> Bool
 ghci'           = fromMaybe False . view ghci
+
+uploadImages' :: BlogLiterately -> Bool
 uploadImages'   = fromMaybe False . view uploadImages
+
+blogid' :: BlogLiterately -> String
 blogid'         = fromMaybe "default" . view blogid
+
+profile' :: BlogLiterately -> String
 profile'        = fromMaybe ""    . view profile
+
+blog' :: BlogLiterately -> String
 blog'           = fromMaybe ""    . view blog
+
+user' :: BlogLiterately -> String
 user'           = fromMaybe ""    . view user
+
+password' :: BlogLiterately -> String
 password'       = fromMaybe ""    . view password
+
+title' :: BlogLiterately -> String
 title'          = fromMaybe ""    . view title
+
+file' :: BlogLiterately -> String
 file'           = fromMaybe ""    . view file
+
+format' :: BlogLiterately -> String
 format'         = fromMaybe ""    . view format
+
+postid' :: BlogLiterately -> String
 postid'         = fromMaybe ""    . view postid
+
+page' :: BlogLiterately -> Bool
 page'           = fromMaybe False . view page
+
+publish' :: BlogLiterately -> Bool
 publish'        = fromMaybe False . view publish
+
+htmlOnly' :: BlogLiterately -> Bool
 htmlOnly'       = fromMaybe False . view htmlOnly
 
 -- | Command-line configuration for use with @cmdargs@.

@@ -35,8 +35,6 @@ module Text.BlogLiterately.Run
 
     ) where
 
-import           Control.Lens                  (set, use, (%=), (&), (.=), (.~),
-                                                (^.))
 import           System.Console.CmdArgs        (cmdArgs)
 import qualified System.IO.UTF8                as U (readFile)
 

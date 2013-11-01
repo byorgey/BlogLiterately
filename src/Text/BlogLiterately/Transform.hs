@@ -43,19 +43,17 @@ module Text.BlogLiterately.Transform
     , fixLineEndings
     ) where
 
-import           Control.Applicative               (pure, (<$>), (<**>))
+import           Control.Applicative               ((<$>))
 import           Control.Arrow                     ((>>>))
-import           Control.Lens                      (has, isn't, set, use, (%=),
+import           Control.Lens                      (has, isn't, use, (%=),
                                                     (&), (.=), (.~), (^.), _1,
                                                     _2, _Just)
 import           Control.Monad.State
-import           Data.Default                      (def)
 import           Data.List                         (intercalate, isPrefixOf)
 import qualified Data.Map                          as M
 import           Data.Monoid                       (mappend)
 import           Data.Monoid                       (mempty, (<>))
 import qualified Data.Set                          as S
-import qualified Data.Traversable                  as T
 import           System.Directory                  (doesFileExist,
                                                     getAppUserDataDirectory)
 import           System.Exit                       (exitFailure)
@@ -63,7 +61,6 @@ import           System.FilePath                   (takeExtension, (<.>), (</>))
 import           System.IO                         (hFlush, stdout)
 import           Text.Blaze.Html.Renderer.String   (renderHtml)
 import           Text.Pandoc
-import           Text.Pandoc.Options
 import           Text.Parsec                       (ParseError)
 
 import           Text.BlogLiterately.Block         (onTag)
@@ -174,7 +171,7 @@ centerImages :: Pandoc -> Pandoc
 centerImages = bottomUp centerImage
   where
     centerImage :: [Block] -> [Block]
-    centerImage (img@(Para [Image altText (imgUrl, imgTitle)]) : bs) =
+    centerImage (img@(Para [Image _altText (_imgUrl, _imgTitle)]) : bs) =
         RawBlock "html" "<div style=\"text-align: center;\">"
       : img
       : RawBlock "html" "</div>"
@@ -327,14 +324,14 @@ standardTransforms =
 xformDoc :: BlogLiterately -> [Transform] -> String -> IO (BlogLiterately, String)
 xformDoc bl xforms =
         fixLineEndings
-    >>> parseFile bl parseOpts
+    >>> parseFile parseOpts
 
     >>> runTransforms xforms bl
 
     >=> _2 (return . writeHtml writeOpts)
     >=> _2 (return . renderHtml)
   where
-    parseFile bl opts =
+    parseFile opts =
       case bl^.format of
         Just "rst"      -> readRST      opts
         Just _          -> readMarkdown opts
@@ -377,6 +374,7 @@ xformDoc bl xforms =
       | opt `isPrefixOf` "jsmath"      = JsMath (mathUrlMaybe opt)
       | opt `isPrefixOf` "mathjax"     = MathJax (mathUrl mathJaxURL opt)
       | opt `isPrefixOf` "gladtex"     = GladTeX
+      | otherwise                      = PlainMath
 
     webTeXURL  = "http://chart.apis.google.com/chart?cht=tx&chl="
     mathJaxURL = "http://cdn.mathjax.org/mathjax/latest/MathJax.js"
@@ -385,7 +383,7 @@ xformDoc bl xforms =
     urlPart = drop 1 . dropWhile (/='=')
 
     mathUrlMaybe opt = case urlPart opt of "" -> Nothing; x -> Just x
-    mathUrl def opt  = case urlPart opt of "" -> def; x -> x
+    mathUrl dflt opt  = case urlPart opt of "" -> dflt; x -> x
 
 -- | Turn @CRLF@ pairs into a single @LF@.  This is necessary since
 --   'readMarkdown' is picky about line endings.
