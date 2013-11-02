@@ -16,6 +16,6 @@ references:
 
 # Introduction
 
-This is a test blog post with references [@doe2006].
+This is a test blog post with references [@doe2006], @doe2006, [-@doe2006].
 
 # References

@@ -41,6 +41,7 @@ module Text.BlogLiterately.Options
     , page
     , publish
     , htmlOnly
+    , citations
     , xtra
 
     -- ** Default accessors
@@ -65,6 +66,7 @@ module Text.BlogLiterately.Options
     , page'
     , publish'
     , htmlOnly'
+    , citations'
     )
     where
 
@@ -110,6 +112,7 @@ data BlogLiterately = BlogLiterately
   , _htmlOnly       :: Maybe Bool          -- ^ Don't upload anything;
                                            --   just output HTML to
                                            --   stdout.
+  , _citations      :: Maybe Bool          -- ^ Process citations? (default: true)
   , _xtra           :: [String]            -- ^ Extension arguments, for use e.g. by
                                            --   custom transforms
   }
@@ -145,6 +148,7 @@ instance Monoid BlogLiterately where
     , _page           = Nothing
     , _publish        = Nothing
     , _htmlOnly       = Nothing
+    , _citations      = Nothing
     , _xtra           = []
     }
 
@@ -171,6 +175,7 @@ instance Monoid BlogLiterately where
     , _page           = combine _page
     , _publish        = combine _publish
     , _htmlOnly       = combine _htmlOnly
+    , _citations      = combine _citations
     , _xtra           = combine _xtra
     }
     where combine f = f bl1 `mplus` f bl2
@@ -240,6 +245,9 @@ publish'        = fromMaybe False . view publish
 htmlOnly' :: BlogLiterately -> Bool
 htmlOnly'       = fromMaybe False . view htmlOnly
 
+citations' :: BlogLiterately -> Bool
+citations' = fromMaybe True . view citations
+
 -- | Command-line configuration for use with @cmdargs@.
 blOpts :: BlogLiterately
 blOpts = BlogLiterately
@@ -295,6 +303,17 @@ blOpts = BlogLiterately
        &= explicit
        &= name "tag" &= name "T"
        &= help "tag (can specify more than one)"
+
+     , _citations = enum
+        [ Just True
+          &= help "process citations (default)"
+          &= name "citations"
+          &= explicit
+        , Just False
+          &= help "do not process citations"
+          &= name "no-citations"
+          &= explicit
+        ]
 
      , _xtra     = def
                    &= help "extension arguments, for use with custom extensions"

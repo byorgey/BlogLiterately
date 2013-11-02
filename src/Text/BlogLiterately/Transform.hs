@@ -245,7 +245,7 @@ highlightOptsXF = Transform doHighlightOptsXF (const True)
 
 -- | Format citations.
 citationsXF :: Transform
-citationsXF = ioTransform (const processCites') (const True)
+citationsXF = ioTransform (const processCites') citations'
 
 -- | Load options from a profile if one is specified.
 profileXF :: Transform

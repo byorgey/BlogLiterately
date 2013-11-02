@@ -155,6 +155,47 @@ separately.  You may optionally use a similar scheme with `hscolour`.
 Sample stylesheets are provided in the package archive file
 (`kate.css`, `hscolour.css`).
 
+Citations
+---------
+
+`BlogLiterately` can take advantage of `pandoc`'s ability to process
+and typeset citations.  To include citations in your blog post:
+
+1. Specify a bibliography---either the name of a bibliography file, or
+   an explicit list of references---as metadata in your document.  With
+   Markdown, this is accomplished with a YAML document enclosed by `---`
+   at the beginning of the file (see the Pandoc documentation on [YAML
+   metadata
+   blocks](http://johnmacfarlane.net/pandoc/demo/example9/pandocs-markdown.html#yaml-metadata-block)).
+   For example,
+
+       ---
+       title: My Blog Post
+       bibliography: references.bib
+       ---
+       Foo bar [@doe2006].
+
+   (There is no support yet for citations if you are using
+   reStructuredText; yell if you want it.)  You can specify the name of a
+   file containing a bibliography, as in the example above; here is [a
+   list of the bibliography formats that are
+   accepted](https://github.com/jgm/pandoc-citeproc/blob/master/README.md).
+   Alternately, you can [give an explicit list of references](http://johnmacfarlane.net/pandoc/README.html#citations).
+
+2. Include citations, formatted like `[@doe2006]` for a normal
+   citation like (Doe, 2006); `@doe2006` for a text citation like Doe
+   (2006), or `[-@doe2006]` for a citation without the name (for
+   situations when the name already occurred elsewhere in the sentence).
+   See the [pandoc documentation for more details and
+   examples](http://johnmacfarlane.net/pandoc/README.html#citations).
+
+3. Simply run `BlogLiterately`; citation processing is on by
+   default. (You can explicitly turn it on with the `--citations` flag;
+   to turn it off, use `--no-citations`.)  Citations will be typeset and
+   a bibliography will be appended at the end. You may want to include a
+   section heading like `# References` or `# Bibliography` at the end of
+   your post, to go above the generated bibliography.
+
 LaTeX
 -----
 
