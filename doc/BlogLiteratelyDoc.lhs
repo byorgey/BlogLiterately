@@ -169,11 +169,11 @@ and typeset citations.  To include citations in your blog post:
    blocks](http://johnmacfarlane.net/pandoc/demo/example9/pandocs-markdown.html#yaml-metadata-block)).
    For example,
 
-       ---
-       title: My Blog Post
-       bibliography: references.bib
-       ---
-       Foo bar [@doe2006].
+         ---
+         title: My Blog Post
+         bibliography: references.bib
+         ---
+         Foo bar [@doe2006].
 
    (There is no support yet for citations if you are using
    reStructuredText; yell if you want it.)  You can specify the name of a
@@ -372,7 +372,7 @@ Command-line options
 Most of the command-line options for `BlogLiterately` are hopefully
 self-explanatory, given the above background:
 
-    BlogLierately v0.6, (c) Robert Greayer 2008-2010, Brent Yorgey 2012-2013
+    BlogLierately v0.7, (c) Robert Greayer 2008-2010, Brent Yorgey 2012-2013
     For help, see http://byorgey.wordpress.com/blogliterately/
 
     BlogLiterately [OPTIONS] FILE
@@ -395,15 +395,17 @@ self-explanatory, given the above background:
       -T --tag=ITEM           tag (can specify more than one)
          --blogid=ID          Blog specific identifier
       -P --profile=STRING     profile to use
-      -b --blog=URL           blog XML-RPC url (if omitted, html goes to stdout)
+      -b --blog=URL           blog XML-RPC url (if omitted, HTML goes to stdout)
       -u --user=USER          user name
       -p --password=PASSWORD  password
       -t --title=TITLE        post title
+      -f --format=FORMAT      input format: markdown or rst
       -i --postid=ID          Post to replace (if any)
          --page               create a "page" instead of a post (WordPress only)
          --publish            publish post (otherwise it's uploaded as a draft)
       -h --html-only          don't upload anything; output HTML to stdout
-
+         --citations          process citations (default)
+         --no-citations       do not process citations
       -x --xtra=ITEM          extension arguments, for use with custom extensions
       -? --help               Display help message
       -V --version            Print version information
