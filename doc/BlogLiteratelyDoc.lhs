@@ -262,7 +262,6 @@ For example, consider the following definition:
 
 Now, given the input
 
-    [other]
         [ghci]
         :t hailstone
         hailstone 15
@@ -291,7 +290,6 @@ if no expected output is given), the result is typeset normally.  If
 the actual and expected outputs differ, the actual output is typeset
 first in red, then the expected output in blue.  For example,
 
-    [other]
         [ghci]
         reverse "kayak"
         7+18
@@ -473,7 +471,6 @@ Option blocks
 In addition, options may be specified inline, using a code block
 marked with the `[BLOpts]`.  For example,
 
-    [other]
         [BLOpts]
         profile = foo
         title = "My awesome blog post!"
@@ -495,7 +492,6 @@ Pandoc supports a special syntax for specifying the title, placing the
 title on the first line marked with `%`.  `BlogLiterately` supports
 this format too, so the above example could also have been written as:
 
-    [other]
     % My awesome blog post!
 
         [BLOpts]
