@@ -1,3 +1,9 @@
+0.7.1 (14 January 2014)
+-----------------------
+
+  * Allow pandoc-citeproc-0.3
+  * Add --toc option for putting a table of contents at the top of a post
+
 0.7.0.2 (4 December 2013)
 -------------------------
 
