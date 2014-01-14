@@ -1,5 +1,8 @@
 This is a test.
 
+Section A
+=========
+
 > x :: Int
 > x = 3
 
@@ -8,11 +11,16 @@ Some more testing. $\pi = \tau/2$.
     foo
     bar
 
+A subsection.
+-------------
+
 And with ghci:
 
     [ghci]
     (x + 2 :: Int)
     [1..8]
+
+## Another subsection ##
 
 How about that!  Here's some more ghci:
 
@@ -22,6 +30,8 @@ How about that!  Here's some more ghci:
 Inline $\LaTeX$: $\sum_{i=1}^n i^2$ vs. display-style:
 
 $$\sum_{i=1}^n i^2$$
+
+# Section B #
 
 Neato!  And also $\pi$.
 

@@ -17,10 +17,10 @@ module Text.BlogLiterately.Options.Parse
 
 import           Control.Applicative         (pure, (*>), (<$>), (<*))
 import           Control.Arrow               (second)
-import           Control.Lens                ((&), (.~), ASetter')
+import           Control.Lens                (ASetter', (&), (.~))
 import           Data.Char                   (isSpace)
 import           Data.Either                 (partitionEithers)
-import           Data.Monoid                 (mconcat, mempty, Monoid)
+import           Data.Monoid                 (Monoid, mconcat, mempty)
 import           Text.Parsec                 (ParseError, char, many, noneOf,
                                               optional, parse, sepBy, spaces,
                                               string, try, (<|>))
@@ -52,6 +52,7 @@ readBLOption = parse parseBLOption ""
 parseBLOption :: Parser BlogLiterately
 parseBLOption =
       parseField style        "style"         parseStr
+  <|> parseField toc          "toc"           parseBool
   <|> parseField wplatex      "wplatex"       parseBool
   <|> parseField math         "math"          parseStr
   <|> parseField ghci         "ghci"          parseBool

@@ -5,6 +5,8 @@
     ghci    = true
     wplatex = true
     page    = true
+    publish = true
+    toc     = true
 
 [`BlogLiterately`][] is a tool for uploading blog posts to servers
 that support the [MetaWeblog API][metaweblog] (such as
@@ -221,6 +223,15 @@ on-the-fly.  Passing the `--wplatex` option to `BlogLiterately` causes
 any embedded LaTeX to be output in the format expected by WordPress.
 Note that an extra `$latex...` won't be added to the beginning of
 LaTeX expressions which already appear to be in WordPress format.
+
+Table of contents
+-----------------
+
+`BlogLiterately` can also take advantage of pandoc's ability to
+generate a table of contents.  Just pass the `--toc` option to
+`BlogLiterately` and a table of contents will be added to the top of
+your post.  See this documentation itself for an example of the
+output.
 
 `ghci` sessions
 ---------------

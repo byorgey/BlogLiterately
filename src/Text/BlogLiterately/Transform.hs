@@ -46,9 +46,9 @@ module Text.BlogLiterately.Transform
 
 import           Control.Applicative               ((<$>))
 import           Control.Arrow                     ((>>>))
-import           Control.Lens                      (has, isn't, use, (%=),
-                                                    (&), (.=), (.~), (^.), _1,
-                                                    _2, _Just)
+import           Control.Lens                      (has, isn't, use, (%=), (&),
+                                                    (.=), (.~), (^.), _1, _2,
+                                                    _Just)
 import           Control.Monad.State
 import           Data.List                         (intercalate, isPrefixOf)
 import qualified Data.Map                          as M
@@ -357,20 +357,13 @@ xformDoc bl xforms =
                 }
     writeOpts = def
                 { writerReferenceLinks = True
+                , writerTableOfContents = toc' bl
                 , writerHTMLMathMethod =
                   case math' bl of
                     ""  -> PlainMath
                     opt -> mathOption opt
                 , writerStandalone     = True
-                , writerTemplate       = unlines
-                  [ "$for(css)$"
-                  , "  <linkrel=\"stylesheet\" href=\"$css$\" $if(html5)$$else$type=\"text/css\" $endif$/>"
-                  , "$endfor$"
-                  , "$if(math)$"
-                  , "  $math$"
-                  , "$endif$"
-                  , "$body$"
-                  ]
+                , writerTemplate       = blHtmlTemplate
                 }
     mathOption opt
       | opt `isPrefixOf` "latexmathml" ||
@@ -399,3 +392,27 @@ fixLineEndings :: String -> String
 fixLineEndings [] = []
 fixLineEndings ('\r':'\n':cs) = '\n':fixLineEndings cs
 fixLineEndings (c:cs) = c:fixLineEndings cs
+
+-- We use a special template with the "standalone" pandoc writer.  We
+-- don't actually want truly "standalone" HTML documents because they
+-- have to sit inside another web page.  But we do want things like
+-- math typesetting and a table of contents.
+blHtmlTemplate = unlines
+  [ "$if(highlighting-css)$"
+  , "  <style type=\"text/css\">"
+  , "$highlighting-css$"
+  , "  </style>"
+  , "$endif$"
+  , "$for(css)$"
+  , "  <link rel=\"stylesheet\" href=\"$css$\" $if(html5)$$else$type=\"text/css\" $endif$/>"
+  , "$endfor$"
+  , "$if(math)$"
+  , "  $math$"
+  , "$endif$"
+  , "$if(toc)$"
+  , "<div id=\"$idprefix$TOC\">"
+  , "$toc$"
+  , "</div>"
+  , "$endif$"
+  , "$body$"
+  ]

@@ -23,6 +23,7 @@ module Text.BlogLiterately.Options
     , style
     , hsHighlight
     , otherHighlight
+    , toc
     , wplatex
     , math
     , ghci
@@ -50,6 +51,7 @@ module Text.BlogLiterately.Options
     , style'
     , hsHighlight'
     , otherHighlight'
+    , toc'
     , wplatex'
     , math'
     , ghci'
@@ -87,6 +89,7 @@ data BlogLiterately = BlogLiterately
   , _hsHighlight    :: Maybe HsHighlight   -- ^ Haskell highlighting mode
   , _otherHighlight :: Maybe Bool          -- ^ Use highlighting-kate for
                                            --   non-Haskell?
+  , _toc            :: Maybe Bool          -- ^ Generate a table of contents?
   , _wplatex        :: Maybe Bool          -- ^ Format LaTeX for WordPress?
   , _math           :: Maybe String        -- ^ Indicate how to format math
   , _ghci           :: Maybe Bool          -- ^ Automatically process ghci sessions?
@@ -130,6 +133,7 @@ instance Monoid BlogLiterately where
     { _style          = Nothing
     , _hsHighlight    = Nothing
     , _otherHighlight = Nothing
+    , _toc            = Nothing
     , _wplatex        = Nothing
     , _math           = Nothing
     , _ghci           = Nothing
@@ -157,6 +161,7 @@ instance Monoid BlogLiterately where
     { _style          = combine _style
     , _hsHighlight    = combine _hsHighlight
     , _otherHighlight = combine _otherHighlight
+    , _toc            = combine _toc
     , _wplatex        = combine _wplatex
     , _math           = combine _math
     , _ghci           = combine _ghci
@@ -196,6 +201,9 @@ hsHighlight'    = fromMaybe (HsColourInline defaultStylePrefs) . view hsHighligh
 
 otherHighlight' :: BlogLiterately -> Bool
 otherHighlight' = fromMaybe True  . view otherHighlight
+
+toc' :: BlogLiterately -> Bool
+toc'            = fromMaybe False . view toc
 
 wplatex' :: BlogLiterately -> Bool
 wplatex'        = fromMaybe False . view wplatex
@@ -281,6 +289,16 @@ blOpts = BlogLiterately
          &= explicit
          &= name "no-kate"
          &= help "don't highlight non-Haskell code"
+       ]
+     , _toc = enum
+       [ Just True
+         &= explicit
+         &= name "toc"
+         &= help "generate a table of contents"
+       , Just False
+         &= explicit
+         &= name "no-toc"
+         &= help "don't generate a table of contents (default)"
        ]
      , _wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
                   &= name "wplatex" &= name "w" &= explicit
