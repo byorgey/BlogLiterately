@@ -1,3 +1,8 @@
+0.7.1.1 (17 January 2014)
+-------------------------
+
+  * Bug fix: no table of contents is now actually the default, as advertised
+
 0.7.1 (14 January 2014)
 -----------------------
 
