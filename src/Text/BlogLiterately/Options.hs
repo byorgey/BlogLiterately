@@ -291,14 +291,14 @@ blOpts = BlogLiterately
          &= help "don't highlight non-Haskell code"
        ]
      , _toc = enum
-       [ Just True
-         &= explicit
-         &= name "toc"
-         &= help "generate a table of contents"
-       , Just False
+       [ Just False
          &= explicit
          &= name "no-toc"
          &= help "don't generate a table of contents (default)"
+       , Just True
+         &= explicit
+         &= name "toc"
+         &= help "generate a table of contents"
        ]
      , _wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
                   &= name "wplatex" &= name "w" &= explicit
