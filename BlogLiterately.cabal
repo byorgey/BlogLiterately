@@ -53,7 +53,7 @@ Library
                    parsec >= 3 && < 3.2,
                    HaXml >= 1.22 && < 1.25,
                    hscolour >= 1.20 && < 1.21,
-                   blaze-html >= 0.5 && < 0.7,
+                   blaze-html >= 0.5 && < 0.8,
                    cmdargs >= 0.9.5 && < 0.11,
                    haxr >= 3000.9 && < 3000.11,
                    pandoc >= 1.12 && < 1.13,
