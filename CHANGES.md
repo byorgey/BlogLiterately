@@ -1,3 +1,9 @@
+0.7.1.4 (3 February 2014)
+-------------------------
+
+  * (#11) Workaround allowing [ghci] blocks in .lhs files containing
+    lines that start with #
+
 0.7.1.3 (30 January 2014)
 -------------------------
 
