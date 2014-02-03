@@ -41,7 +41,10 @@ import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
 import           Data.Char                  (isSpace)
 import           Data.Functor               ((<$>))
 import           Data.List                  (intercalate, isPrefixOf)
+import           System.FilePath            (takeFileName)
 import           System.IO
+import qualified System.IO.Strict           as Strict
+import           System.IO.Temp
 import           System.Process             (ProcessHandle,
                                              runInteractiveCommand,
                                              waitForProcess)
@@ -93,16 +96,33 @@ ghciEval (GhciInput expr expected) =  do
 --   it, and finally stop the process.
 withGhciProcess :: FilePath -> ReaderT ProcessInfo IO a -> IO a
 withGhciProcess f m = do
-  isLit <- isLiterate f
-  h     <- runInteractiveCommand $ "ghci -v0 -ignore-dot-ghci "
-                                   ++ (if isLit then f else "")
-  res   <- runReaderT m h
-  stopGhci h
-  return res
+  src <- Strict.readFile f
+  let isLit = isLiterate src
+  withLiterateHashWorkaround f src $ \f' -> do
+    h     <- runInteractiveCommand $ "ghci -v0 -ignore-dot-ghci "
+                                     ++ (if isLit then f' else "")
+    res   <- runReaderT m h
+    stopGhci h
+    return res
+
+-- | Workaround for https://ghc.haskell.org/trac/ghc/ticket/4836; see
+--   also https://github.com/byorgey/BlogLiterately/issues/11.  If the
+--   file contains any lines beginning with #, create a temporary file
+--   with those lines filtered out, and pass that instead.[
+withLiterateHashWorkaround :: FilePath -> String -> (FilePath -> IO a) -> IO a
+withLiterateHashWorkaround f src k = do
+  let bad = ("#" `isPrefixOf`)
+      b   = any bad . lines $ src
+  case b of
+    False -> k f
+    True  -> withTempFile "" (takeFileName f) $ \f' h -> do
+               hPutStr h (unlines . filter (not . bad) . lines $ src)
+               hClose h
+               k f'
 
 -- | Poor man's check to see whether we have a literate Haskell file.
-isLiterate :: FilePath -> IO Bool
-isLiterate f = (any ("> " `isPrefixOf`) . lines) <$> readFile f
+isLiterate :: String -> Bool
+isLiterate = any ("> " `isPrefixOf`) . lines
 
 -- | Stop a ghci process by passing it @:q@ and waiting for it to exit.
 stopGhci :: ProcessInfo -> IO ()

@@ -47,6 +47,8 @@ Library
                    containers,
                    bool-extras,
                    mtl,
+                   temporary >= 1.1 && < 1.3,
+                   strict >= 0.3 && < 0.4,
                    split >= 0.1.4 && < 0.3,
                    utf8-string >= 0.3 && < 0.4,
                    transformers >= 0.3 && < 0.4,
