@@ -1,3 +1,10 @@
+0.7.1.5 (10 March 2014)
+-----------------------
+
+  * Fix bug that was causing options set in profile or in-file options
+    header to be ignored when doing pandoc writing, which affected
+    e.g. table of contents setting.
+
 0.7.1.4 (3 February 2014)
 -------------------------
 
