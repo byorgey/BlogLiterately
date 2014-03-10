@@ -336,7 +336,7 @@ xformDoc bl xforms =
 
     >>> runTransforms xforms bl
 
-    >=> _2 (return . writeHtml writeOpts)
+    >=> (\(bl', p) -> return $ (bl', writeHtml (writeOpts bl') p) )
     >=> _2 (return . renderHtml)
   where
     parseFile opts =
@@ -355,16 +355,16 @@ xformDoc bl xforms =
                                      `S.insert` readerExtensions def
                 , readerSmart      = True
                 }
-    writeOpts = def
-                { writerReferenceLinks = True
-                , writerTableOfContents = toc' bl
-                , writerHTMLMathMethod =
-                  case math' bl of
-                    ""  -> PlainMath
-                    opt -> mathOption opt
-                , writerStandalone     = True
-                , writerTemplate       = blHtmlTemplate
-                }
+    writeOpts bl = def
+                   { writerReferenceLinks = True
+                   , writerTableOfContents = toc' bl
+                   , writerHTMLMathMethod =
+                     case math' bl of
+                       ""  -> PlainMath
+                       opt -> mathOption opt
+                   , writerStandalone     = True
+                   , writerTemplate       = blHtmlTemplate
+                   }
     mathOption opt
       | opt `isPrefixOf` "latexmathml" ||
         opt `isPrefixOf` "asciimathml" = LaTeXMathML (mathUrlMaybe opt)
