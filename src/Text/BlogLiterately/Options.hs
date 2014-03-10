@@ -263,7 +263,7 @@ blOpts = BlogLiterately
                     &= typFile
                     &= name "style" &= name "s" &= explicit
      , _hsHighlight = enum
-       [ Just (HsColourInline defaultStylePrefs)
+       [ Nothing
          &= explicit
          &= name "hscolour-icss"
          &= help "highlight haskell: hscolour, inline style (default)"
@@ -281,7 +281,7 @@ blOpts = BlogLiterately
          &= help "highlight haskell with highlighting-kate"
        ]
      , _otherHighlight = enum
-       [ Just True
+       [ Nothing
          &= explicit
          &= name "kate"
          &= help "highlight non-Haskell code with highlighting-kate (default)"
@@ -291,7 +291,7 @@ blOpts = BlogLiterately
          &= help "don't highlight non-Haskell code"
        ]
      , _toc = enum
-       [ Just False
+       [ Nothing
          &= explicit
          &= name "no-toc"
          &= help "don't generate a table of contents (default)"
@@ -323,7 +323,7 @@ blOpts = BlogLiterately
        &= help "tag (can specify more than one)"
 
      , _citations = enum
-        [ Just True
+        [ Nothing
           &= help "process citations (default)"
           &= name "citations"
           &= explicit
