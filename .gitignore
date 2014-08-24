@@ -10,6 +10,6 @@ dist_*
 .hsenv_*
 .hsenv
 TAGS
-.cabal-sandbox
+.cabal-sandbox*
 cabal.sandbox.config
 *.html
