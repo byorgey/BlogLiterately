@@ -31,7 +31,6 @@ import           Control.Monad                       (liftM)
 import           Data.Char                           (toLower)
 import           Data.List                           (find)
 import           Data.Maybe                          (fromMaybe)
-import qualified System.IO.UTF8                      as U (readFile)
 
 import           Language.Haskell.HsColour           (Output (..), hscolour)
 import           Language.Haskell.HsColour.Colourise (defaultColourPrefs)
@@ -203,7 +202,7 @@ defaultStylePrefs =
 --   empty.
 getStylePrefs :: Maybe FilePath -> IO StylePrefs
 getStylePrefs Nothing      = return defaultStylePrefs
-getStylePrefs (Just fname) = liftM read (U.readFile fname)
+getStylePrefs (Just fname) = liftM read (readFile fname)
 
 -- | Take a @String@ of HTML produced by hscolour, and \"bake\" styles
 --   into it by replacing class attributes with appropriate style
