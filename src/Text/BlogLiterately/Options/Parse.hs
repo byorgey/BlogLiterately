@@ -40,7 +40,7 @@ import           Text.BlogLiterately.Options
 readBLOptions :: String -> ([ParseError], BlogLiterately)
 readBLOptions = second mconcat
               . partitionEithers
-              . map readBLOption
+              . map (readBLOption . dropWhile isSpace)
               . filter (not . all isSpace)
               . lines
 
