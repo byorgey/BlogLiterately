@@ -1,3 +1,18 @@
+0.7.1.8 (4 May 2015)
+--------------------
+
+  * Bump upper bounds.  Now allows:
+      - `base-4.8`
+      - `transformers-0.4`
+      - `lens-4.9`
+      - `hscolour-1.22`
+      - `blaze-html-0.8`
+      - `HaXml-1.25`
+      - `pandoc-1.13`
+      - `pandoc-citeproc-0.6`
+  * Get rid of `utf8-string` dependency
+  * Drop leading spaces while parsing BLOpts block
+
 0.7.1.7 (5 June 2014)
 ---------------------
 
