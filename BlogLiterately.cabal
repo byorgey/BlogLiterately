@@ -90,5 +90,5 @@ Executable BlogLiterately
                    cmdargs >= 0.9.5 && < 0.11
   Main-Is:        BlogLiterately.hs
   hs-source-dirs: main
-  Ghc-Options:    -fwarn-unused-imports
+  Ghc-Options:    -fwarn-unused-imports -threaded
   Default-language: Haskell2010
