@@ -1,3 +1,14 @@
+0.8 (28 May 2015)
+-----------------
+
+  * Require `pandoc-1.14`
+  * Allow `highlighting-kate-0.6`
+  * With the introduction of `Either` results for `pandoc`'s reader
+    functions, the type of `Text.BlogLiterately.Transform.xformDoc`
+    has changed. It now yields `IO (Either PandocError
+    (BlogLiterately, String))` instead of `IO (BlogLiterately,
+    String)`.
+
 0.7.1.11 (26 May 2015)
 ----------------------
 
