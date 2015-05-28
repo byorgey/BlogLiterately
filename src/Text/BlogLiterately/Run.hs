@@ -56,8 +56,10 @@ blogLiteratelyWith = blogLiteratelyCustom . (standardTransforms ++)
 --   orders of the standard transforms and your own, to exclude some
 --   or all of the standard transforms, etc.
 blogLiteratelyCustom :: [Transform] -> IO ()
-blogLiteratelyCustom ts =
-      cmdArgs blOpts
-  >>= \bl -> readFile (file' bl)
-  >>= xformDoc bl ts
-  >>= uncurry postIt
+blogLiteratelyCustom ts = do
+  bl  <- cmdArgs blOpts
+  doc <- readFile (file' bl)
+  res <- xformDoc bl ts doc
+  case res of
+    Left err -> putStrLn $ "Pandoc error: " ++ show err
+    Right (bl',doc') -> postIt bl' doc'

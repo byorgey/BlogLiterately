@@ -56,6 +56,7 @@ import qualified Data.Map                          as M
 import           Data.Monoid                       (mappend)
 import           Data.Monoid                       (mempty, (<>))
 import qualified Data.Set                          as S
+import           Data.Traversable                  (traverse)
 import           System.Directory                  (doesFileExist,
                                                     getAppUserDataDirectory)
 import           System.Exit                       (exitFailure)
@@ -64,6 +65,7 @@ import           System.IO                         (hFlush, stdout)
 import           Text.Blaze.Html.Renderer.String   (renderHtml)
 import           Text.CSL.Pandoc                   (processCites')
 import           Text.Pandoc
+import           Text.Pandoc.Error                 (PandocError)
 import           Text.Parsec                       (ParseError)
 
 import           Text.BlogLiterately.Block         (onTag)
@@ -330,16 +332,17 @@ standardTransforms =
 
 -- | Transform a complete input document string to an HTML output
 --   string, given a list of transformation passes.
-xformDoc :: BlogLiterately -> [Transform] -> String -> IO (BlogLiterately, String)
+xformDoc :: BlogLiterately -> [Transform] -> String -> IO (Either PandocError (BlogLiterately, String))
 xformDoc bl xforms =
         fixLineEndings
     >>> parseFile parseOpts
-
-    >>> runTransforms xforms bl
-
-    >=> (\(bl', p) -> return $ (bl', writeHtml (writeOpts bl') p) )
-    >=> _2 (return . renderHtml)
+    >>> traverse
+      (  runTransforms xforms bl
+      >=> (\(bl', p) -> return $ (bl', writeHtml (writeOpts bl') p) )
+      >=> _2 (return . renderHtml)
+      )
   where
+    parseFile :: ReaderOptions -> String -> Either PandocError Pandoc
     parseFile opts =
       case bl^.format of
         Just "rst"      -> readRST      opts
