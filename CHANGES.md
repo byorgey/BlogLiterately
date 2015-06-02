@@ -1,3 +1,8 @@
+0.8.1 (1 June 2015)
+-------------------
+
+  * Require `haxr-3000.11` which adds HTTPS support.
+
 0.8 (28 May 2015)
 -----------------
 
