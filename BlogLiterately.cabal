@@ -57,12 +57,12 @@ Library
                    blaze-html >= 0.5 && < 0.9,
                    cmdargs >= 0.9.5 && < 0.11,
                    haxr >= 3000.11 && < 3000.12,
-                   pandoc >= 1.14 && < 1.15,
+                   pandoc >= 1.14 && < 1.16,
                    pandoc-types >= 1.12 && < 1.13,
                    pandoc-citeproc >= 0.1.2 && < 0.8,
                    highlighting-kate >= 0.5 && < 0.7,
                    data-default >= 0.5 && < 0.6,
-                   lens >= 3.8 && < 4.12
+                   lens >= 3.8 && < 4.13
   Exposed-modules: Text.BlogLiterately
                    Text.BlogLiterately.Block
                    Text.BlogLiterately.Ghci
