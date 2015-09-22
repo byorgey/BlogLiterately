@@ -62,7 +62,7 @@ Library
                    pandoc-citeproc >= 0.1.2 && < 0.8,
                    highlighting-kate >= 0.5 && < 0.7,
                    data-default >= 0.5 && < 0.6,
-                   lens >= 3.8 && < 4.13
+                   lens >= 3.8 && < 4.14
   Exposed-modules: Text.BlogLiterately
                    Text.BlogLiterately.Block
                    Text.BlogLiterately.Ghci
