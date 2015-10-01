@@ -15,7 +15,7 @@
 
 module Text.BlogLiterately.Post
     (
-      mkPost, mkArray, postIt
+      mkPost, postIt
     ) where
 
 import           Control.Lens                (at, makePrisms, to, traverse,
@@ -28,28 +28,22 @@ import           Network.XmlRpc.Internals    (Value (..), XmlRpcType, toValue)
 import           Text.BlogLiterately.Options
 
 {-
-The metaWeblog API defines `newPost` and `editPost` procedures that
+The WordPress XML-RPC API defines `newPost` and `editPost` procedures that
 look like:
 
     [other]
-    metaWeblog.newPost (blogid, username, password, struct, publish)
-        returns string
-    metaWeblog.editPost (postid, username, password, struct, publish)
+    wp.newPost (blogid, username, password, content)
+        returns string (post_id)
+    wp.editPost (blogid, username, password, post_id, content)
         returns true
 
-For WordPress blogs, the `blogid` is ignored.  The user name and
-password are simply strings, and `publish` is a flag indicating
-whether to load the post as a draft, or to make it public immediately.
-The `postid` is an identifier string which is assigned when you
-initially create a post. The interesting bit is the `struct` field,
-which is an XML-RPC structure defining the post along with some
-meta-data, like the title.  I want be able to provide the post body, a
-title, and lists of categories and tags.  For the body and title, we
-could just let HaXR convert the values automatically into the XML-RPC
-`Value` type, since they all have the same Haskell type (`String`) and
-thus can be put into a list.  But the categories and tags are lists of
-strings, so we need to explicitly convert everything to a `Value`,
-then combine:
+The blogid is a number uniquely identifying a wordpress blog.  The
+user name and password are simply strings.  The `post_id` is an
+identifier string which is assigned when you initially create a
+post. The interesting bit is the `content` field, which is an XML-RPC
+structure defining the post along with some meta-data, like the title.
+I want be able to provide the post body, a title, lists of categories
+and tags, and whether the post should be published or a draft.
 -}
 
 -- | Prepare a post for uploading by creating something of the proper
@@ -59,20 +53,19 @@ mkPost :: String    -- ^ Post title
        -> [String]  -- ^ List of categories
        -> [String]  -- ^ List of tags
        -> Bool      -- ^ @True@ = page, @False@ = post
+       -> Bool      -- ^ @True@ = publish, @False@ = draft
        -> [(String, Value)]
-mkPost title_ text_ categories_ tags_ page_ =
-       mkArray "categories" categories_
-    ++ mkArray "mt_keywords" tags_
-    ++ [ ("title", toValue title_)
-       , ("description", toValue text_)
+mkPost title_ text_ categories_ tags_ page_ publish_ =
+       [ ("post_title", toValue title_)
+       , ("post_content", toValue text_)
+       , ("post_status", toValue (if publish_ then "publish" else "draft"))
+       , ("term", toValue $
+                    [ ("category", toValue categories_)
+                    , ("post_tag", toValue tags_)
+                    ]
+         )
        ]
     ++ [ ("post_type", toValue "page") | page_ ]
-
--- | Given a name and a list of values, create a named \"array\" field
---   suitable for inclusion in an XML-RPC struct.
-mkArray :: XmlRpcType [a] => String -> [a] -> [(String, Value)]
-mkArray _    []     = []
-mkArray name values = [(name, toValue values)]
 
 {-
 The HaXR library exports a function for invoking XML-RPC procedures:
@@ -92,17 +85,16 @@ any function with zero or more parameters in the class `XmlRpcType`
 and a return type of `XmlRpcType r => IO r` will work, which means you
 can simply 'feed' `remote` additional arguments as required by the
 remote procedure, and as long as you make the call in an IO context,
-it will typecheck.  `postIt` calls `metaWeblog.newPost` or
-`metaWeblog.editPost` (or simply prints the HTML to stdout) as
-appropriate:
+it will typecheck.  `postIt` calls `wp.newPost` or `wp.editPost` (or
+simply prints the HTML to stdout) as appropriate:
 -}
 
 makePrisms ''Value
 
 -- | Get the URL for a given post.
-getPostURL :: String -> String -> String -> String -> IO (Maybe String)
-getPostURL url pid usr pwd = do
-  v <- remote url "metaWeblog.getPost" pid usr pwd
+getPostURL :: String -> Int -> String -> String -> String -> IO (Maybe String)
+getPostURL url bid pid usr pwd = do
+  v <- remote url "wp.getPost" bid usr pwd pid
   return (v ^? _ValueStruct . to M.fromList . at "link" . traverse . _ValueString)
 
 -- | Given a configuration and a formatted post, upload it to the server.
@@ -115,25 +107,26 @@ postIt bl html =
       let pwd = password' bl
       case bl^.postid of
         Nothing  -> do
-          pid <- remote url "metaWeblog.newPost"
+          pid <- remote url "wp.newPost"
                    (blogid' bl)
                    (user' bl)
                    pwd
                    post
-                   (publish' bl)
           putStrLn $ "Post ID: " ++ pid
-          getPostURL url pid (user' bl) pwd >>= maybe (return ()) putStrLn
+          getPostURL url (blogid' bl) pid (user' bl) pwd >>= maybe (return ()) putStrLn
         Just pid -> do
-          success <- remote url "metaWeblog.editPost" pid
+          success <- remote url "wp.editPost"
+                       (blogid' bl)
                        (user' bl)
                        pwd
+                       pid
                        post
-                       (publish' bl)
           case success of
-            True  -> getPostURL url pid (user' bl) pwd >>= maybe (return ()) putStrLn
+            True  -> getPostURL url (blogid' bl) pid (user' bl) pwd >>= maybe (return ()) putStrLn
             False -> putStrLn "Update failed!"
   where
     post = mkPost
              (title' bl)
              html (bl^.categories) (bl^.tags)
              (page' bl)
+             (publish' bl)

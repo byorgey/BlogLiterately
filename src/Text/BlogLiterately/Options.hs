@@ -96,7 +96,7 @@ data BlogLiterately = BlogLiterately
   , _uploadImages   :: Maybe Bool          -- ^ Automatically upload images?
   , _categories     :: [String]            -- ^ Categories for the post
   , _tags           :: [String]            -- ^ Tags for the post
-  , _blogid         :: Maybe String        -- ^ Blog-specific identifier
+  , _blogid         :: Maybe Int           -- ^ Blog-specific identifier
                                            --   (e.g. for blogging software
                                            --   handling multiple blogs)
   , _profile        :: Maybe String        -- ^ Name of profile to use.
@@ -217,8 +217,8 @@ ghci'           = fromMaybe False . view ghci
 uploadImages' :: BlogLiterately -> Bool
 uploadImages'   = fromMaybe False . view uploadImages
 
-blogid' :: BlogLiterately -> String
-blogid'         = fromMaybe "default" . view blogid
+blogid' :: BlogLiterately -> Int
+blogid'         = fromMaybe 0 . view blogid
 
 profile' :: BlogLiterately -> String
 profile'        = fromMaybe ""    . view profile

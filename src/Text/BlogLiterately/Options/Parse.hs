@@ -26,7 +26,7 @@ import           Text.Parsec                 (ParseError, char, many, noneOf,
                                               string, try, (<|>))
 import           Text.Parsec.Language        (haskell)
 import           Text.Parsec.String          (Parser)
-import           Text.Parsec.Token           (stringLiteral)
+import           Text.Parsec.Token           (natural, stringLiteral)
 
 
 import           Text.BlogLiterately.Options
@@ -59,7 +59,7 @@ parseBLOption =
   <|> parseField uploadImages "upload-images" parseBool
   <|> parseField categories   "categories"    parseStrList
   <|> parseField tags         "tags"          parseStrList
-  <|> parseField blogid       "blogid"        parseStr
+  <|> parseField blogid       "blogid"        parseInt
   <|> parseField profile      "profile"       parseStr
   <|> parseField blog         "blog"          parseStr
   <|> parseField user         "user"          parseStr
@@ -76,6 +76,9 @@ str = stringLiteral haskell <|> many (noneOf " \t\n\r,\"[]")
 
 parseStr :: Parser (Maybe String)
 parseStr = Just <$> str
+
+parseInt :: Parser (Maybe Int)
+parseInt = (Just . fromInteger) <$> natural haskell
 
 parseBool :: Parser (Maybe Bool)
 parseBool = Just <$> ( ((string "true"  <|> try (string "on")) *> pure True)

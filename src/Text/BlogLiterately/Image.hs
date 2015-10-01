@@ -100,7 +100,7 @@ readMay s = case reads s of
 writeUploadedImages :: M.Map FilePath URL -> IO ()
 writeUploadedImages m = writeFile uploadedImagesFile (show m)
 
--- | Upload a file using the @metaWeblog.newMediaObject@ XML-RPC method
+-- | Upload a file using the @wp.uploadFile@ XML-RPC method
 --   call.
 uploadIt :: String -> FilePath -> BlogLiterately -> IO (Maybe Value)
 uploadIt url filePath (BlogLiterately{..}) = do
@@ -111,8 +111,8 @@ uploadIt url filePath (BlogLiterately{..}) = do
       putStrLn $ "\nFile not found: " ++ filePath
       return Nothing
     Just media -> do
-      val <- remote url "metaWeblog.newMediaObject"
-               (fromMaybe "default" _blogid)
+      val <- remote url "wp.uploadFile"
+               (fromMaybe 0  _blogid)
                (fromMaybe "" _user)
                (fromMaybe "" _password)
                media
@@ -130,7 +130,7 @@ mkMediaObject filePath = do
       return . Just $ ValueStruct
         [ ("name", toValue fileName)
         , ("type", toValue fileType)
-        , ("bits", ValueBase64 bits)
+        , ("bits", toValue bits)    -- XXX "shouldn't be base64-encoded..."
         ]
   where
     fileName = takeFileName filePath
