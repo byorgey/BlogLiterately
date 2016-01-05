@@ -55,17 +55,17 @@ uploadAllImages bl@(BlogLiterately{..}) p =
     _           -> return p
   where
     uploadOneImage :: String -> Inline -> StateT (M.Map FilePath URL) IO Inline
-    uploadOneImage xmlrpc i@(Image altText (imgUrl, imgTitle))
+    uploadOneImage xmlrpc i@(Image attr altText (imgUrl, imgTitle))
       | isLocal imgUrl = do
           uploaded <- get
           case M.lookup imgUrl uploaded of
-            Just url -> return $ Image altText (url, imgTitle)
+            Just url -> return $ Image attr altText (url, imgTitle)
             Nothing  -> do
               res <- lift $ uploadIt xmlrpc imgUrl bl
               case res of
                 Just (ValueStruct (lookup "url" -> Just (ValueString newUrl))) -> do
                   modify (M.insert imgUrl newUrl)
-                  return $ Image altText (newUrl, imgTitle)
+                  return $ Image attr altText (newUrl, imgTitle)
                 _ -> do
                   liftIO . putStrLn $ "Warning: upload of " ++ imgUrl ++ " failed."
                   return i

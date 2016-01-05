@@ -176,7 +176,7 @@ centerImages :: Pandoc -> Pandoc
 centerImages = bottomUp centerImage
   where
     centerImage :: [Block] -> [Block]
-    centerImage (img@(Para [Image _altText (_imgUrl, _imgTitle)]) : bs) =
+    centerImage (img@(Para [Image _attr _altText (_imgUrl, _imgTitle)]) : bs) =
         RawBlock "html" "<div style=\"text-align: center;\">"
       : img
       : RawBlock "html" "</div>"
@@ -206,13 +206,10 @@ optionsXF :: Transform
 optionsXF = Transform optionsXF' (const True)
   where
     optionsXF' = do
-      p <- gets snd
-      let (errs, opts) = queryWith extractOptions p
+      (errs, opts) <- queryWith extractOptions <$> gets snd
       mapM_ (liftIO . print) errs
       _1 %= (<> opts)
-
-      let p' = bottomUp killOptionBlocks p
-      _2 .= p'
+      _2 %= bottomUp killOptionBlocks
 
 -- | Take a block and extract from it a list of parse errors and an
 --   options record.  If the blog is not tagged with @[BLOpts]@ these
