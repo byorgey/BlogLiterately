@@ -51,7 +51,10 @@ import           Control.Lens                      (has, isn't, use, (%=), (&),
                                                     (.=), (.~), (^.), _1, _2,
                                                     _Just)
 import           Control.Monad.State
-import           Data.List                         (intercalate, isPrefixOf)
+import           Data.Char                         (toLower)
+import           Data.List                         (intercalate, isInfixOf,
+                                                    isPrefixOf)
+import           Data.List.Split                   (splitOn)
 import qualified Data.Map                          as M
 import           Data.Monoid                       (mappend)
 import           Data.Monoid                       (mempty, (<>))
@@ -182,6 +185,28 @@ centerImages = bottomUp centerImage
       : RawBlock "html" "</div>"
       : bs
     centerImage bs = bs
+
+-- XXX comment me
+specialLinkXF :: Transform
+specialLinkXF = ioTransform (pure specialLinks) (const True)
+
+specialLinks :: Pandoc -> IO Pandoc
+specialLinks = bottomUpM specialLink
+  where
+    specialLink :: Inline -> IO Inline
+    specialLink i@(Link attrs alt (url, title))
+      | Just (typ, target) <- getSpecial url
+      = case map toLower typ of
+          "lucky" -> undefined
+          "wiki"  -> undefined
+          "prev"  -> undefined
+    specialLink i = return i
+
+    getSpecial url
+      | "::" `isInfixOf` url =
+          let (typ:rest) = splitOn "::" url
+          in  Just (typ, intercalate "::" rest)
+      | otherwise = Nothing
 
 -- | Potentially extract a title from the metadata block, and set it
 --   in the options record.
