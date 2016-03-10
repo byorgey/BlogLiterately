@@ -60,6 +60,8 @@ import           Data.Monoid                       (mappend)
 import           Data.Monoid                       (mempty, (<>))
 import qualified Data.Set                          as S
 import           Data.Traversable                  (traverse)
+import           Network.HTTP                      (getRequest, getResponseBody,
+                                                    simpleHTTP)
 import           System.Directory                  (doesFileExist,
                                                     getAppUserDataDirectory)
 import           System.Exit                       (exitFailure)
@@ -67,6 +69,7 @@ import           System.FilePath                   (takeExtension, (<.>), (</>))
 import           System.IO                         (hFlush, stdout)
 import           Text.Blaze.Html.Renderer.String   (renderHtml)
 import           Text.CSL.Pandoc                   (processCites')
+import           Text.HTML.TagSoup
 import           Text.Pandoc
 import           Text.Pandoc.Error                 (PandocError)
 import           Text.Parsec                       (ParseError)
@@ -187,8 +190,8 @@ centerImages = bottomUp centerImage
     centerImage bs = bs
 
 -- XXX comment me
-specialLinkXF :: Transform
-specialLinkXF = ioTransform (pure specialLinks) (const True)
+specialLinksXF :: Transform
+specialLinksXF = ioTransform (pure specialLinks) (const True)
 
 specialLinks :: Pandoc -> IO Pandoc
 specialLinks = bottomUpM specialLink
@@ -197,8 +200,8 @@ specialLinks = bottomUpM specialLink
     specialLink i@(Link attrs alt (url, title))
       | Just (typ, target) <- getSpecial url
       = case map toLower typ of
-          "lucky" -> undefined
-          "wiki"  -> undefined
+          "lucky" -> (\u -> Link attrs alt (u, title)) <$> getLucky target
+          "wiki"  -> return (Link attrs alt ("https://en.wikipedia.org/wiki/" ++ target, title))
           "prev"  -> undefined
     specialLink i = return i
 
@@ -207,6 +210,12 @@ specialLinks = bottomUpM specialLink
           let (typ:rest) = splitOn "::" url
           in  Just (typ, intercalate "::" rest)
       | otherwise = Nothing
+
+openURL :: String -> IO String
+openURL x = getResponseBody =<< simpleHTTP (getRequest x)
+
+getLucky :: String -> IO String
+getLucky = return
 
 -- | Potentially extract a title from the metadata block, and set it
 --   in the options record.
@@ -343,6 +352,7 @@ standardTransforms =
   , ghciXF
   , uploadImagesXF
   , centerImagesXF
+  , specialLinksXF
   , highlightOptsXF
   , highlightXF
   , citationsXF
