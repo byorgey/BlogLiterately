@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
 
@@ -183,9 +182,9 @@ centerImages = bottomUp centerImage
   where
     centerImage :: [Block] -> [Block]
     centerImage (img@(Para [Image _attr _altText (_imgUrl, _imgTitle)]) : bs) =
-        RawBlock "html" "<div style=\"text-align: center;\">"
+        RawBlock (Format "html") "<div style=\"text-align: center;\">"
       : img
-      : RawBlock "html" "</div>"
+      : RawBlock (Format "html") "</div>"
       : bs
     centerImage bs = bs
 
@@ -215,7 +214,14 @@ openURL :: String -> IO String
 openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 
 getLucky :: String -> IO String
-getLucky = return
+getLucky searchTerm = do
+  results <- openURL $ "http://www.google.com/search?q=" ++ searchTerm
+  let tags   = parseTags results
+      anchor = take 1 . dropWhile (~/= "<a>") . dropWhile (~/= "<h3 class='r'>") $ tags
+  let url = case anchor of
+              [t@(TagOpen{})] -> takeWhile (/='&') . dropWhile (/='h') . fromAttrib "href" $ t
+              _ -> "XXXXXXXXXX"
+  return url
 
 -- | Potentially extract a title from the metadata block, and set it
 --   in the options record.
