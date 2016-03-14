@@ -1,3 +1,4 @@
+
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -201,7 +202,14 @@ specialLinks = bottomUpM specialLink
       = case map toLower typ of
           "lucky" -> (\u -> Link attrs alt (u, title)) <$> getLucky target
           "wiki"  -> return (Link attrs alt ("https://en.wikipedia.org/wiki/" ++ target, title))
-          "prev"  -> undefined
+          "prev"  -> undefined  -- XXX don't do *previous* because
+                                -- this is not stable: if I add more
+                                -- posts and then later come back to
+                                -- edit/re-post a post, the most
+                                -- recent post has changed.  Better to
+                                -- just do some sort of keyword/title
+                                -- etc. search (or id #) which would
+                                -- be more stable?
     specialLink i = return i
 
     getSpecial url
