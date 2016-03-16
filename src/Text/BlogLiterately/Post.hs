@@ -9,17 +9,20 @@
 -- License     :  GPL (see LICENSE)
 -- Maintainer  :  Brent Yorgey <byorgey@gmail.com>
 --
--- Uploading posts to the server.
+-- Uploading posts to the server and fetching posts from the server.
 --
 -----------------------------------------------------------------------------
 
 module Text.BlogLiterately.Post
     (
-      mkPost, mkArray, postIt
+      mkPost, mkArray, postIt, getPostURL, findTitle
     ) where
 
 import           Control.Lens                (at, makePrisms, to, traverse,
-                                              (^.), (^?))
+                                              (^.), (^..), (^?), _Just, _head)
+import           Data.Char                   (toLower)
+import           Data.Function               (on)
+import           Data.List                   (isInfixOf)
 import qualified Data.Map                    as M
 
 import           Network.XmlRpc.Client       (remote)
@@ -104,6 +107,17 @@ getPostURL :: String -> String -> String -> String -> IO (Maybe String)
 getPostURL url pid usr pwd = do
   v <- remote url "metaWeblog.getPost" pid usr pwd
   return (v ^? _ValueStruct . to M.fromList . at "link" . traverse . _ValueString)
+
+-- | Look at the last n posts and find the most recent whose title
+--   contains the search term (case insensitive); return its permalink
+--   URL.
+findTitle :: Int -> String -> String -> String -> String -> IO (Maybe String)
+findTitle numPrev url search usr pwd = do
+  res <- remote url "metaWeblog.getRecentPosts" (0::Int) usr pwd numPrev
+  let matches s = (isInfixOf `on` map toLower) search s
+      posts  = res ^.. _ValueArray . traverse . _ValueStruct . to M.fromList
+      posts' = filter (\p -> maybe False matches (p ^? at "title" . _Just . _ValueString)) posts
+  return (posts' ^? _head . at "link" . _Just . _ValueString)
 
 -- | Given a configuration and a formatted post, upload it to the server.
 postIt :: BlogLiterately -> String -> IO ()

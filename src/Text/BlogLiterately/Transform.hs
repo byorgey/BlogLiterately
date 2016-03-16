@@ -51,11 +51,12 @@ import           Control.Lens                      (has, isn't, use, (%=), (&),
                                                     (.=), (.~), (^.), _1, _2,
                                                     _Just)
 import           Control.Monad.State
-import           Data.Char                         (toLower)
+import           Data.Char                         (isDigit, toLower)
 import           Data.List                         (intercalate, isInfixOf,
                                                     isPrefixOf)
 import           Data.List.Split                   (splitOn)
 import qualified Data.Map                          as M
+import           Data.Maybe                        (fromMaybe)
 import           Data.Monoid                       (mappend)
 import           Data.Monoid                       (mempty, (<>))
 import qualified Data.Set                          as S
@@ -84,6 +85,7 @@ import           Text.BlogLiterately.Image         (uploadAllImages)
 import           Text.BlogLiterately.LaTeX         (wpTeXify)
 import           Text.BlogLiterately.Options
 import           Text.BlogLiterately.Options.Parse (readBLOptions)
+import           Text.BlogLiterately.Post          (findTitle, getPostURL)
 
 -- | A document transformation consists of two parts: an actual
 --   transformation, expressed as a function over Pandoc documents, and
@@ -191,25 +193,28 @@ centerImages = bottomUp centerImage
 
 -- XXX comment me
 specialLinksXF :: Transform
-specialLinksXF = ioTransform (pure specialLinks) (const True)
+specialLinksXF = ioTransform specialLinks (const True)
 
-specialLinks :: Pandoc -> IO Pandoc
-specialLinks = bottomUpM specialLink
+specialLinks :: BlogLiterately -> Pandoc -> IO Pandoc
+specialLinks bl = bottomUpM specialLink
   where
     specialLink :: Inline -> IO Inline
     specialLink i@(Link attrs alt (url, title))
       | Just (typ, target) <- getSpecial url
       = case map toLower typ of
-          "lucky" -> (\u -> Link attrs alt (u, title)) <$> getLucky target
-          "wiki"  -> return (Link attrs alt ("https://en.wikipedia.org/wiki/" ++ target, title))
-          "prev"  -> undefined  -- XXX don't do *previous* because
-                                -- this is not stable: if I add more
-                                -- posts and then later come back to
-                                -- edit/re-post a post, the most
-                                -- recent post has changed.  Better to
-                                -- just do some sort of keyword/title
-                                -- etc. search (or id #) which would
-                                -- be more stable?
+          "lucky" -> mkLink <$> getLucky target
+          "wiki"  -> mkLink <$> pure ("https://en.wikipedia.org/wiki/" ++ target)
+          "post"  -> (mkLink . fromMaybe url) <$>
+            case (all isDigit target, bl ^. blog) of
+              (_    , Nothing ) -> return Nothing
+              (True , Just url) -> getPostURL url target (user' bl) (password' bl)
+              (False, Just url) -> findTitle 20 url target (user' bl) (password' bl)
+
+              -- If all digits, replace with permalink for that postid
+              -- Otherwise, search titles of 20 most recent posts.
+              --   Choose most recent that matches.
+      where
+        mkLink u = Link attrs alt (u, title)
     specialLink i = return i
 
     getSpecial url
