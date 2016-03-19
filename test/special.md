@@ -8,3 +8,5 @@ This is a link to the
 [most recent post about SIGCSE](post::SIGCSE), and another
 [post about network reliability](post::1730), and a
 [post that does not exist](post::flapjacks).
+
+This is a post about the game of [Go](wiki::Go (game)).
