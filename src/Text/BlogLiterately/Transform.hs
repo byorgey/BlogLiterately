@@ -191,30 +191,63 @@ centerImages = bottomUp centerImage
       : bs
     centerImage bs = bs
 
--- XXX comment me
+-- | Replace special links with appropriate URLs.  Currently, four
+--   types of special links are supported:
+--
+--   [@lucky::<search>@] The first Google result for @<search>@.
+--
+--   [@wiki::<title>@] The Wikipedia page for @<title>@.  Note that
+--   the page is not checked for existence.
+--
+--   [@post::nnnn@] Link to the blog post with post ID @nnnn@.  Note
+--   that this form of special link is invoked when @nnnn@ consists of
+--   all digits, so it only works on blogs which use numerical
+--   identifiers for post IDs (as Wordpress does).
+--
+--   [@post::<search>@] Link to the most recent blog post (among the
+--   20 most recent posts) containing @<search>@ in its title.
+--
+--   For example, a post written in Markdown format containing
+--
+--   @
+--       This is a post about the game of [Go](wiki::Go (game)).
+--   @
+--
+--   will be formatted in HTML as
+--
+--   @
+--       <p>This is a post about the game of <a href="https://en.wikipedia.org/wiki/Go%20(game)">Go</a>.</p>
+--   @
+--
+--   XXX mention mkSpecialLinksXF
+--
 specialLinksXF :: Transform
-specialLinksXF = ioTransform specialLinks (const True)
+specialLinksXF = mkSpecialLinksXF standardSpecialLinks
 
-specialLinks :: BlogLiterately -> Pandoc -> IO Pandoc
-specialLinks bl = bottomUpM specialLink
+-- XXX
+standardSpecialLinks :: [SpecialLink]
+standardSpecialLinks = [luckyLink, wikiLink, postLink]
+
+-- XXX
+type SpecialLink = (String, String -> BlogLiterately -> IO String)
+
+-- XXX
+mkSpecialLinksXF :: [SpecialLink] -> Transform
+mkSpecialLinksXF links = ioTransform (specialLinks links) (const True)
+
+-- XXX
+specialLinks :: [SpecialLink] -> BlogLiterately -> Pandoc -> IO Pandoc
+specialLinks links bl = bottomUpM specialLink
   where
     specialLink :: Inline -> IO Inline
     specialLink i@(Link attrs alt (url, title))
       | Just (typ, target) <- getSpecial url
-      = case map toLower typ of
-          "lucky" -> mkLink <$> getLucky target
-          "wiki"  -> mkLink <$> pure ("https://en.wikipedia.org/wiki/" ++ target)
-          "post"  -> (mkLink . fromMaybe url) <$>
-            case (all isDigit target, bl ^. blog) of
-              (_    , Nothing ) -> return Nothing
-              (True , Just url) -> getPostURL url target (user' bl) (password' bl)
-              (False, Just url) -> findTitle 20 url target (user' bl) (password' bl)
-
-              -- If all digits, replace with permalink for that postid
-              -- Otherwise, search titles of 20 most recent posts.
-              --   Choose most recent that matches.
+      = mkLink <$> case lookup (map toLower typ) links of
+                     Just mkURL -> mkURL target bl
+                     Nothing    -> return target
       where
         mkLink u = Link attrs alt (u, title)
+
     specialLink i = return i
 
     getSpecial url
@@ -223,18 +256,41 @@ specialLinks bl = bottomUpM specialLink
           in  Just (typ, intercalate "::" rest)
       | otherwise = Nothing
 
+-- XXX
+luckyLink :: SpecialLink
+luckyLink = ("lucky", getLucky)
+  where
+    getLucky searchTerm _ = do
+      results <- openURL $ "http://www.google.com/search?q=" ++ searchTerm
+      let tags   = parseTags results
+          anchor = take 1 . dropWhile (~/= "<a>") . dropWhile (~/= "<h3 class='r'>") $ tags
+          url = case anchor of
+            [t@(TagOpen{})] -> takeWhile (/='&') . dropWhile (/='h') . fromAttrib "href" $ t
+            _ -> searchTerm
+      return url
+
+-- XXX
 openURL :: String -> IO String
 openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 
-getLucky :: String -> IO String
-getLucky searchTerm = do
-  results <- openURL $ "http://www.google.com/search?q=" ++ searchTerm
-  let tags   = parseTags results
-      anchor = take 1 . dropWhile (~/= "<a>") . dropWhile (~/= "<h3 class='r'>") $ tags
-  let url = case anchor of
-              [t@(TagOpen{})] -> takeWhile (/='&') . dropWhile (/='h') . fromAttrib "href" $ t
-              _ -> "XXXXXXXXXX"
-  return url
+-- XXX
+wikiLink :: SpecialLink
+wikiLink = ("wiki", \target _ -> pure ("https://en.wikipedia.org/wiki/" ++ target))
+
+-- XXX
+postLink :: SpecialLink
+postLink = ("post", getPostLink)
+  where
+    getPostLink target bl =
+      fromMaybe target <$>
+        case (all isDigit target, bl ^. blog) of
+          (_    , Nothing ) -> return Nothing
+          (True , Just url) -> getPostURL url target (user' bl) (password' bl)
+          (False, Just url) -> findTitle 20 url target (user' bl) (password' bl)
+
+          -- If all digits, replace with permalink for that postid
+          -- Otherwise, search titles of 20 most recent posts.
+          --   Choose most recent that matches.
 
 -- | Potentially extract a title from the metadata block, and set it
 --   in the options record.
@@ -347,6 +403,8 @@ loadProfile bl =
 --   * 'uploadImagesXF': upload images if requested
 --
 --   * 'centerImagesXF': center images occurring in their own paragraph
+--
+--   * 'specialLinksXF': replace special link types with URLs
 --
 --   * 'highlightOptsXF': load the requested highlighting style file
 --
