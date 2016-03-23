@@ -35,6 +35,14 @@ module Text.BlogLiterately.Transform
     , centerImagesXF
     , citationsXF
 
+      -- * Link generation
+    , specialLinksXF
+    , mkSpecialLinksXF
+    , standardSpecialLinks
+    , luckyLink
+    , wikiLink
+    , postLink
+
       -- * Transforms
     , Transform(..), pureTransform, ioTransform, runTransform, runTransforms
 
@@ -228,14 +236,26 @@ specialLinksXF = mkSpecialLinksXF standardSpecialLinks
 standardSpecialLinks :: [SpecialLink]
 standardSpecialLinks = [luckyLink, wikiLink, postLink]
 
--- XXX
+-- | A special link consists of two parts:
+--
+--   * An identifier string.  If the identifier string is @<id>@, this
+--   will trigger for links which are of the form @<id>::XXXX@.
+--
+--   * A URL generation function.  It takes as input the string
+--   following the @::@ (the @XXXX@ in the example above), the
+--   configuration record, and must output a URL.
+--
+--   For example, ("cats", XXX
 type SpecialLink = (String, String -> BlogLiterately -> IO String)
 
--- XXX
+-- | Create a transformation which looks for the given special links
+--   and replaces them appropriately. You can use this function with
+--   your own types of special links.
 mkSpecialLinksXF :: [SpecialLink] -> Transform
 mkSpecialLinksXF links = ioTransform (specialLinks links) (const True)
 
--- XXX
+-- | Create a document transformation which looks for the given
+--   special links and replaces them appropriately.
 specialLinks :: [SpecialLink] -> BlogLiterately -> Pandoc -> IO Pandoc
 specialLinks links bl = bottomUpM specialLink
   where
@@ -256,7 +276,8 @@ specialLinks links bl = bottomUpM specialLink
           in  Just (typ, intercalate "::" rest)
       | otherwise = Nothing
 
--- XXX
+-- | Turn @lucky::<search>@ into a link to the first Google result for
+-- @<search>@.
 luckyLink :: SpecialLink
 luckyLink = ("lucky", getLucky)
   where
@@ -269,15 +290,24 @@ luckyLink = ("lucky", getLucky)
             _ -> searchTerm
       return url
 
--- XXX
+-- | Get the contents of the given URL in a simple way.
 openURL :: String -> IO String
 openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 
--- XXX
+-- | Given @wiki::<title>@, generate a link to the Wikipedia page for
+--   @<title>@.  Note that the page is not checked for existence.
 wikiLink :: SpecialLink
 wikiLink = ("wiki", \target _ -> pure ("https://en.wikipedia.org/wiki/" ++ target))
 
--- XXX
+-- | @postLink@ handles two types of special links.
+--
+-- [@post::nnnn@] Link to the blog post with post ID @nnnn@.  Note that
+-- this form of special link is invoked when @nnnn@ consists of all
+-- digits, so it only works on blogs which use numerical identifiers
+-- for post IDs (as Wordpress does).
+--
+-- [@post::<search>@] Link to the most recent blog post (among the
+-- 20 most recent posts) containing @<search>@ in its title.
 postLink :: SpecialLink
 postLink = ("post", getPostLink)
   where
