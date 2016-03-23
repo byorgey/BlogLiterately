@@ -227,12 +227,14 @@ centerImages = bottomUp centerImage
 --       <p>This is a post about the game of <a href="https://en.wikipedia.org/wiki/Go%20(game)">Go</a>.</p>
 --   @
 --
---   XXX mention mkSpecialLinksXF
---
+--   You can also create a Transform with your own special link types,
+--   using 'mkSpecialLinksXF', and I am happy to receive pull requests
+--   adding new types of standard special links.
 specialLinksXF :: Transform
 specialLinksXF = mkSpecialLinksXF standardSpecialLinks
 
--- XXX
+-- | The standard special link types included in 'specialLinksXF':
+--   'luckyLink', 'wikiLink', and 'postLink'.
 standardSpecialLinks :: [SpecialLink]
 standardSpecialLinks = [luckyLink, wikiLink, postLink]
 
@@ -245,7 +247,12 @@ standardSpecialLinks = [luckyLink, wikiLink, postLink]
 --   following the @::@ (the @XXXX@ in the example above), the
 --   configuration record, and must output a URL.
 --
---   For example, ("cats", XXX
+--   For example,
+--
+--   @("twitter", \u _ -> return $ "https://twitter.com/" ++ u)@
+--
+--   is a simple 'SpecialLink' which causes links of the form
+--   @twitter::user@ to be replaced by @https://twitter.com/user@.
 type SpecialLink = (String, String -> BlogLiterately -> IO String)
 
 -- | Create a transformation which looks for the given special links
