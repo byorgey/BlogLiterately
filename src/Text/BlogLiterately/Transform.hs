@@ -304,7 +304,7 @@ openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 -- | Given @wiki::<title>@, generate a link to the Wikipedia page for
 --   @<title>@.  Note that the page is not checked for existence.
 wikiLink :: SpecialLink
-wikiLink = ("wiki", \target _ -> pure ("https://en.wikipedia.org/wiki/" ++ target))
+wikiLink = ("wiki", \target _ -> return $ "https://en.wikipedia.org/wiki/" ++ target)
 
 -- | @postLink@ handles two types of special links.
 --
