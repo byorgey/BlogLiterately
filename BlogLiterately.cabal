@@ -26,7 +26,7 @@ Author:         Robert Greayer <robgreayer@yahoo.com>
 Maintainer:     Brent Yorgey <byorgey@cis.upenn.edu>
 Stability:      experimental
 Build-Type:     Simple
-Tested-With:    GHC ==7.6.3, GHC ==7.8.4, GHC ==7.10.1
+Tested-With:    GHC ==7.6.3, GHC ==7.8.4, GHC ==7.10.3, GHC ==8.0.1
 Extra-Source-Files: CHANGES.md
                     README.markdown
                     doc/BlogLiteratelyDoc.lhs
@@ -39,7 +39,7 @@ Source-repository head
   location: git://github.com/byorgey/BlogLiterately.git
 
 Library
-  Build-Depends:   base >= 4.0 && < 4.9,
+  Build-Depends:   base >= 4.0 && < 4.10,
                    process,
                    filepath,
                    directory,
@@ -62,7 +62,9 @@ Library
                    pandoc-citeproc >= 0.1.2 && < 0.10,
                    highlighting-kate >= 0.5 && < 0.7,
                    data-default >= 0.5 && < 0.6,
-                   lens >= 3.8 && < 4.14
+                   lens >= 3.8 && < 4.14,
+                   tagsoup >= 0.13.4 && < 0.14,
+                   HTTP >= 4000.3 && < 4000.4
   Exposed-modules: Text.BlogLiterately
                    Text.BlogLiterately.Block
                    Text.BlogLiterately.Ghci

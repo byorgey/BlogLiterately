@@ -224,6 +224,52 @@ any embedded LaTeX to be output in the format expected by WordPress.
 Note that an extra `$latex...` won't be added to the beginning of
 LaTeX expressions which already appear to be in WordPress format.
 
+Special links
+-------------
+
+Certain special link types can be replaced with appropriate URLs.  A
+special link is one where the URL is of the form `<name>::<text>`
+where `<name>` is used to identify the special link type, and `<text>`
+is passed as a parameter to a function which can use it to generate a
+URL. Currently, four types of special links are supported by default
+(and you can easily add your own):
+
+`lucky::<search>`
+
+:   The first Google result for `<search>`.
+
+`wiki::<title>`
+
+:   The Wikipedia page for `<title>`.  (Note that the page is not
+    checked for existence.)
+
+`post::nnnn`
+
+:   Link to the blog post on your blog with post ID `nnnn`.  Note that
+    this form of special link is invoked when `nnnn` consists of all
+    digits, so it only works on blogs which use numerical identifiers for
+    post IDs (as Wordpress does).
+
+`post::<search>`
+
+:   Link to the most recent blog post (among the
+    20 most recent posts) containing `<search>` in its title.
+
+For example, a post written in Markdown format containing
+
+```
+    This is a post about the game of [Go](wiki::Go (game)).
+```
+
+will be formatted in HTML as
+
+```
+    <p>This is a post about the game of <a href="https://en.wikipedia.org/wiki/Go%20(game)">Go</a>.</p>
+```
+
+You can easily add your own new types of special links.  See the
+`SpecialLink` type and the `mkSpecialLinksXF` function.
+
 Table of contents
 -----------------
 

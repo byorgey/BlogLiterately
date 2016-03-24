@@ -1,6 +1,6 @@
+
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
 
@@ -35,6 +35,14 @@ module Text.BlogLiterately.Transform
     , centerImagesXF
     , citationsXF
 
+      -- * Link generation
+    , specialLinksXF
+    , mkSpecialLinksXF
+    , standardSpecialLinks
+    , luckyLink
+    , wikiLink
+    , postLink
+
       -- * Transforms
     , Transform(..), pureTransform, ioTransform, runTransform, runTransforms
 
@@ -51,12 +59,18 @@ import           Control.Lens                      (has, isn't, use, (%=), (&),
                                                     (.=), (.~), (^.), _1, _2,
                                                     _Just)
 import           Control.Monad.State
-import           Data.List                         (intercalate, isPrefixOf)
+import           Data.Char                         (isDigit, toLower)
+import           Data.List                         (intercalate, isInfixOf,
+                                                    isPrefixOf)
+import           Data.List.Split                   (splitOn)
 import qualified Data.Map                          as M
+import           Data.Maybe                        (fromMaybe)
 import           Data.Monoid                       (mappend)
 import           Data.Monoid                       (mempty, (<>))
 import qualified Data.Set                          as S
 import           Data.Traversable                  (traverse)
+import           Network.HTTP                      (getRequest, getResponseBody,
+                                                    simpleHTTP)
 import           System.Directory                  (doesFileExist,
                                                     getAppUserDataDirectory)
 import           System.Exit                       (exitFailure)
@@ -64,6 +78,7 @@ import           System.FilePath                   (takeExtension, (<.>), (</>))
 import           System.IO                         (hFlush, stdout)
 import           Text.Blaze.Html.Renderer.String   (renderHtml)
 import           Text.CSL.Pandoc                   (processCites')
+import           Text.HTML.TagSoup
 import           Text.Pandoc
 import           Text.Pandoc.Error                 (PandocError)
 import           Text.Parsec                       (ParseError)
@@ -78,6 +93,7 @@ import           Text.BlogLiterately.Image         (uploadAllImages)
 import           Text.BlogLiterately.LaTeX         (wpTeXify)
 import           Text.BlogLiterately.Options
 import           Text.BlogLiterately.Options.Parse (readBLOptions)
+import           Text.BlogLiterately.Post          (findTitle, getPostURL)
 
 -- | A document transformation consists of two parts: an actual
 --   transformation, expressed as a function over Pandoc documents, and
@@ -177,11 +193,141 @@ centerImages = bottomUp centerImage
   where
     centerImage :: [Block] -> [Block]
     centerImage (img@(Para [Image _attr _altText (_imgUrl, _imgTitle)]) : bs) =
-        RawBlock "html" "<div style=\"text-align: center;\">"
+        RawBlock (Format "html") "<div style=\"text-align: center;\">"
       : img
-      : RawBlock "html" "</div>"
+      : RawBlock (Format "html") "</div>"
       : bs
     centerImage bs = bs
+
+-- | Replace special links with appropriate URLs.  Currently, four
+--   types of special links are supported:
+--
+--   [@lucky::<search>@] The first Google result for @<search>@.
+--
+--   [@wiki::<title>@] The Wikipedia page for @<title>@.  Note that
+--   the page is not checked for existence.
+--
+--   [@post::nnnn@] Link to the blog post with post ID @nnnn@.  Note
+--   that this form of special link is invoked when @nnnn@ consists of
+--   all digits, so it only works on blogs which use numerical
+--   identifiers for post IDs (as Wordpress does).
+--
+--   [@post::<search>@] Link to the most recent blog post (among the
+--   20 most recent posts) containing @<search>@ in its title.
+--
+--   For example, a post written in Markdown format containing
+--
+--   @
+--       This is a post about the game of [Go](wiki::Go (game)).
+--   @
+--
+--   will be formatted in HTML as
+--
+--   @
+--       <p>This is a post about the game of <a href="https://en.wikipedia.org/wiki/Go%20(game)">Go</a>.</p>
+--   @
+--
+--   You can also create a Transform with your own special link types,
+--   using 'mkSpecialLinksXF', and I am happy to receive pull requests
+--   adding new types of standard special links.
+specialLinksXF :: Transform
+specialLinksXF = mkSpecialLinksXF standardSpecialLinks
+
+-- | The standard special link types included in 'specialLinksXF':
+--   'luckyLink', 'wikiLink', and 'postLink'.
+standardSpecialLinks :: [SpecialLink]
+standardSpecialLinks = [luckyLink, wikiLink, postLink]
+
+-- | A special link consists of two parts:
+--
+--   * An identifier string.  If the identifier string is @<id>@, this
+--   will trigger for links which are of the form @<id>::XXXX@.
+--
+--   * A URL generation function.  It takes as input the string
+--   following the @::@ (the @XXXX@ in the example above), the
+--   configuration record, and must output a URL.
+--
+--   For example,
+--
+--   @("twitter", \u _ -> return $ "https://twitter.com/" ++ u)@
+--
+--   is a simple 'SpecialLink' which causes links of the form
+--   @twitter::user@ to be replaced by @https://twitter.com/user@.
+type SpecialLink = (String, String -> BlogLiterately -> IO String)
+
+-- | Create a transformation which looks for the given special links
+--   and replaces them appropriately. You can use this function with
+--   your own types of special links.
+mkSpecialLinksXF :: [SpecialLink] -> Transform
+mkSpecialLinksXF links = ioTransform (specialLinks links) (const True)
+
+-- | Create a document transformation which looks for the given
+--   special links and replaces them appropriately.
+specialLinks :: [SpecialLink] -> BlogLiterately -> Pandoc -> IO Pandoc
+specialLinks links bl = bottomUpM specialLink
+  where
+    specialLink :: Inline -> IO Inline
+    specialLink i@(Link attrs alt (url, title))
+      | Just (typ, target) <- getSpecial url
+      = mkLink <$> case lookup (map toLower typ) links of
+                     Just mkURL -> mkURL target bl
+                     Nothing    -> return target
+      where
+        mkLink u = Link attrs alt (u, title)
+
+    specialLink i = return i
+
+    getSpecial url
+      | "::" `isInfixOf` url =
+          let (typ:rest) = splitOn "::" url
+          in  Just (typ, intercalate "::" rest)
+      | otherwise = Nothing
+
+-- | Turn @lucky::<search>@ into a link to the first Google result for
+-- @<search>@.
+luckyLink :: SpecialLink
+luckyLink = ("lucky", getLucky)
+  where
+    getLucky searchTerm _ = do
+      results <- openURL $ "http://www.google.com/search?q=" ++ searchTerm
+      let tags   = parseTags results
+          anchor = take 1 . dropWhile (~/= "<a>") . dropWhile (~/= "<h3 class='r'>") $ tags
+          url = case anchor of
+            [t@(TagOpen{})] -> takeWhile (/='&') . dropWhile (/='h') . fromAttrib "href" $ t
+            _ -> searchTerm
+      return url
+
+-- | Get the contents of the given URL in a simple way.
+openURL :: String -> IO String
+openURL x = getResponseBody =<< simpleHTTP (getRequest x)
+
+-- | Given @wiki::<title>@, generate a link to the Wikipedia page for
+--   @<title>@.  Note that the page is not checked for existence.
+wikiLink :: SpecialLink
+wikiLink = ("wiki", \target _ -> return $ "https://en.wikipedia.org/wiki/" ++ target)
+
+-- | @postLink@ handles two types of special links.
+--
+-- [@post::nnnn@] Link to the blog post with post ID @nnnn@.  Note that
+-- this form of special link is invoked when @nnnn@ consists of all
+-- digits, so it only works on blogs which use numerical identifiers
+-- for post IDs (as Wordpress does).
+--
+-- [@post::<search>@] Link to the most recent blog post (among the
+-- 20 most recent posts) containing @<search>@ in its title.
+postLink :: SpecialLink
+postLink = ("post", getPostLink)
+  where
+    getPostLink target bl =
+      fromMaybe target <$>
+        case (all isDigit target, bl ^. blog) of
+          (_    , Nothing ) -> return Nothing
+          (True , Just url) -> getPostURL url target (user' bl) (password' bl)
+          (False, Just url) -> findTitle 20 url target (user' bl) (password' bl)
+
+          -- If all digits, replace with permalink for that postid
+          -- Otherwise, search titles of 20 most recent posts.
+          --   Choose most recent that matches.
 
 -- | Potentially extract a title from the metadata block, and set it
 --   in the options record.
@@ -295,6 +441,8 @@ loadProfile bl =
 --
 --   * 'centerImagesXF': center images occurring in their own paragraph
 --
+--   * 'specialLinksXF': replace special link types with URLs
+--
 --   * 'highlightOptsXF': load the requested highlighting style file
 --
 --   * 'highlightXF': perform syntax highlighting
@@ -318,6 +466,7 @@ standardTransforms =
   , ghciXF
   , uploadImagesXF
   , centerImagesXF
+  , specialLinksXF
   , highlightOptsXF
   , highlightXF
   , citationsXF
