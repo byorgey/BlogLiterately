@@ -22,8 +22,8 @@ License:        GPL
 License-file:   LICENSE
 Category:       Web
 Copyright:      Copyright (c) Robert Greayer 2008-2010, Brent Yorgey 2012-2013
-Author:         Robert Greayer <robgreayer@yahoo.com>
-Maintainer:     Brent Yorgey <byorgey@cis.upenn.edu>
+Author:         Robert Greayer <robgreayer@yahoo.com>, Brent Yorgey
+Maintainer:     Brent Yorgey <byorgey@gmail.com>
 Stability:      experimental
 Build-Type:     Simple
 Tested-With:    GHC ==7.6.3, GHC ==7.8.4, GHC ==7.10.3, GHC ==8.0.1
