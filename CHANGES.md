@@ -1,3 +1,11 @@
+0.8.2 (25 March 2016)
+---------------------
+
+  * New feature: support various types of "special links" which are
+    automatically replaced with appropriate URLs.  Initial support for
+    wikipedia links, Google "feeling lucky" search, and links to other
+    posts on the same blog specified by ID or search term.
+
 0.8.1.6 (22 March 2016)
 -----------------------
 
