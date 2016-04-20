@@ -1,5 +1,5 @@
 Name:           BlogLiterately
-Version:        0.8.2
+Version:        0.8.2.1
 Synopsis:       A tool for posting Haskelly articles to blogs
 Description:    Write blog posts in Markdown format, then use BlogLiterately
                 to do syntax highlighting, format ghci sessions, and upload
@@ -61,7 +61,7 @@ Library
                    pandoc-types >= 1.16 && < 1.17,
                    pandoc-citeproc >= 0.1.2 && < 0.10,
                    highlighting-kate >= 0.5 && < 0.7,
-                   data-default >= 0.5 && < 0.6,
+                   data-default >= 0.5 && < 0.7,
                    lens >= 3.8 && < 4.14,
                    tagsoup >= 0.13.4 && < 0.14,
                    HTTP >= 4000.3 && < 4000.4
