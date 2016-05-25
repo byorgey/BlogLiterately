@@ -23,6 +23,7 @@ module Text.BlogLiterately.Options
     , style
     , hsHighlight
     , otherHighlight
+    , litHaskell
     , toc
     , wplatex
     , math
@@ -51,6 +52,7 @@ module Text.BlogLiterately.Options
     , style'
     , hsHighlight'
     , otherHighlight'
+    , litHaskell'
     , toc'
     , wplatex'
     , math'
@@ -89,6 +91,7 @@ data BlogLiterately = BlogLiterately
   , _hsHighlight    :: Maybe HsHighlight   -- ^ Haskell highlighting mode
   , _otherHighlight :: Maybe Bool          -- ^ Use highlighting-kate for
                                            --   non-Haskell?
+  , _litHaskell     :: Maybe Bool          -- ^ Parse as literate Haskell?
   , _toc            :: Maybe Bool          -- ^ Generate a table of contents?
   , _wplatex        :: Maybe Bool          -- ^ Format LaTeX for WordPress?
   , _math           :: Maybe String        -- ^ Indicate how to format math
@@ -133,6 +136,7 @@ instance Monoid BlogLiterately where
     { _style          = Nothing
     , _hsHighlight    = Nothing
     , _otherHighlight = Nothing
+    , _litHaskell     = Nothing
     , _toc            = Nothing
     , _wplatex        = Nothing
     , _math           = Nothing
@@ -161,6 +165,7 @@ instance Monoid BlogLiterately where
     { _style          = combine _style
     , _hsHighlight    = combine _hsHighlight
     , _otherHighlight = combine _otherHighlight
+    , _litHaskell     = combine _litHaskell
     , _toc            = combine _toc
     , _wplatex        = combine _wplatex
     , _math           = combine _math
@@ -201,6 +206,9 @@ hsHighlight'    = fromMaybe (HsColourInline defaultStylePrefs) . view hsHighligh
 
 otherHighlight' :: BlogLiterately -> Bool
 otherHighlight' = fromMaybe True  . view otherHighlight
+
+litHaskell' :: BlogLiterately -> Bool
+litHaskell' = fromMaybe True . view litHaskell
 
 toc' :: BlogLiterately -> Bool
 toc'            = fromMaybe False . view toc
@@ -292,18 +300,28 @@ blOpts = BlogLiterately
        ]
      , _toc = enum
        [ Nothing
-         &= explicit
          &= name "no-toc"
          &= help "don't generate a table of contents (default)"
-       , Just True
          &= explicit
+       , Just True
          &= name "toc"
          &= help "generate a table of contents"
+         &= explicit
        ]
      , _wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
                   &= name "wplatex" &= name "w" &= explicit
      , _math    = def &= help "how to layout math, where --math=<pandoc-option>[=URL]"
                   &= name "math" &= name "m" &= explicit
+     , _litHaskell = enum
+        [ Nothing
+          &= help "parse as literate Haskell (default)"
+          &= name "lit-haskell"
+          &= explicit
+        , Just False
+          &= help "do not parse as literate Haskell"
+          &= name "no-lit-haskell"
+          &= explicit
+        ]
      , _ghci    = def &= help "run [ghci] blocks through ghci and include output"
                   &= name "ghci" &= name "g" &= explicit
      , _uploadImages = def &= name "upload-images" &= name "I" &= explicit &= help "upload local images"

@@ -73,6 +73,14 @@ Markdown and pandoc
 [supports a few extensions](http://johnmacfarlane.net/pandoc/README.html#pandocs-markdown)
 to the basic format.
 
+By default, `BlogLiterately` assumes that markdown files should be
+parsed as if they contain literate Haskell code.  To disable
+processing of markdown files with literate Haskell extensions, use the
+`--no-lit-haskell` command-line argument.  This makes a difference,
+for example, when processing paragraphs set off by "bird tracks"
+(*i.e.* leading `>` characters): in literate Haskell, these are code
+blocks, whereas in plain markdown they are blockquotes.
+
 Determining input format
 ------------------------
 

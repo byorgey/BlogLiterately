@@ -55,6 +55,7 @@ parseBLOption =
   <|> parseField toc          "toc"           parseBool
   <|> parseField wplatex      "wplatex"       parseBool
   <|> parseField math         "math"          parseStr
+  <|> parseField litHaskell   "lit-haskell"   parseBool
   <|> parseField ghci         "ghci"          parseBool
   <|> parseField uploadImages "upload-images" parseBool
   <|> parseField categories   "categories"    parseStrList

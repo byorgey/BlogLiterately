@@ -501,8 +501,11 @@ xformDoc bl xforms =
             _       -> readMarkdown opts
 
     parseOpts = def
-                { readerExtensions = Ext_literate_haskell
-                                     `S.insert` readerExtensions def
+                { readerExtensions =
+                    case bl^.litHaskell of
+                      Just False -> readerExtensions def
+                      _          -> S.insert Ext_literate_haskell
+                                    (readerExtensions def)
                 , readerSmart      = True
                 }
     writeOpts bl = def
