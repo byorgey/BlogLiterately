@@ -1,3 +1,10 @@
+0.8.3 (25 May 2016)
+-------------------
+
+  * Add `--[no-]lit-haskell` flags, to enable/disable processing of
+    markdown files as literate Haskell. See
+    [#29](https://github.com/byorgey/BlogLiterately/issues/29).
+
 0.8.2.3 (9 May 2016)
 --------------------
 
