@@ -199,13 +199,21 @@ centerImages = bottomUp centerImage
       : bs
     centerImage bs = bs
 
--- | Replace special links with appropriate URLs.  Currently, four
---   types of special links are supported:
+-- | Replace special links with appropriate URLs.  Currently, the
+--   following types of special links are supported:
 --
 --   [@lucky::<search>@] The first Google result for @<search>@.
 --
 --   [@wiki::<title>@] The Wikipedia page for @<title>@.  Note that
 --   the page is not checked for existence.
+--
+--   [@hackage::<pkg>@] The Hackage page for @<pkg>@.
+--
+--   [@github::<user>/<repo>@] The top page for the given repo on github.
+--
+--   [@github::<user>/<repo>/#<nnn>@] Link to a particular issue.
+--
+--   [@github::<user>/<repo>/\@<hash>@] Link to a particular commit.
 --
 --   [@post::nnnn@] Link to the blog post with post ID @nnnn@.  Note
 --   that this form of special link is invoked when @nnnn@ consists of
@@ -234,9 +242,16 @@ specialLinksXF :: Transform
 specialLinksXF = mkSpecialLinksXF standardSpecialLinks
 
 -- | The standard special link types included in 'specialLinksXF':
---   'luckyLink', 'wikiLink', and 'postLink'.
+--   'luckyLink', 'wikiLink', 'postLink', 'githubLink', and
+--   'hackageLink'.
 standardSpecialLinks :: [SpecialLink]
-standardSpecialLinks = [luckyLink, wikiLink, postLink]
+standardSpecialLinks =
+  [ luckyLink
+  , wikiLink
+  , postLink
+  , githubLink
+  , hackageLink
+  ]
 
 -- | A special link consists of two parts:
 --
@@ -329,18 +344,33 @@ postLink = ("post", getPostLink)
           -- Otherwise, search titles of 20 most recent posts.
           --   Choose most recent that matches.
 
--- | XXX comment me
+-- | @githubLink@ handles several types of special links.
+--
+-- [@github::<user>/<repo>@] links to a repository.
+--
+-- [@github::<user>/<repo>/#<nnn>@] links to issue #nnn.
+--
+-- [@github::<user>/<repo>/\@<hash>@] links to the commit with the
+-- given hash.
 githubLink :: SpecialLink
 githubLink = ("github", getGithubLink)
   where
     getGithubLink target bl =
       case splitOn "/" target of
-        (user : repo : ghTarget) -> github ++ mkTarget ghTarget
-        _ -> github ++ target
+        (user : repo : ghTarget) -> return $ github </> user </> repo </> mkTarget ghTarget
+        _ -> return $ github </> target
     github = "https://github.com/"
     mkTarget []                 = ""
-    mkTarget (('@': hash) : _)  = "commit/" ++ hash
-    mkTarget (('#': issue) : _) = "issues/" ++ issue
+    mkTarget (('@': hash) : _)  = "commit" </> hash
+    mkTarget (('#': issue) : _) = "issues" </> issue
+
+-- | A target of the form @hackage::<pkg>@ turns into a link to the
+--   package @<pkg>@ on Hackage.
+hackageLink :: SpecialLink
+hackageLink = ("hackage", getHackageLink)
+  where
+    getHackageLink pkg bl = return $ hackagePrefix ++ pkg
+    hackagePrefix = "http://hackage.haskell.org/package/"
 
 -- | Potentially extract a title from the metadata block, and set it
 --   in the options record.
