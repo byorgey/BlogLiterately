@@ -1,3 +1,11 @@
+0.8.4 (13 July 2016)
+--------------------
+
+Two new special link types:
+
+  - Github (link to a repo, issue, or commit)
+  - Hackage (link to a package)
+
 0.8.3.1 (14 June 2016)
 ----------------------
 
