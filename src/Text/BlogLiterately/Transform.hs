@@ -329,6 +329,19 @@ postLink = ("post", getPostLink)
           -- Otherwise, search titles of 20 most recent posts.
           --   Choose most recent that matches.
 
+-- | XXX comment me
+githubLink :: SpecialLink
+githubLink = ("github", getGithubLink)
+  where
+    getGithubLink target bl =
+      case splitOn "/" target of
+        (user : repo : ghTarget) -> github ++ mkTarget ghTarget
+        _ -> github ++ target
+    github = "https://github.com/"
+    mkTarget []                 = ""
+    mkTarget (('@': hash) : _)  = "commit/" ++ hash
+    mkTarget (('#': issue) : _) = "issues/" ++ issue
+
 -- | Potentially extract a title from the metadata block, and set it
 --   in the options record.
 titleXF :: Transform
