@@ -18,7 +18,7 @@ Description:    Write blog posts in Markdown format, then use BlogLiterately
                 "Text.BlogLiterately.Run".
 Cabal-Version:  >= 1.10
 Homepage:       http://byorgey.wordpress.com/blogliterately/
-License:        GPL
+License:        GPL-3
 License-file:   LICENSE
 Category:       Web
 Copyright:      Copyright (c) Robert Greayer 2008-2010, Brent Yorgey 2012-2016
