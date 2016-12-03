@@ -558,8 +558,7 @@ xformDoc bl xforms =
                      case math' bl of
                        ""  -> PlainMath
                        opt -> mathOption opt
-                   , writerStandalone     = True
-                   , writerTemplate       = blHtmlTemplate
+                   , writerTemplate       = Just blHtmlTemplate
                    }
     mathOption opt
       | opt `isPrefixOf` "latexmathml" ||
