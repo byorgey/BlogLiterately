@@ -26,7 +26,7 @@ Author:         Robert Greayer <robgreayer@yahoo.com>, Brent Yorgey
 Maintainer:     Brent Yorgey <byorgey@gmail.com>
 Stability:      experimental
 Build-Type:     Simple
-Tested-With:    GHC ==7.6.3, GHC ==7.8.4, GHC ==7.10.3, GHC ==8.0.1
+Tested-With:    GHC ==7.8.4, GHC ==7.10.3, GHC ==8.0.1
 Extra-Source-Files: CHANGES.md
                     README.markdown
                     doc/BlogLiteratelyDoc.lhs
