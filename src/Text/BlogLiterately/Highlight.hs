@@ -39,7 +39,7 @@ import           Text.Blaze.Html.Renderer.String     (renderHtml)
 import           Text.Highlighting.Kate
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Shared                  (safeRead)
-import           Text.XML.HaXml                      hiding (find, attr, html)
+import           Text.XML.HaXml                      hiding (attr, find, html)
 import           Text.XML.HaXml.Posn                 (noPos)
 
 import           Text.BlogLiterately.Block           (unTag)
@@ -50,11 +50,11 @@ type StylePrefs = [(String,String)]
 
 -- | Four modes for highlighting Haskell.
 data HsHighlight =
-      HsColourInline StylePrefs   -- ^ Use hscolour and inline the styles.
-    | HsColourCSS                 -- ^ Use hscolour in conjunction with
-                                  --   an external CSS style sheet.
-    | HsKate                      -- ^ Use highlighting-kate.
-    | HsNoHighlight               -- ^ Do not highlight Haskell.
+      HsColourInline   -- ^ Use hscolour and inline the styles.
+    | HsColourCSS      -- ^ Use hscolour in conjunction with
+                       --   an external CSS style sheet.
+    | HsKate           -- ^ Use highlighting-kate.
+    | HsNoHighlight    -- ^ Do not highlight Haskell.
   deriving (Data,Typeable,Show,Eq)
 
 makePrisms ''HsHighlight
@@ -207,8 +207,9 @@ getStylePrefs (Just fname) = liftM read (readFile fname)
 -- | Take a @String@ of HTML produced by hscolour, and \"bake\" styles
 --   into it by replacing class attributes with appropriate style
 --   attributes.
-bakeStyles :: StylePrefs -> String -> String
-bakeStyles prefs s = verbatim $ filtDoc (xmlParse "bake-input" s)
+bakeStyles :: Maybe StylePrefs -> String -> String
+bakeStyles Nothing      s = s
+bakeStyles (Just prefs) s = verbatim $ filtDoc (xmlParse "bake-input" s)
   where
 
     -- filter the document (an Hscoloured fragment of Haskell source)
@@ -253,23 +254,21 @@ the highlighting-kate styles.
 --   the content contains marked up Haskell (possibly with literate
 --   markers), or marked up non-Haskell, if highlighting of non-Haskell has
 --   been selected.
-colouriseCodeBlock :: HsHighlight -> Bool -> Block -> Block
-colouriseCodeBlock hsHighlight otherHighlight (CodeBlock attr@(_,classes,_) s)
+colouriseCodeBlock :: Maybe StylePrefs -> HsHighlight -> Bool -> Block -> Block
+colouriseCodeBlock mstyle hsHighlight otherHighlight (CodeBlock attr@(_,classes,_) s)
 
   | ctag == Just "haskell" || haskell
   = case hsHighlight of
-        HsColourInline style ->
-            rawHtml $ bakeStyles style $ colourIt lit src
-        HsColourCSS   -> rawHtml $ colourIt lit src
-        HsNoHighlight -> rawHtml $ simpleHTML hsrc
-        HsKate        -> case ctag of
+        HsColourInline ->
+            rawHtml . bakeStyles mstyle $ colourIt lit src
+        HsColourCSS    -> rawHtml $ colourIt lit src
+        HsNoHighlight  -> rawHtml $ simpleHTML hsrc
+        HsKate         -> rawHtml . bakeStyles mstyle $ case ctag of
             Nothing -> myHighlightK attr hsrc
             Just t  -> myHighlightK ("", t:classes,[]) hsrc
 
   | otherHighlight
-  = case ctag of
-        Nothing -> myHighlightK attr src
-        Just t  -> myHighlightK ("",[t],[]) src
+  = rawHtml . bakeStyles mstyle . myHighlightK highlightKAttrs $ src
 
   | otherwise
   = rawHtml $ simpleHTML src
@@ -285,16 +284,20 @@ colouriseCodeBlock hsHighlight otherHighlight (CodeBlock attr@(_,classes,_) s)
     haskell      = "haskell" `elem` classes
     simpleHTML h = "<pre><code>" ++ h ++ "</code></pre>"
     myHighlightK attrs h = case highlight formatHtmlBlock attrs h of
-        Nothing   -> rawHtml $ simpleHTML s
-        Just html -> rawHtml $ replaceBreaks $ renderHtml html
+        Nothing   -> simpleHTML s
+        Just html -> replaceBreaks $ renderHtml html
+    highlightKAttrs = case ctag of
+      Nothing -> attr
+      Just t -> ("",[t],[])
+
     rawHtml = RawBlock (Format "html")
 
-colouriseCodeBlock _ _ b = b
+colouriseCodeBlock _ _ _ b = b
 
 -- | Perform syntax highlighting on an entire Pandoc document.
-colourisePandoc :: HsHighlight -> Bool -> Pandoc -> Pandoc
-colourisePandoc hsHighlight otherHighlight (Pandoc m blocks) =
-    Pandoc m $ map (colouriseCodeBlock hsHighlight otherHighlight) blocks
+colourisePandoc :: Maybe StylePrefs -> HsHighlight -> Bool -> Pandoc -> Pandoc
+colourisePandoc mstyle hsHighlight otherHighlight (Pandoc m blocks) =
+    Pandoc m $ map (colouriseCodeBlock mstyle hsHighlight otherHighlight) blocks
 
 --------------------------------------------------
 -- highlight function

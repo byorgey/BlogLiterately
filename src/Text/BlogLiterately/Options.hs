@@ -77,7 +77,6 @@ module Text.BlogLiterately.Options
 import           Control.Lens                  (makeLenses, view)
 import           Control.Monad                 (mplus)
 import           Data.Maybe                    (fromMaybe)
-import           Data.Monoid
 import           Data.Version
 import           Paths_BlogLiterately          (version)
 
@@ -202,7 +201,7 @@ style' :: BlogLiterately -> String
 style'          = fromMaybe ""    . view style
 
 hsHighlight' :: BlogLiterately -> HsHighlight
-hsHighlight'    = fromMaybe (HsColourInline defaultStylePrefs) . view hsHighlight
+hsHighlight'    = fromMaybe HsColourInline . view hsHighlight
 
 otherHighlight' :: BlogLiterately -> Bool
 otherHighlight' = fromMaybe True  . view otherHighlight
