@@ -7,7 +7,6 @@
     page    = true
     publish = true
     toc     = true
-    lit-haskell = false
 
 [`BlogLiterately`][] is a tool for uploading blog posts to servers
 that support the [MetaWeblog API][metaweblog] (such as
