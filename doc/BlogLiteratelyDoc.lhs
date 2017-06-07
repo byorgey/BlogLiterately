@@ -79,7 +79,10 @@ processing of markdown files with literate Haskell extensions, use the
 `--no-lit-haskell` command-line argument.  This makes a difference,
 for example, when processing paragraphs set off by "bird tracks"
 (*i.e.* leading `>` characters): in literate Haskell, these are code
-blocks, whereas in plain markdown they are blockquotes.
+blocks, whereas in plain markdown they are blockquotes.  In addition,
+section headings beginning with hash signs (`#`, `##`, etc.) cannot be
+used in literate Haskell mode; only section headings underlined with
+hyphens or equals signs are supported.
 
 Determining input format
 ------------------------
@@ -503,7 +506,7 @@ Boolean options are specified by `true`, `on`, `false`, or `off`.
 String values use normal Haskell syntax for strings, surrounded by
 double quotes. Optionally, the double quotes may be omitted for
 strings which do not contain spaces, double quotes, commas, or square
-brackets. Lists use also use Haskell list syntax, with comma-separated
+brackets. Lists also use Haskell list syntax, with comma-separated
 items surrounded by square brackets, except that the square brackets
 may be omitted.  For example, `myblog.cfg` might look like this:
 
@@ -515,9 +518,9 @@ may be omitted.  For example, `myblog.cfg` might look like this:
     categories = foo, bar, "some really long category"
 
 The list of options which are currently supported are: `style`,
-`wplatex`, `math`, `ghci`, `upload-images`, `categories`, `tags`,
-`blogid`, `profile`, `blog`, `user`, `password`, `title`, `postid`,
-`page`, `publish`, `xtras`.
+`lit-haskell`, `wplatex`, `math`, `ghci`, `upload-images`,
+`categories`, `tags`, `blogid`, `profile`, `blog`, `user`, `password`,
+`title`, `postid`, `page`, `publish`, `xtras`.
 
 Option blocks
 -------------

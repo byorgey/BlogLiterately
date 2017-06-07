@@ -14,3 +14,5 @@ TAGS
 .cabal-sandbox*
 cabal.sandbox.config
 *.html
+
+.stack-work
