@@ -57,7 +57,7 @@ matrix:
     compiler: ": #stack nightly"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  # Build on macOS in addition to Linux. This is an allowed failure for now,
+  # Build on MacOS in addition to Linux. This is an allowed failure for now,
   # since the build is timing out.
   - env: BUILD=stack ARGS=""
     compiler: ": #stack default osx"
@@ -68,9 +68,12 @@ matrix:
   #  compiler: ": #stack 7.8.4 osx"
   #  os: osx
 
-  - env: BUILD=stack ARGS="--resolver nightly"
-    compiler: ": #stack nightly osx"
-    os: osx
+  # Since the MacOS build is timing out, it does not make sense to try building
+  # with the nightly at the moment, since this increases the total build time
+  # in Travis unnecessarily.
+  # - env: BUILD=stack ARGS="--resolver nightly"
+  #   compiler: ": #stack nightly osx"
+  #   os: osx
 
   allow_failures:
   - os: osx
