@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/byorgey/BlogLiterately.svg?branch=master)](https://travis-ci.org/byorgey/BlogLiterately)
+
 Write blog posts in Markdown format, then use BlogLiterately to do
 syntax highlighting, format ghci sessions, and upload to any blog
 supporting the [metaWeblog API (such as Wordpress)](http://codex.wordpress.org/XML-RPC_MetaWeblog_API).
