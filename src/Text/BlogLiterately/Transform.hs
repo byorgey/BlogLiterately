@@ -1,7 +1,7 @@
-
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TupleSections     #-}
 {-# LANGUAGE TypeOperators     #-}
 
 -----------------------------------------------------------------------------
@@ -68,6 +68,9 @@ import           Data.Maybe                        (fromMaybe)
 import           Data.Monoid                       (mappend)
 import           Data.Monoid                       (mempty, (<>))
 import qualified Data.Set                          as S
+import           Data.Text                         (Text)
+import qualified Data.Text                         as T
+import qualified Data.Text.Lazy                    as LT
 import           Data.Traversable                  (traverse)
 import           Network.HTTP                      (getRequest, getResponseBody,
                                                     simpleHTTP)
@@ -79,7 +82,7 @@ import           System.IO                         (hFlush, stdout)
 import           Text.Blaze.Html.Renderer.String   (renderHtml)
 import           Text.CSL.Pandoc                   (processCites')
 import           Text.HTML.TagSoup
-import           Text.Pandoc
+import           Text.Pandoc                       hiding (openURL)
 import           Text.Pandoc.Error                 (PandocError)
 import           Text.Parsec                       (ParseError)
 
@@ -522,16 +525,16 @@ standardTransforms =
 -- | Transform a complete input document string to an HTML output
 --   string, given a list of transformation passes.
 xformDoc :: BlogLiterately -> [Transform] -> String -> IO (Either PandocError (BlogLiterately, String))
-xformDoc bl xforms =
-        fixLineEndings
-    >>> parseFile parseOpts
-    >>> traverse
-      (  runTransforms xforms bl
-      >=> (\(bl', p) -> return $ (bl', writeHtml (writeOpts bl') p) )
-      >=> _2 (return . renderHtml)
-      )
+xformDoc bl xforms = runIO .
+    (     fixLineEndings
+      >>> T.pack
+      >>> parseFile parseOpts
+      >=> (liftIO . runTransforms xforms bl)
+      >=> (\(bl', p) -> (bl',) <$> writeHtml5String (writeOpts bl') p)
+      >=> _2 (return . T.unpack)
+    )
   where
-    parseFile :: ReaderOptions -> String -> Either PandocError Pandoc
+    parseFile :: ReaderOptions -> Text -> PandocIO Pandoc
     parseFile opts =
       case bl^.format of
         Just "rst"      -> readRST      opts
@@ -545,11 +548,11 @@ xformDoc bl xforms =
 
     parseOpts = def
                 { readerExtensions =
+                    enableExtension Ext_smart $
                     case bl^.litHaskell of
                       Just False -> readerExtensions def
-                      _          -> S.insert Ext_literate_haskell
+                      _          -> enableExtension Ext_literate_haskell
                                     (readerExtensions def)
-                , readerSmart      = True
                 }
     writeOpts bl = def
                    { writerReferenceLinks = True
@@ -563,7 +566,7 @@ xformDoc bl xforms =
     mathOption opt
       | opt `isPrefixOf` "latexmathml" ||
         opt `isPrefixOf` "asciimathml" = LaTeXMathML (mathUrlMaybe opt)
-      | opt `isPrefixOf` "mathml"      = MathML (mathUrlMaybe opt)
+      | opt `isPrefixOf` "mathml"      = MathML
       | opt `isPrefixOf` "mimetex"     =
           WebTeX (mathUrl "/cgi-bin/mimetex.cgi?" opt)
       | opt `isPrefixOf` "webtex"      = WebTeX (mathUrl webTeXURL opt)
