@@ -1,3 +1,9 @@
+0.8.5 (10 January 2018)
+-----------------------
+
+  - update to work with `pandoc-2.x`.  No longer builds with
+    `pandoc-1.x`.
+
 0.8.4.3 (3 December 2016)
 -------------------------
 
