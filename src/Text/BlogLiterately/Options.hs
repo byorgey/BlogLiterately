@@ -25,6 +25,7 @@ module Text.BlogLiterately.Options
     , otherHighlight
     , litHaskell
     , toc
+    , rawlatex
     , wplatex
     , math
     , ghci
@@ -54,6 +55,7 @@ module Text.BlogLiterately.Options
     , otherHighlight'
     , litHaskell'
     , toc'
+    , rawlatex'
     , wplatex'
     , math'
     , ghci'
@@ -93,6 +95,7 @@ data BlogLiterately = BlogLiterately
                                            --   non-Haskell?
   , _litHaskell     :: Maybe Bool          -- ^ Parse as literate Haskell?
   , _toc            :: Maybe Bool          -- ^ Generate a table of contents?
+  , _rawlatex       :: Maybe Bool          -- ^ Pass LaTeX through unchanged?
   , _wplatex        :: Maybe Bool          -- ^ Format LaTeX for WordPress?
   , _math           :: Maybe String        -- ^ Indicate how to format math
   , _ghci           :: Maybe Bool          -- ^ Automatically process ghci sessions?
@@ -138,6 +141,7 @@ instance Monoid BlogLiterately where
     , _otherHighlight = Nothing
     , _litHaskell     = Nothing
     , _toc            = Nothing
+    , _rawlatex       = Nothing
     , _wplatex        = Nothing
     , _math           = Nothing
     , _ghci           = Nothing
@@ -167,6 +171,7 @@ instance Monoid BlogLiterately where
     , _otherHighlight = combine _otherHighlight
     , _litHaskell     = combine _litHaskell
     , _toc            = combine _toc
+    , _rawlatex       = combine _rawlatex
     , _wplatex        = combine _wplatex
     , _math           = combine _math
     , _ghci           = combine _ghci
@@ -212,6 +217,9 @@ litHaskell' = fromMaybe True . view litHaskell
 
 toc' :: BlogLiterately -> Bool
 toc'            = fromMaybe False . view toc
+
+rawlatex' :: BlogLiterately -> Bool
+rawlatex'        = fromMaybe False . view rawlatex
 
 wplatex' :: BlogLiterately -> Bool
 wplatex'        = fromMaybe False . view wplatex
@@ -308,6 +316,8 @@ blOpts = BlogLiterately
          &= help "generate a table of contents"
          &= explicit
        ]
+     , _rawlatex = def &= help "pass inline/display LaTeX through unchanged"
+                       &= name "rawlatex" &= name "r" &= explicit
      , _wplatex = def &= help "reformat inline LaTeX the way WordPress expects"
                   &= name "wplatex" &= name "w" &= explicit
      , _math    = def &= help "how to layout math, where --math=<pandoc-option>[=URL]"

@@ -12,11 +12,26 @@
 
 module Text.BlogLiterately.LaTeX
     (
-      wpTeXify
+      rawTeXify
+    , wpTeXify
     ) where
 
 import           Data.List   (isPrefixOf)
 import           Text.Pandoc
+
+-- | Pass LaTeX through unchanged.
+rawTeXify :: Pandoc -> Pandoc
+rawTeXify = bottomUp formatDisplayTex . bottomUp formatInlineTex
+  where formatInlineTex :: [Inline] -> [Inline]
+        formatInlineTex (Math InlineMath tex : is)
+          = (RawInline (Format "html") ("$" ++ tex ++ "$")) : is
+        formatInlineTex is = is
+
+        formatDisplayTex :: [Block] -> [Block]
+        formatDisplayTex (Para [Math DisplayMath tex] : bs)
+          = RawBlock (Format "html") ("\n\\[" ++ tex ++ "\\]\n")
+          : bs
+        formatDisplayTex bs = bs
 
 -- | WordPress can render LaTeX, but expects it in a special non-standard
 --   format (@\$latex foo\$@).  The @wpTeXify@ function formats LaTeX code

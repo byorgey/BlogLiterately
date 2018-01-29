@@ -28,6 +28,7 @@ module Text.BlogLiterately.Transform
     , highlightOptsXF
     , passwordXF
     , titleXF
+    , rawtexifyXF
     , wptexifyXF
     , ghciXF
     , uploadImagesXF
@@ -93,7 +94,7 @@ import           Text.BlogLiterately.Highlight     (HsHighlight (HsColourInline)
                                                     getStylePrefs,
                                                     _HsColourInline)
 import           Text.BlogLiterately.Image         (uploadAllImages)
-import           Text.BlogLiterately.LaTeX         (wpTeXify)
+import           Text.BlogLiterately.LaTeX         (rawTeXify, wpTeXify)
 import           Text.BlogLiterately.Options
 import           Text.BlogLiterately.Options.Parse (readBLOptions)
 import           Text.BlogLiterately.Post          (findTitle, getPostURL)
@@ -166,6 +167,10 @@ runTransforms ts bl p = execStateT (mapM_ runTransform ts) (bl,p)
 -- $standard
 -- These transforms are enabled by default in the standard
 -- @BlogLiterately@ executable.
+
+-- | Pass LaTeX (inline or display) through unchanged (if the @rawlatex@ flag is set).
+rawtexifyXF :: Transform
+rawtexifyXF = pureTransform (const rawTeXify) rawlatex'
 
 -- | Format embedded LaTeX for WordPress (if the @wplatex@ flag is set).
 wptexifyXF :: Transform
@@ -479,6 +484,8 @@ loadProfile bl =
 --
 --   * 'titleXF': extract the title from a special title block
 --
+--   * 'rawtexifyXF': pass LaTeX through unchanged
+--
 --   * 'wptexifyXF': turn LaTeX into WordPress format if requested
 --
 --   * 'ghciXF': run and typeset ghci sessions if requested
@@ -508,6 +515,7 @@ standardTransforms =
     -- much, except highlightOptsXF should go before highlightXF.
   , passwordXF
   , titleXF
+  , rawtexifyXF
   , wptexifyXF
   , ghciXF
   , uploadImagesXF
@@ -546,14 +554,19 @@ xformDoc bl xforms = runIO .
             ".txt"  -> readRST opts
             _       -> readMarkdown opts
 
-    parseOpts = def
-                { readerExtensions =
-                    enableExtension Ext_smart $
-                    case bl^.litHaskell of
-                      Just False -> readerExtensions def
-                      _          -> enableExtension Ext_literate_haskell
-                                    (readerExtensions def)
-                }
+    parseOpts = let e0 = enableExtension Ext_smart $
+                         case bl^.litHaskell of
+                           Just False -> readerExtensions def
+                           _          -> enableExtension Ext_literate_haskell
+                                              (readerExtensions def)
+                    e1 = case bl^.rawlatex of
+                           Just True -> enableExtension Ext_tex_math_dollars $
+                                        enableExtension Ext_tex_math_single_backslash $
+                                        readerExtensions def
+                           _         -> readerExtensions def
+
+                 in def { readerExtensions = e0 <> e1 }
+
     writeOpts bl = def
                    { writerReferenceLinks = True
                    , writerTableOfContents = toc' bl
