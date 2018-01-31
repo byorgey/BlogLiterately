@@ -53,6 +53,7 @@ parseBLOption :: Parser BlogLiterately
 parseBLOption =
       parseField style        "style"         parseStr
   <|> parseField toc          "toc"           parseBool
+  <|> parseField rawlatex     "rawlatex"      parseBool
   <|> parseField wplatex      "wplatex"       parseBool
   <|> parseField math         "math"          parseStr
   <|> parseField litHaskell   "lit-haskell"   parseBool
