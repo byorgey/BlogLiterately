@@ -1,3 +1,11 @@
+0.8.6.1 (31 January 2018)
+-------------------------
+
+  - bug fix: a lot of options got turned off by default in pandoc 2.x!
+    Restore default pandoc Markdown parsing options.  This bug means
+    that 0.8.5 and 0.8.6 did not parse various things correctly such
+    as LaTeX math, citations, and YAML header blocks.
+
 0.8.6 (31 January 2018)
 -----------------------
 
