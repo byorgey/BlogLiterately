@@ -235,6 +235,10 @@ any embedded LaTeX to be output in the format expected by WordPress.
 Note that an extra `$latex...` won't be added to the beginning of
 LaTeX expressions which already appear to be in WordPress format.
 
+Finally, to simply pass LaTeX math through unchanged (for example, if
+your blog hosting software will do LaTeX processing), you can use the
+`--rawlatex` option.
+
 Special links
 -------------
 
@@ -452,13 +456,18 @@ self-explanatory, given the above background:
          --kate               highlight non-Haskell code with highlighting-kate
                               (default)
          --no-kate            don't highlight non-Haskell code
+         --lit-haskell        parse as literate Haskell (default)
+         --no-lit-haskell     do not parse as literate Haskell
+         --no-toc             don't generate a table of contents (default)
+         --toc                generate a table of contents
+      -r --rawlatex           pass inline/display LaTeX through unchanged
       -w --wplatex            reformat inline LaTeX the way WordPress expects
       -m --math=ITEM          how to layout math, where
                               --math=<pandoc-option>[=URL]
       -g --ghci               run [ghci] blocks through ghci and include output
       -I --upload-images      upload local images
       -C --category=ITEM      post category (can specify more than one)
-      -T --tag=ITEM           tag (can specify more than one)
+      -T --tag=ITEM ---tags   tag (can specify more than one)
          --blogid=ID          Blog specific identifier
       -P --profile=STRING     profile to use
       -b --blog=URL           blog XML-RPC url (if omitted, HTML goes to stdout)
@@ -475,6 +484,7 @@ self-explanatory, given the above background:
       -x --xtra=ITEM          extension arguments, for use with custom extensions
       -? --help               Display help message
       -V --version            Print version information
+         --numeric-version    Print just the version number
 
 Profiles
 --------
