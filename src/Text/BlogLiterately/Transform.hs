@@ -554,28 +554,34 @@ xformDoc bl xforms = runIO .
             ".txt"  -> readRST opts
             _       -> readMarkdown opts
 
-    parseOpts = let e0 = enableExtension Ext_smart $
-                         case bl^.litHaskell of
-                           Just False -> readerExtensions def
-                           _          -> enableExtension Ext_literate_haskell
-                                              (readerExtensions def)
-                    e1 = case bl^.rawlatex of
-                           Just True -> enableExtension Ext_tex_math_dollars $
-                                        enableExtension Ext_tex_math_single_backslash $
-                                        readerExtensions def
-                           _         -> readerExtensions def
+    parseOpts = def
+      { readerExtensions = pandocExtensions &
+          foldr (.) id
+            [ enableExtension Ext_tex_math_single_backslash
+            , case bl^.litHaskell of
+                Just False -> id
+                _          -> enableExtension Ext_literate_haskell
+            ]
 
-                 in def { readerExtensions = e0 <> e1 }
+            -- Relevant extensions enabled by default in pandocExtensions:
+            -- (see https://hackage.haskell.org/package/pandoc-2.1.1/docs/src/Text-Pandoc-Extensions.html#pandocExtensions):
 
+            -- Ext_smart
+            -- Ext_yaml_metadata_block
+            -- Ext_tex_math_dollars
+            -- Ext_pandoc_title_block
+            -- Ext_citations
+      }
     writeOpts bl = def
-                   { writerReferenceLinks = True
-                   , writerTableOfContents = toc' bl
-                   , writerHTMLMathMethod =
-                     case math' bl of
-                       ""  -> PlainMath
-                       opt -> mathOption opt
-                   , writerTemplate       = Just blHtmlTemplate
-                   }
+      { writerReferenceLinks = True
+      , writerTableOfContents = toc' bl
+      , writerHTMLMathMethod =
+          case math' bl of
+            ""  -> PlainMath
+            opt -> mathOption opt
+      , writerTemplate       = Just blHtmlTemplate
+      }
+
     mathOption opt
       | opt `isPrefixOf` "latexmathml" ||
         opt `isPrefixOf` "asciimathml" = LaTeXMathML (mathUrlMaybe opt)
