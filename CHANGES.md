@@ -1,3 +1,10 @@
+0.8.6 (31 January 2018)
+-----------------------
+
+  - allow `lens-4.16`
+  - allow `pandoc-citeproc-0.14`
+  - new `rawlatex` option for passing LaTeX code through unchanged
+
 0.8.5 (10 January 2018)
 -----------------------
 
