@@ -222,7 +222,7 @@ $$\sum_{k=0}^\infty 1/k^2.$$
 
 Using the `--math` option, any
 [Pandoc math rendering method may be chosen](http://johnmacfarlane.net/pandoc/README.html#math-rendering-in-html),
-including MathML, jsMath, MathJax, and others.  Note that for some
+including MathML, MathJax, and others.  Note that for some
 methods to work properly, you may need to ensure that the generated
 HTML ends up in the proper CSS or JavaScript environment. (What that
 means depends on the method used.)

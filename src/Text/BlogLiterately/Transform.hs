@@ -583,15 +583,11 @@ xformDoc bl xforms = runIO .
       }
 
     mathOption opt
-      | opt `isPrefixOf` "latexmathml" ||
-        opt `isPrefixOf` "asciimathml" = LaTeXMathML (mathUrlMaybe opt)
       | opt `isPrefixOf` "mathml"      = MathML
       | opt `isPrefixOf` "mimetex"     =
           WebTeX (mathUrl "/cgi-bin/mimetex.cgi?" opt)
       | opt `isPrefixOf` "webtex"      = WebTeX (mathUrl webTeXURL opt)
-      | opt `isPrefixOf` "jsmath"      = JsMath (mathUrlMaybe opt)
       | opt `isPrefixOf` "mathjax"     = MathJax (mathUrl mathJaxURL opt)
-      | opt `isPrefixOf` "gladtex"     = GladTeX
       | otherwise                      = PlainMath
 
     webTeXURL  = "http://chart.apis.google.com/chart?cht=tx&chl="
@@ -600,7 +596,6 @@ xformDoc bl xforms = runIO .
 
     urlPart = drop 1 . dropWhile (/='=')
 
-    mathUrlMaybe opt = case urlPart opt of "" -> Nothing; x -> Just x
     mathUrl dflt opt  = case urlPart opt of "" -> dflt; x -> x
 
 -- | Turn @CRLF@ pairs into a single @LF@.  This is necessary since
