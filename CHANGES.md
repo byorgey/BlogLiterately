@@ -1,3 +1,11 @@
+0.8.6.2 (8 June 2018)
+---------------------
+
+  - Remove deprecated math rendering methods (latexmathml,
+    asciimathml, jsmath, gladtex)
+  - allow `pandoc-2.2`
+  - allow `base-4.11` (GHC 8.4)
+
 0.8.6.1 (31 January 2018)
 -------------------------
 
