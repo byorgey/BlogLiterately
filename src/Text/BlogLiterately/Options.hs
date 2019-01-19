@@ -133,6 +133,38 @@ data BlogLiterately = BlogLiterately
 
 makeLenses ''BlogLiterately
 
+instance Semigroup BlogLiterately where
+  bl1 <> bl2 =
+    BlogLiterately
+    { _style          = combine _style
+    , _hsHighlight    = combine _hsHighlight
+    , _otherHighlight = combine _otherHighlight
+    , _litHaskell     = combine _litHaskell
+    , _toc            = combine _toc
+    , _rawlatex       = combine _rawlatex
+    , _wplatex        = combine _wplatex
+    , _math           = combine _math
+    , _ghci           = combine _ghci
+    , _uploadImages   = combine _uploadImages
+    , _categories     = combine _categories
+    , _tags           = combine _tags
+    , _blogid         = combine _blogid
+    , _profile        = combine _profile
+    , _blog           = combine _blog
+    , _user           = combine _user
+    , _password       = combine _password
+    , _title          = combine _title
+    , _file           = combine _file
+    , _format         = combine _format
+    , _postid         = combine _postid
+    , _page           = combine _page
+    , _publish        = combine _publish
+    , _htmlOnly       = combine _htmlOnly
+    , _citations      = combine _citations
+    , _xtra           = combine _xtra
+    }
+    where combine f = f bl1 `mplus` f bl2
+
 instance Monoid BlogLiterately where
   mempty =
     BlogLiterately
@@ -164,36 +196,7 @@ instance Monoid BlogLiterately where
     , _xtra           = []
     }
 
-  mappend bl1 bl2 =
-    BlogLiterately
-    { _style          = combine _style
-    , _hsHighlight    = combine _hsHighlight
-    , _otherHighlight = combine _otherHighlight
-    , _litHaskell     = combine _litHaskell
-    , _toc            = combine _toc
-    , _rawlatex       = combine _rawlatex
-    , _wplatex        = combine _wplatex
-    , _math           = combine _math
-    , _ghci           = combine _ghci
-    , _uploadImages   = combine _uploadImages
-    , _categories     = combine _categories
-    , _tags           = combine _tags
-    , _blogid         = combine _blogid
-    , _profile        = combine _profile
-    , _blog           = combine _blog
-    , _user           = combine _user
-    , _password       = combine _password
-    , _title          = combine _title
-    , _file           = combine _file
-    , _format         = combine _format
-    , _postid         = combine _postid
-    , _page           = combine _page
-    , _publish        = combine _publish
-    , _htmlOnly       = combine _htmlOnly
-    , _citations      = combine _citations
-    , _xtra           = combine _xtra
-    }
-    where combine f = f bl1 `mplus` f bl2
+  mappend = (<>)
 
 --------------------------------------------------
 -- Default accessors

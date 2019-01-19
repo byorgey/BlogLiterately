@@ -39,7 +39,7 @@ Source-repository head
   location: git://github.com/byorgey/BlogLiterately.git
 
 Library
-  Build-Depends:   base >= 4.0 && < 4.12,
+  Build-Depends:   base >= 4.0 && < 4.13,
                    process,
                    filepath,
                    directory,
@@ -58,12 +58,12 @@ Library
                    blaze-html >= 0.5 && < 0.10,
                    cmdargs >= 0.9.5 && < 0.11,
                    haxr >= 3000.11 && < 3000.12,
-                   pandoc >= 2.0 && < 2.3,
+                   pandoc >= 2.0 && < 2.6,
                    pandoc-types >= 1.16 && < 1.20,
                    pandoc-citeproc >= 0.1.2 && < 0.15,
                    highlighting-kate >= 0.5 && < 0.7,
                    data-default >= 0.5 && < 0.8,
-                   lens >= 3.8 && < 4.17,
+                   lens >= 3.8 && < 4.18,
                    tagsoup >= 0.13.4 && < 0.15,
                    HTTP >= 4000.3 && < 4000.4
   Exposed-modules: Text.BlogLiterately
