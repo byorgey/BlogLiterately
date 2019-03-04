@@ -196,7 +196,7 @@ instance Monoid BlogLiterately where
     , _xtra           = []
     }
 
-  mappend = (<>)
+  mappend = (Semi.<>)
 
 --------------------------------------------------
 -- Default accessors
