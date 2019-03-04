@@ -79,7 +79,7 @@ module Text.BlogLiterately.Options
 import           Control.Lens                  (makeLenses, view)
 import           Control.Monad                 (mplus)
 import           Data.Maybe                    (fromMaybe)
-import           Data.Monoid
+import qualified Data.Semigroup                as Semi
 import           Data.Version
 import           Paths_BlogLiterately          (version)
 
@@ -133,7 +133,7 @@ data BlogLiterately = BlogLiterately
 
 makeLenses ''BlogLiterately
 
-instance Semigroup BlogLiterately where
+instance Semi.Semigroup BlogLiterately where
   bl1 <> bl2 =
     BlogLiterately
     { _style          = combine _style
