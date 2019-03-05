@@ -1,3 +1,10 @@
+0.8.6.3 (4 March 2019)
+----------------------
+
+  - Support for GHC 8.6 (`base-4.12`)
+  - Allow `temporary-1.3`, `pandoc-citeproc-0.16`, `pandoc-2.7`, `lens-4.17`
+  - Drop support for GHC < 8
+
 0.8.6.2 (8 June 2018)
 ---------------------
 
