@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE TemplateHaskell    #-}
 
 -----------------------------------------------------------------------------
@@ -26,6 +27,12 @@ module Text.BlogLiterately.Highlight
     , colourisePandoc
     ) where
 
+-- xmlParse (from HaXmL) uses String
+-- hscolour uses String
+
+import           Data.Text                           (Text)
+import qualified Data.Text                           as T
+
 import           Control.Lens                        (makePrisms)
 import           Control.Monad                       (liftM)
 import           Data.Char                           (toLower)
@@ -39,7 +46,7 @@ import           Text.Blaze.Html.Renderer.String     (renderHtml)
 import           Text.Highlighting.Kate
 import           Text.Pandoc.Definition
 import           Text.Pandoc.Shared                  (safeRead)
-import           Text.XML.HaXml                      hiding (find, attr, html)
+import           Text.XML.HaXml                      hiding (attr, find, html)
 import           Text.XML.HaXml.Posn                 (noPos)
 
 import           Text.BlogLiterately.Block           (unTag)
@@ -67,9 +74,9 @@ wind up in `CodeBlock` elements -- normal markdown formatted code.
 The `Attr` component has metadata about what's in the code block:
 
     [haskell]
-    type Attr = ( String,             -- code block identifier
-                , [String]            -- list of code classes
-                , [(String, String)]  -- name/value pairs
+    type Attr = ( Text,           -- code block identifier
+                , [Text]          -- list of code classes
+                , [(Text, Text)]  -- name/value pairs
                 )
 
 Thanks to some feedback from the Pandoc author, John MacFarlane, I
@@ -147,9 +154,9 @@ style based rendering (for people who can't update their stylesheet).
 
 -- | Use hscolour to syntax highlight some Haskell code.  The first
 -- argument indicates whether the code is literate Haskell.
-colourIt :: Bool -> String -> String
+colourIt :: Bool -> Text -> String
 colourIt literate srcTxt =
-    wrapCode $ hscolour CSS defaultColourPrefs False True "" literate srcTxt'
+    wrapCode $ hscolour CSS defaultColourPrefs False True "" literate (T.unpack srcTxt')
     where srcTxt' | literate  = litify srcTxt
                   | otherwise = srcTxt
           -- wrap the result in a <pre><code> tag, similar to
@@ -164,8 +171,8 @@ colourIt literate srcTxt =
                     `when` tag "pre"
 
 -- | Prepend literate Haskell markers to some source code.
-litify :: String -> String
-litify = unlines . map ("> " ++) . lines
+litify :: Text -> Text
+litify = T.unlines . map (T.append "> ") . T.lines
 
 {-
 Hscolour uses HTML `span` elements and CSS classes like 'hs-keyword'
@@ -259,8 +266,8 @@ colouriseCodeBlock hsHighlight otherHighlight (CodeBlock attr@(_,classes,_) s)
   | ctag == Just "haskell" || haskell
   = case hsHighlight of
         HsColourInline style ->
-            rawHtml $ bakeStyles style $ colourIt lit src
-        HsColourCSS   -> rawHtml $ colourIt lit src
+            rawHtmlT . bakeStyles style $ colourIt lit src
+        HsColourCSS   -> rawHtmlT $ colourIt lit src
         HsNoHighlight -> rawHtml $ simpleHTML hsrc
         HsKate        -> case ctag of
             Nothing -> myHighlightK attr hsrc
@@ -283,11 +290,12 @@ colouriseCodeBlock hsHighlight otherHighlight (CodeBlock attr@(_,classes,_) s)
         | otherwise    = src
     lit          = "sourceCode" `elem` classes
     haskell      = "haskell" `elem` classes
-    simpleHTML h = "<pre><code>" ++ h ++ "</code></pre>"
+    simpleHTML h = T.append "<pre><code>" (T.append h "</code></pre>")
     myHighlightK attrs h = case highlight formatHtmlBlock attrs h of
-        Nothing   -> rawHtml $ simpleHTML s
-        Just html -> rawHtml $ replaceBreaks $ renderHtml html
-    rawHtml = RawBlock (Format "html")
+        Nothing   -> rawHtml  $ simpleHTML s
+        Just html -> rawHtmlT $ replaceBreaks $ renderHtml html
+    rawHtmlT = rawHtml . T.pack
+    rawHtml  = RawBlock (Format "html")
 
 colouriseCodeBlock _ _ b = b
 
@@ -311,21 +319,21 @@ lcLanguages :: [String]
 lcLanguages = map (map toLower) languages
 
 highlight :: (FormatOptions -> [SourceLine] -> a) -- ^ Formatter
-          -> Attr -- ^ Attributes of the CodeBlock
-          -> String -- ^ Raw contents of the CodeBlock
+          -> Attr    -- ^ Attributes of the CodeBlock
+          -> Text    -- ^ Raw contents of the CodeBlock
           -> Maybe a -- ^ Maybe the formatted result
 highlight formatter (_, classes, keyvals) rawCode =
   let firstNum = case safeRead (fromMaybe "1" $ lookup "startFrom" keyvals) of
-                      Just n -> n
+                      Just n  -> n
                       Nothing -> 1
       fmtOpts = defaultFormatOpts{
                   startNumber = firstNum,
                   numberLines = any (`elem`
                         ["number","numberLines", "number-lines"]) classes }
-      lcclasses = map (map toLower) classes
+      lcclasses = map (T.unpack . T.toLower) classes
   in case find (`elem` lcLanguages) lcclasses of
             Nothing -> Nothing
             Just language -> Just
                               $ formatter fmtOpts{ codeClasses = [language],
-                                                   containerClasses = classes }
-                              $ highlightAs language rawCode
+                                                   containerClasses = map T.unpack classes }
+                              $ highlightAs language (T.unpack rawCode)

@@ -19,6 +19,8 @@ module Text.BlogLiterately.Image
     , mkMediaObject
     ) where
 
+import qualified Data.Text                   as T
+
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Trans.Class   (lift)
 import           Control.Monad.Trans.State   (StateT, get, modify, runStateT)
@@ -55,21 +57,24 @@ uploadAllImages bl@(BlogLiterately{..}) p =
     _           -> return p
   where
     uploadOneImage :: String -> Inline -> StateT (M.Map FilePath URL) IO Inline
-    uploadOneImage xmlrpc i@(Image attr altText (imgUrl, imgTitle))
+    uploadOneImage xmlrpc i@(Image attr altText (imgUrlT, imgTitle))
       | isLocal imgUrl = do
           uploaded <- get
           case M.lookup imgUrl uploaded of
-            Just url -> return $ Image attr altText (url, imgTitle)
+            Just url -> return $ Image attr altText (T.pack url, imgTitle)
             Nothing  -> do
               res <- lift $ uploadIt xmlrpc imgUrl bl
               case res of
                 Just (ValueStruct (lookup "url" -> Just (ValueString newUrl))) -> do
                   modify (M.insert imgUrl newUrl)
-                  return $ Image attr altText (newUrl, imgTitle)
+                  return $ Image attr altText (T.pack newUrl, imgTitle)
                 _ -> do
                   liftIO . putStrLn $ "Warning: upload of " ++ imgUrl ++ " failed."
                   return i
       | otherwise      = return i
+      where
+        imgUrl = T.unpack imgUrlT
+
     uploadOneImage _ i = return i
 
     isLocal imgUrl = none (`isPrefixOf` imgUrl) ["http", "/"]

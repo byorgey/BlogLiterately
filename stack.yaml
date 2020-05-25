@@ -2,7 +2,7 @@
 # For more information, see: http://docs.haskellstack.org/en/stable/yaml_configuration/
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-13.8
+resolver: lts-15.13
 
 # Local packages, usually specified by relative directory name
 packages:
@@ -11,7 +11,6 @@ packages:
 extra-deps:
 - bool-extras-0.4.0
 - HaXml-1.25.5
-- haxr-3000.11.3
 
 # Override default flag values for local packages and extra-deps
 flags: {}

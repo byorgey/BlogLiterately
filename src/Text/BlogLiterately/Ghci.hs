@@ -41,6 +41,8 @@ import           Control.Monad.Trans.Reader (ReaderT, ask, runReaderT)
 import           Data.Char                  (isSpace)
 import           Data.Functor               ((<$>))
 import           Data.List                  (intercalate, isPrefixOf)
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
 import           System.FilePath            (takeFileName)
 import           System.IO
 import qualified System.IO.Strict           as Strict
@@ -194,14 +196,14 @@ formatInlineGhci :: FilePath -> Pandoc -> IO Pandoc
 formatInlineGhci f = withGhciProcess f . bottomUpM formatInlineGhci'
   where
     formatInlineGhci' :: Block -> ReaderT ProcessInfo IO Block
-    formatInlineGhci' = onTag "ghci" formatGhciBlock return
+    formatInlineGhci' = onTag (T.pack "ghci") formatGhciBlock return
 
     formatGhciBlock attr src = do
       let inputs = parseGhciInputs src
       results <- zipWith GhciLine inputs <$> mapM ghciEval inputs
-      return $ CodeBlock attr (intercalate "\n" $ map formatGhciResult results)
+      return $ CodeBlock attr (T.intercalate (T.pack "\n") $ map (T.pack . formatGhciResult) results)
 
-parseGhciInputs :: String -> [GhciInput]
+parseGhciInputs :: Text -> [GhciInput]
 parseGhciInputs = map mkGhciInput
                 . split
                   ( dropInitBlank
@@ -210,6 +212,7 @@ parseGhciInputs = map mkGhciInput
                   $ whenElt (not . (" " `isPrefixOf`))
                   )
                 . lines
+                . T.unpack
 
 mkGhciInput :: [String] -> GhciInput
 mkGhciInput []       = GhciInput "" Nothing
