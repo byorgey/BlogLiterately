@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TupleSections     #-}
 {-# LANGUAGE TypeOperators     #-}
@@ -276,7 +277,7 @@ standardSpecialLinks =
 --
 --   is a simple 'SpecialLink' which causes links of the form
 --   @twitter::user@ to be replaced by @https://twitter.com/user@.
-type SpecialLink = (String, String -> BlogLiterately -> IO String)
+type SpecialLink = (Text, Text -> BlogLiterately -> IO Text)
 
 -- | Create a transformation which looks for the given special links
 --   and replaces them appropriately. You can use this function with
@@ -292,7 +293,7 @@ specialLinks links bl = bottomUpM specialLink
     specialLink :: Inline -> IO Inline
     specialLink i@(Link attrs alt (url, title))
       | Just (typ, target) <- getSpecial url
-      = mkLink <$> case lookup (map toLower typ) links of
+      = mkLink <$> case lookup (T.toLower typ) links of
                      Just mkURL -> mkURL target bl
                      Nothing    -> return target
       where
@@ -301,9 +302,9 @@ specialLinks links bl = bottomUpM specialLink
     specialLink i = return i
 
     getSpecial url
-      | "::" `isInfixOf` url =
-          let (typ:rest) = splitOn "::" url
-          in  Just (typ, intercalate "::" rest)
+      | "::" `T.isInfixOf` url =
+          let (typ:rest) = T.splitOn "::" url
+          in  Just (typ, T.intercalate "::" rest)
       | otherwise = Nothing
 
 -- | Turn @lucky::<search>@ into a link to the first Google result for
@@ -311,12 +312,16 @@ specialLinks links bl = bottomUpM specialLink
 luckyLink :: SpecialLink
 luckyLink = ("lucky", getLucky)
   where
+    getLucky :: Text -> BlogLiterately -> IO Text
     getLucky searchTerm _ = do
-      results <- openURL $ "http://www.google.com/search?q=" ++ searchTerm
+      results <- openURL $ "http://www.google.com/search?q=" ++ (T.unpack searchTerm)
       let tags   = parseTags results
-          anchor = take 1 . dropWhile (~/= "<a>") . dropWhile (~/= "<h3 class='r'>") $ tags
+          anchor = take 1
+            . dropWhile (~/= ("<a>" :: String))
+            . dropWhile (~/= ("<h3 class='r'>" :: String))
+            $ tags
           url = case anchor of
-            [t@(TagOpen{})] -> takeWhile (/='&') . dropWhile (/='h') . fromAttrib "href" $ t
+            [t@(TagOpen{})] -> T.pack . takeWhile (/='&') . dropWhile (/='h') . fromAttrib "href" $ t
             _ -> searchTerm
       return url
 
@@ -327,7 +332,7 @@ openURL x = getResponseBody =<< simpleHTTP (getRequest x)
 -- | Given @wiki::<title>@, generate a link to the Wikipedia page for
 --   @<title>@.  Note that the page is not checked for existence.
 wikiLink :: SpecialLink
-wikiLink = ("wiki", \target _ -> return $ "https://en.wikipedia.org/wiki/" ++ target)
+wikiLink = ("wiki", \target _ -> return $ T.append "https://en.wikipedia.org/wiki/" target)
 
 -- | @postLink@ handles two types of special links.
 --
@@ -341,12 +346,13 @@ wikiLink = ("wiki", \target _ -> return $ "https://en.wikipedia.org/wiki/" ++ ta
 postLink :: SpecialLink
 postLink = ("post", getPostLink)
   where
+    getPostLink :: Text -> BlogLiterately -> IO Text
     getPostLink target bl =
-      fromMaybe target <$>
-        case (all isDigit target, bl ^. blog) of
+      (fromMaybe target . fmap T.pack) <$>
+        case (T.all isDigit target, bl ^. blog) of
           (_    , Nothing ) -> return Nothing
-          (True , Just url) -> getPostURL url target (user' bl) (password' bl)
-          (False, Just url) -> findTitle 20 url target (user' bl) (password' bl)
+          (True , Just url) -> getPostURL url (T.unpack target) (user' bl) (password' bl)
+          (False, Just url) -> findTitle 20 url (T.unpack target) (user' bl) (password' bl)
 
           -- If all digits, replace with permalink for that postid
           -- Otherwise, search titles of 20 most recent posts.
@@ -363,10 +369,11 @@ postLink = ("post", getPostLink)
 githubLink :: SpecialLink
 githubLink = ("github", getGithubLink)
   where
-    getGithubLink target bl =
-      case splitOn "/" target of
-        (user : repo : ghTarget) -> return $ github </> user </> repo </> mkTarget ghTarget
-        _ -> return $ github </> target
+    getGithubLink :: Text -> BlogLiterately -> IO Text
+    getGithubLink target bl = return . T.pack $
+      case splitOn "/" (T.unpack target) of
+        (user : repo : ghTarget) -> github </> user </> repo </> mkTarget ghTarget
+        _ -> github </> (T.unpack target)
     github = "https://github.com/"
     mkTarget []                 = ""
     mkTarget (('@': hash) : _)  = "commit" </> hash
@@ -377,7 +384,8 @@ githubLink = ("github", getGithubLink)
 hackageLink :: SpecialLink
 hackageLink = ("hackage", getHackageLink)
   where
-    getHackageLink pkg bl = return $ hackagePrefix ++ pkg
+    getHackageLink :: Text -> BlogLiterately -> IO Text
+    getHackageLink pkg bl = return $ T.append hackagePrefix pkg
     hackagePrefix = "http://hackage.haskell.org/package/"
 
 -- | Potentially extract a title from the metadata block, and set it
@@ -389,9 +397,9 @@ titleXF = Transform extractTitle (const True)
       (Pandoc (Meta m) _) <- gets snd
       case M.lookup "title" m of
         Just (MetaString s) ->
-          setTitle s
+          setTitle (T.unpack s)
         Just (MetaInlines is) ->
-          setTitle (intercalate " " [s | Str s <- is])
+          setTitle (intercalate " " [T.unpack s | Str s <- is])
         _ -> return ()
 
     -- title set explicitly with --title takes precedence.
@@ -412,7 +420,7 @@ optionsXF = Transform optionsXF' (const True)
 --   options record.  If the blog is not tagged with @[BLOpts]@ these
 --   will just be empty.
 extractOptions :: Block -> ([ParseError], BlogLiterately)
-extractOptions = onTag "blopts" (const readBLOptions) (const mempty)
+extractOptions = onTag "blopts" (const (readBLOptions . T.unpack)) (const mempty)
 
 -- | Delete any blocks tagged with @[BLOpts]@.
 killOptionBlocks :: Block -> Block
@@ -575,35 +583,35 @@ xformDoc bl xforms = runIO .
     writeOpts bl = def
       { writerReferenceLinks = True
       , writerTableOfContents = toc' bl
-      , writerHTMLMathMethod =
-          case math' bl of
-            ""  -> PlainMath
-            opt -> mathOption opt
-      , writerTemplate       = Just blHtmlTemplate
+      -- , writerHTMLMathMethod =     -- XXX FIX ME
+      --     case math' bl of
+      --       ""  -> PlainMath
+      --       opt -> mathOption opt
+      -- , writerTemplate       = Just blHtmlTemplate
       }
 
-    mathOption opt
-      | opt `isPrefixOf` "mathml"      = MathML
-      | opt `isPrefixOf` "mimetex"     =
-          WebTeX (mathUrl "/cgi-bin/mimetex.cgi?" opt)
-      | opt `isPrefixOf` "webtex"      = WebTeX (mathUrl webTeXURL opt)
-      | opt `isPrefixOf` "mathjax"     = MathJax (mathUrl mathJaxURL opt)
-      | otherwise                      = PlainMath
+    -- mathOption opt
+    --   | opt `isPrefixOf` "mathml"      = MathML
+    --   | opt `isPrefixOf` "mimetex"     =
+    --       WebTeX (mathUrl "/cgi-bin/mimetex.cgi?" opt)
+    --   | opt `isPrefixOf` "webtex"      = WebTeX (mathUrl webTeXURL opt)
+    --   | opt `isPrefixOf` "mathjax"     = MathJax (mathUrl mathJaxURL opt)
+    --   | otherwise                      = PlainMath
 
-    webTeXURL  = "http://chart.apis.google.com/chart?cht=tx&chl="
-    mathJaxURL = "http://cdn.mathjax.org/mathjax/latest/MathJax.js"
-                 ++ "?config=TeX-AMS-MML_HTMLorMML"
+    -- webTeXURL  = "http://chart.apis.google.com/chart?cht=tx&chl="
+    -- mathJaxURL = "http://cdn.mathjax.org/mathjax/latest/MathJax.js"
+    --              ++ "?config=TeX-AMS-MML_HTMLorMML"
 
-    urlPart = drop 1 . dropWhile (/='=')
+    -- urlPart = drop 1 . dropWhile (/='=')
 
-    mathUrl dflt opt  = case urlPart opt of "" -> dflt; x -> x
+    -- mathUrl dflt opt  = case urlPart opt of "" -> dflt; x -> x
 
 -- | Turn @CRLF@ pairs into a single @LF@.  This is necessary since
 --   'readMarkdown' is picky about line endings.
 fixLineEndings :: String -> String
-fixLineEndings [] = []
+fixLineEndings []             = []
 fixLineEndings ('\r':'\n':cs) = '\n':fixLineEndings cs
-fixLineEndings (c:cs) = c:fixLineEndings cs
+fixLineEndings (c:cs)         = c:fixLineEndings cs
 
 -- We use a special template with the "standalone" pandoc writer.  We
 -- don't actually want truly "standalone" HTML documents because they
