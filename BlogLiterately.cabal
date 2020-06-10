@@ -39,7 +39,7 @@ Source-repository head
   location: git://github.com/byorgey/BlogLiterately.git
 
 Library
-  Build-Depends:   base >= 4.0 && < 4.14,
+  Build-Depends:   base >= 4.0 && < 4.15,
                    process,
                    filepath,
                    directory,
