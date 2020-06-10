@@ -59,7 +59,7 @@ Library
                    cmdargs >= 0.9.5 && < 0.11,
                    haxr >= 3000.11 && < 3000.12,
                    pandoc >= 2.0 && < 2.10,
-                   pandoc-types >= 1.16 && < 1.21,
+                   pandoc-types >= 1.20 && < 1.21,
                    pandoc-citeproc >= 0.1.2 && < 0.17,
                    highlighting-kate >= 0.5 && < 0.7,
                    data-default >= 0.5 && < 0.8,

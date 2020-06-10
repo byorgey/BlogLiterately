@@ -541,14 +541,17 @@ standardTransforms =
 -- | Transform a complete input document string to an HTML output
 --   string, given a list of transformation passes.
 xformDoc :: BlogLiterately -> [Transform] -> String -> IO (Either PandocError (BlogLiterately, String))
-xformDoc bl xforms = runIO .
+xformDoc bl xforms s = do
+  Right tpl <- compileTemplate "" blHtmlTemplate
+  runIO .
     (     fixLineEndings
       >>> T.pack
       >>> parseFile parseOpts
       >=> (liftIO . runTransforms xforms bl)
-      >=> (\(bl', p) -> (bl',) <$> writeHtml5String (writeOpts bl') p)
+      >=> (\(bl', p) -> (bl',) <$> writeHtml5String (writeOpts bl' tpl) p)
       >=> _2 (return . T.unpack)
     )
+    $ s
   where
     parseFile :: ReaderOptions -> Text -> PandocIO Pandoc
     parseFile opts =
@@ -580,31 +583,32 @@ xformDoc bl xforms = runIO .
             -- Ext_pandoc_title_block
             -- Ext_citations
       }
-    writeOpts bl = def
-      { writerReferenceLinks = True
+    writeOpts bl tpl = def
+      { writerReferenceLinks  = True
       , writerTableOfContents = toc' bl
-      -- , writerHTMLMathMethod =     -- XXX FIX ME
-      --     case math' bl of
-      --       ""  -> PlainMath
-      --       opt -> mathOption opt
-      -- , writerTemplate       = Just blHtmlTemplate
+      , writerHTMLMathMethod  =
+          case math' bl of
+            ""  -> PlainMath
+            opt -> mathOption (T.pack opt)
+      , writerTemplate        = Just tpl
       }
 
-    -- mathOption opt
-    --   | opt `isPrefixOf` "mathml"      = MathML
-    --   | opt `isPrefixOf` "mimetex"     =
-    --       WebTeX (mathUrl "/cgi-bin/mimetex.cgi?" opt)
-    --   | opt `isPrefixOf` "webtex"      = WebTeX (mathUrl webTeXURL opt)
-    --   | opt `isPrefixOf` "mathjax"     = MathJax (mathUrl mathJaxURL opt)
-    --   | otherwise                      = PlainMath
+    mathOption opt
+      | opt `T.isPrefixOf` "mathml"      = MathML
+      | opt `T.isPrefixOf` "mimetex"     =
+          WebTeX (mathUrl "/cgi-bin/mimetex.cgi?" opt)
+      | opt `T.isPrefixOf` "webtex"      = WebTeX (mathUrl webTeXURL opt)
+      | opt `T.isPrefixOf` "mathjax"     = MathJax (mathUrl mathJaxURL opt)
+      | otherwise                      = PlainMath
 
-    -- webTeXURL  = "http://chart.apis.google.com/chart?cht=tx&chl="
-    -- mathJaxURL = "http://cdn.mathjax.org/mathjax/latest/MathJax.js"
-    --              ++ "?config=TeX-AMS-MML_HTMLorMML"
+    webTeXURL  = "http://chart.apis.google.com/chart?cht=tx&chl="
+    mathJaxURL = T.append "http://cdn.mathjax.org/mathjax/latest/MathJax.js"
+                   "?config=TeX-AMS-MML_HTMLorMML"
 
-    -- urlPart = drop 1 . dropWhile (/='=')
+    urlPart :: Text -> Text
+    urlPart = T.drop 1 . T.dropWhile (/='=')
 
-    -- mathUrl dflt opt  = case urlPart opt of "" -> dflt; x -> x
+    mathUrl dflt opt  = case urlPart opt of "" -> dflt; x -> x
 
 -- | Turn @CRLF@ pairs into a single @LF@.  This is necessary since
 --   'readMarkdown' is picky about line endings.
@@ -617,7 +621,7 @@ fixLineEndings (c:cs)         = c:fixLineEndings cs
 -- don't actually want truly "standalone" HTML documents because they
 -- have to sit inside another web page.  But we do want things like
 -- math typesetting and a table of contents.
-blHtmlTemplate = unlines
+blHtmlTemplate = T.unlines
   [ "$if(highlighting-css)$"
   , "  <style type=\"text/css\">"
   , "$highlighting-css$"
