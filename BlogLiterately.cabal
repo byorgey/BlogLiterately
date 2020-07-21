@@ -58,12 +58,12 @@ Library
                    blaze-html >= 0.5 && < 0.10,
                    cmdargs >= 0.9.5 && < 0.11,
                    haxr >= 3000.11 && < 3000.12,
-                   pandoc >= 2.0 && < 2.10,
-                   pandoc-types >= 1.20 && < 1.21,
-                   pandoc-citeproc >= 0.1.2 && < 0.17,
+                   pandoc >= 2.0 && < 2.11,
+                   pandoc-types >= 1.20 && < 1.22,
+                   pandoc-citeproc >= 0.1.2 && < 0.18,
                    highlighting-kate >= 0.5 && < 0.7,
                    data-default >= 0.5 && < 0.8,
-                   lens >= 3.8 && < 4.19,
+                   lens >= 3.8 && < 4.20,
                    tagsoup >= 0.13.4 && < 0.15,
                    HTTP >= 4000.3 && < 4000.4
   Exposed-modules: Text.BlogLiterately
