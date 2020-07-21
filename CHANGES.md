@@ -1,3 +1,9 @@
+0.8.7 (21 July 2020)
+--------------------
+
+  - Add support for GHC 8.8, 8.10
+  - Switch to `pandoc-2.9` and `text`
+
 0.8.6.3 (4 March 2019)
 ----------------------
 
