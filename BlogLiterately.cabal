@@ -58,7 +58,7 @@ Library
                    blaze-html >= 0.5 && < 0.10,
                    cmdargs >= 0.9.5 && < 0.11,
                    haxr >= 3000.11 && < 3000.12,
-                   pandoc >= 2.0 && < 2.11,
+                   pandoc >= 2.8 && < 2.11,
                    pandoc-types >= 1.20 && < 1.22,
                    pandoc-citeproc >= 0.1.2 && < 0.18,
                    highlighting-kate >= 0.5 && < 0.7,
