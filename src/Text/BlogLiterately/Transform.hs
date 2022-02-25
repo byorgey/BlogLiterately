@@ -1,9 +1,7 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TupleSections     #-}
-{-# LANGUAGE TypeOperators     #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -46,7 +44,7 @@ module Text.BlogLiterately.Transform
     , postLink
 
       -- * Transforms
-    , Transform(..), pureTransform, ioTransform, runTransform, runTransforms
+    , Transform(..), pureTransform, ioTransform, pioTransform, runTransform, runTransforms
 
       -- * Transforming documents
     , xformDoc
@@ -82,9 +80,9 @@ import           System.Exit                       (exitFailure)
 import           System.FilePath                   (takeExtension, (<.>), (</>))
 import           System.IO                         (hFlush, stdout)
 import           Text.Blaze.Html.Renderer.String   (renderHtml)
-import           Text.CSL.Pandoc                   (processCites')
 import           Text.HTML.TagSoup
 import           Text.Pandoc                       hiding (openURL)
+import           Text.Pandoc.Citeproc              (processCitations)
 import           Text.Pandoc.Error                 (PandocError)
 import           Text.Parsec                       (ParseError)
 
@@ -130,7 +128,7 @@ import           Text.BlogLiterately.Post          (findTitle, getPostURL)
 --   For examples, see the implementations of the standard transforms
 --   below.
 data Transform = Transform
-                 { getTransform :: StateT (BlogLiterately, Pandoc) IO ()
+                 { getTransform :: StateT (BlogLiterately, Pandoc) PandocIO ()
                    -- ^ A document transformation, which can transform
                    --   both the document and the options and have
                    --   effects in the IO monad.  The options record
@@ -143,22 +141,29 @@ data Transform = Transform
 -- | Construct a transformation from a pure function.
 pureTransform :: (BlogLiterately -> Pandoc -> Pandoc)
               -> (BlogLiterately -> Bool) -> Transform
-pureTransform transf cond = Transform (gets fst >>= \bl -> _2 %= transf bl) cond
+pureTransform transf = Transform (gets fst >>= \bl -> _2 %= transf bl)
 
 -- | Construct a transformation from a function in the @IO@ monad.
 ioTransform :: (BlogLiterately -> Pandoc -> IO Pandoc)
             -> (BlogLiterately -> Bool) -> Transform
-ioTransform transf cond = Transform (StateT . fmap (fmap $ (,) ()) $ transf') cond
-  where transf' (bl,p) = ((,) bl) <$> transf bl p
+ioTransform transf = pioTransform (\b p -> liftIO (transf b p))
+
+-- | Construct a transformation from a function in the @PandocIO@ monad.
+pioTransform :: (BlogLiterately -> Pandoc -> PandocIO Pandoc)
+             -> (BlogLiterately -> Bool) -> Transform
+pioTransform transf = Transform $ do
+  (bl,p) <- get
+  p' <- lift $ transf bl p
+  put (bl,p')
 
 -- | Run a 'Transform' (if its condition is met).
-runTransform :: Transform -> StateT (BlogLiterately, Pandoc) IO ()
+runTransform :: Transform -> StateT (BlogLiterately, Pandoc) PandocIO ()
 runTransform t = do
   bl <- gets fst
   when (xfCond t bl) $ getTransform t
 
 -- | Run a pipeline of 'Transform's.
-runTransforms :: [Transform] -> BlogLiterately -> Pandoc -> IO (BlogLiterately, Pandoc)
+runTransforms :: [Transform] -> BlogLiterately -> Pandoc -> PandocIO (BlogLiterately, Pandoc)
 runTransforms ts bl p = execStateT (mapM_ runTransform ts) (bl,p)
 
 --------------------------------------------------
@@ -450,7 +455,7 @@ highlightOptsXF = Transform doHighlightOptsXF (const True)
 
 -- | Format citations.
 citationsXF :: Transform
-citationsXF = ioTransform (const processCites') citations'
+citationsXF = pioTransform (const processCitations) citations'
 
 -- | Load options from a profile if one is specified.
 profileXF :: Transform
@@ -547,7 +552,7 @@ xformDoc bl xforms s = do
     (     fixLineEndings
       >>> T.pack
       >>> parseFile parseOpts
-      >=> (liftIO . runTransforms xforms bl)
+      >=> runTransforms xforms bl
       >=> (\(bl', p) -> (bl',) <$> writeHtml5String (writeOpts bl' tpl) p)
       >=> _2 (return . T.unpack)
     )
