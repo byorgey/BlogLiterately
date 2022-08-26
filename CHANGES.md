@@ -1,3 +1,9 @@
+0.8.8 (20 May 2022)
+-------------------
+
+  - Support GHC through 9.2
+  - Allow `pandoc-2.18`, `citeproc-0.7`, and `text-2.0`
+
 0.8.7 (21 July 2020)
 --------------------
 
