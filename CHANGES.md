@@ -1,3 +1,8 @@
+0.8.8.1 (25 August 2022)
+------------------------
+
+  - Bug fix: keep explicit line breaks out of generated HTML
+
 0.8.8 (20 May 2022)
 -------------------
 
