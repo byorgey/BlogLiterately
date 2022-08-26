@@ -590,6 +590,7 @@ xformDoc bl xforms s = do
       }
     writeOpts bl tpl = def
       { writerReferenceLinks  = True
+      , writerWrapText        = WrapNone
       , writerTableOfContents = toc' bl
       , writerHTMLMathMethod  =
           case math' bl of
