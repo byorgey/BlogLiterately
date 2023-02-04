@@ -65,8 +65,7 @@ import           Data.List                         (intercalate, isInfixOf,
 import           Data.List.Split                   (splitOn)
 import qualified Data.Map                          as M
 import           Data.Maybe                        (fromMaybe)
-import           Data.Monoid                       (mappend)
-import           Data.Monoid                       (mempty, (<>))
+import           Data.Monoid                       (mappend, mempty, (<>))
 import qualified Data.Set                          as S
 import           Data.Text                         (Text)
 import qualified Data.Text                         as T
@@ -419,7 +418,7 @@ optionsXF = Transform optionsXF' (const True)
       (errs, opts) <- queryWith extractOptions <$> gets snd
       mapM_ (liftIO . print) errs
       _1 %= (<> opts)
-      _2 %= bottomUp killOptionBlocks
+      _2 %= bottomUp (concatMap killOptionBlocks)
 
 -- | Take a block and extract from it a list of parse errors and an
 --   options record.  If the blog is not tagged with @[BLOpts]@ these
@@ -428,8 +427,8 @@ extractOptions :: Block -> ([ParseError], BlogLiterately)
 extractOptions = onTag "blopts" (const (readBLOptions . T.unpack)) (const mempty)
 
 -- | Delete any blocks tagged with @[BLOpts]@.
-killOptionBlocks :: Block -> Block
-killOptionBlocks = onTag "blopts" (const (const Null)) id
+killOptionBlocks :: Block -> [Block]
+killOptionBlocks = onTag "blopts" (const (const [])) (:[])
 
 -- | Prompt the user for a password if the @blog@ field is set but no
 --   password has been provided.
