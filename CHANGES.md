@@ -1,3 +1,14 @@
+0.8.8.2 (8 Feb 2023)
+--------------------
+
+  - Support GHC through 9.4
+  - Bump upper bounds to allow:
+    - `base-4.17`
+    - `pandoc-3.0`
+    - `pandoc-types-1.23`
+    - `citeproc-0.8`
+    - `lens-5.2`
+
 0.8.8.1 (25 August 2022)
 ------------------------
 
