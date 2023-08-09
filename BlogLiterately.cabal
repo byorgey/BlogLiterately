@@ -65,7 +65,8 @@ Library
                    data-default >= 0.5 && < 0.8,
                    lens >= 3.8 && < 5.3,
                    tagsoup >= 0.13.4 && < 0.15,
-                   HTTP >= 4000.3 && < 4000.5
+                   HTTP >= 4000.3 && < 4000.5,
+                   http-streams >= 0.8.9.8
   Exposed-modules: Text.BlogLiterately
                    Text.BlogLiterately.Block
                    Text.BlogLiterately.Ghci
