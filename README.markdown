@@ -12,3 +12,24 @@ To make further customization possible, the internals of the
 executable are made available as a library.  In particular, it is easy
 to create your own executable which adds extra custom transformations;
 see [`Text.BlogLiterately.Run`](http://hackage.haskell.org/packages/archive/BlogLiterately/latest/doc/html/Text-BlogLiterately-Run.html).
+
+Mac installation instructions
+-----------------------------
+
+The following instructions for installing BlogLiterately on a new Mac
+(with apple silicon M2 processor and Ventura) were kindly provided by
+Chris Reade.
+
+After installing ghc and cabal using `ghcup`, there are two more
+things needed: `pkgconfig` and `openssl`. Install both of these using
+homebrew, and set the paths as instructed.
+
+Finally, edit `~/.cabal/config` so that it provides locations for the
+openssl lib and include files.  For example:
+
+```
+extra-include-dirs: /opt/homebrew/opt/openssl@3/include
+extra-lib-dirs: /opt/homebrew/opt/openssl@3/lib
+```
+
+Finally, `cabal install BlogLiterately`.
