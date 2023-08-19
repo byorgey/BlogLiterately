@@ -21,7 +21,7 @@ The following instructions for installing BlogLiterately on a new Mac
 Chris Reade.
 
 After installing ghc and cabal using `ghcup`, there are two more
-things needed: `pkgconfig` and `openssl`. Install both of these using
+things needed: `pkg-config` and `openssl`. Install both of these using
 homebrew, and set the paths as instructed.
 
 Finally, edit `~/.cabal/config` so that it provides locations for the
